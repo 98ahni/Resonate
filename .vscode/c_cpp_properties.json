@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/system/include/**", "${workspaceFolder}/.vscode/emsdk/upstream/include/c++/v1/**"
+            ],
+            "defines": [],
+            "compilerPath": "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/emcc",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
