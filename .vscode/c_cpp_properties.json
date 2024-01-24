@@ -11,8 +11,7 @@
             "compilerPath": "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/emcc",
             "cStandard": "c17",
             "cppStandard": "c++20",
-            "intelliSenseMode": "linux-clang-x64",
-            "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json"
+            "intelliSenseMode": "linux-clang-x64"
         }
     ],
     "version": 4
