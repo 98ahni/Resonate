@@ -1,0 +1,32 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
+{
+	"name": "Node.js",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",
+	"features": {
+		"ghcr.io/devcontainers-contrib/features/jshint:2": {},
+		"ghcr.io/ebaskoro/devcontainer-features/emscripten:1": {}
+	},
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+	"customizations" : {
+		"vscode": {
+			"settings": {
+				"cmake.emscriptenSearchDirs": ["${workspaceFolder}/.vscode/emsdk/upstream/emscripten/"]
+			}
+		}
+	},
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+	"onCreateCommand": ["emcc -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++  -I \"/workspaces/Resonate/imgui/\" -g -include \"EmscriptenPlatform.h\" -x c++-header -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -O0 -std=c++20 -o /workspaces/Resonate/bin/Intermediate/Debug/%{Filename}.o -o //workspaces/Resonate/bin/Resonate.html --bind -O0 -g3"],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "npm install"
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
