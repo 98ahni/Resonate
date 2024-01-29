@@ -1,21 +1,47 @@
 #include <stdio.h>
 #include <emscripten.h>
+#include "Windows/MainWindow.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include "Extensions/TouchInput.h"
+
+bool g_showInputDebugger = false;
+char* g_testStr = new char[50];
+extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
+EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
 void loop(void* window){
-    ImGui::Begin("Test");
+    MainWindow_NewFrame(window);
+    if(g_showInputDebugger)
+    {
+        ImGui::Begin("Input Debugger", &g_showInputDebugger);
+        ImGui::Text("Mouse position: %f, %f", ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+        if(TouchInput_HasTouch()) ImGui::Text("Using Touch");
+        else ImGui::Text("Using Mouse");
+        ImGui::InputText("Text Input", g_testStr, 50);
+        if(ImGui::IsItemClicked(0) && TouchInput_HasTouch()) TouchInput_ReadyKeyboard(false);
+        //char* logs = &get_console_logs();
+        //ImGui::Text(logs);
+        //free(logs);
+        ImGui::End();
+    }
 
+    MainWindow_RenderFrame();
 }
 
 int main(){
-    GLFWwindow* window;
-    glfwCreateWindow(1600, 900, "Resonate", 0, 0);
-    ImGui_ImplOpenGL3_Init("#version 300");
-    ImGui_ImplGlfw_InitForOpenGL(window,true);
-    emscripten_set_main_loop_arg(loop, (void*)window, 0, false);
+    void* _window = nullptr;
+    MainWindow_Init("Resonate", &_window);
+    MainWindow_StyleVarsShadow();
+    MainWindow_StyleColorsShadow();
+    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Emscripten/Assets/RobotoMono-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 16.0f);
+    ImGui::GetIO().Fonts->Build();
+    ImGui::GetIO().FontDefault = MainWindow::Font;
+    //ImGui::PushFont(roboto);
+
+    emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;
 }
