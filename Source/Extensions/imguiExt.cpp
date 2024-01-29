@@ -1,9 +1,7 @@
 #include "imguiExt.h"
 #include <imgui.h>
 #include <imgui_internal.h>
-
-#define remap(value, istart, istop, ostart, ostop) (ostart + (ostop - ostart) * ((value - istart) / (istop - istart)))
-#define clamp(value, min, max) (value < min ? min : (max < value ? max : value))
+#include "Defines.h"
 
 void ImGui::Ext::TimedSyllable(const char *syllable, float start, float end, float currentTime)
 {
@@ -14,12 +12,15 @@ void ImGui::Ext::TimedSyllable(const char *syllable, float start, float end, flo
     Text(syllable);
     ImDrawList* drawList = GetWindowDrawList();
     drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, 2);
+    drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + 5, timeStartPos.y}, {timeStartPos.x, timeStartPos.y + 5}, IM_COL32_WHITE);
 }
 
 void ImGui::Ext::SetColor(unsigned int col)
 {
+    PushStyleColor(ImGuiCol_Text, col);
 }
 
 void ImGui::Ext::ClearColor()
 {
+    PopStyleColor(GetCurrentContext()->ColorStack.size());
 }
