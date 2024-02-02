@@ -8,7 +8,7 @@
             "name": "Launch Node",
             "request": "launch",
             "type": "node",
-            "program": "${workspaceFolder}/.vscode/server.js"
+            "program": "${workspaceFolder}/bin/server.js"
         },
         {
             "name": "Launch Chrome",

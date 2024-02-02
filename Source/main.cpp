@@ -37,9 +37,9 @@ int main(){
     MainWindow_Init("Resonate", &_window);
     MainWindow_StyleVarsShadow();
     MainWindow_StyleColorsShadow();
-    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Emscripten/Assets/RobotoMono-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 16.0f);
-    ImGui::GetIO().Fonts->Build();
-    ImGui::GetIO().FontDefault = MainWindow::Font;
+    //MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Emscripten/Assets/RobotoMono-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 16.0f);
+    //ImGui::GetIO().Fonts->Build();
+    //ImGui::GetIO().FontDefault = MainWindow::Font;
     //ImGui::PushFont(roboto);
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
