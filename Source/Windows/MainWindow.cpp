@@ -11,8 +11,8 @@
 #include <webgpu/webgpu.h>
 #include <webgpu/webgpu_cpp.h>
 #include <backends/imgui_impl_opengl3.h>
-#include <TouchInput.h>
-#include "imguiExt.h"
+#include <Extensions/TouchInput.h>
+#include <Extensions/imguiExt.h>
 
 /* embedded JS function to handle all the asynchronous WebGPU setup */
 EM_JS(void, init_file_system, (), {
