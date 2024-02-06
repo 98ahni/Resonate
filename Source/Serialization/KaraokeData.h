@@ -9,8 +9,8 @@ namespace Serialization
         float myStartTime;
         float myEndTime;
     };
-    typedef std::vector<std::vector<std::string>> KaraokeData;
-    typedef std::vector<std::string> KaraokeLine;
+    typedef std::vector<std::vector<KaraokeToken>> KaraokeData;
+    typedef std::vector<KaraokeToken> KaraokeLine;
     class KaraokeDocument
     {
     public:

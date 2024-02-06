@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <emscripten.h>
 #include "Windows/MainWindow.h"
+#include "Windows/Base/WindowManager.h"
+#include "Windows/TimingEditor.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
 #include <imgui.h>
@@ -29,6 +31,8 @@ void loop(void* window){
         ImGui::End();
     }
 
+    WindowManager::ImGuiDraw();
+
     MainWindow_RenderFrame();
 }
 
@@ -41,6 +45,9 @@ int main(){
     //ImGui::GetIO().Fonts->Build();
     //ImGui::GetIO().FontDefault = MainWindow::Font;
     //ImGui::PushFont(roboto);
+
+    WindowManager::Init();
+    WindowManager::AddWindow<TimingEditor>("Timing");
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;
