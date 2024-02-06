@@ -628,9 +628,9 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  66731: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 66854: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 66956: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  67291: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 67414: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 67516: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
 function show_input_debugger() {_ShowInputDebugger(); }
 function force_click_event(node) { try { node.dispatchEvent(new MouseEvent('click')); } catch(e) { var evt = document.createEvent('MouseEvents'); evt.initMouseEvent('click', true, false, window, 0, 0, 0, 80, 20, false, false, false, false, 0, null); node.dispatchEvent(evt); } }
@@ -9688,8 +9688,8 @@ var _asyncify_start_unwind = (a0) => (_asyncify_start_unwind = wasmExports['asyn
 var _asyncify_stop_unwind = () => (_asyncify_stop_unwind = wasmExports['asyncify_stop_unwind'])();
 var _asyncify_start_rewind = (a0) => (_asyncify_start_rewind = wasmExports['asyncify_start_rewind'])(a0);
 var _asyncify_stop_rewind = () => (_asyncify_stop_rewind = wasmExports['asyncify_stop_rewind'])();
-var ___start_em_js = Module['___start_em_js'] = 62688;
-var ___stop_em_js = Module['___stop_em_js'] = 66731;
+var ___start_em_js = Module['___start_em_js'] = 63248;
+var ___stop_em_js = Module['___stop_em_js'] = 67291;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
