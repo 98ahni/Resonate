@@ -11,6 +11,13 @@
             "program": "${workspaceFolder}/bin/server.js"
         },
         {
+            "name": "Launch Node Win32",
+            "request": "launch",
+            "type": "node",
+            "program": "${workspaceFolder}/bin/server.js",
+            "runtimeExecutable": "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/node/16.20.0_64bit/bin/node.exe"
+        },
+        {
             "name": "Launch Chrome",
             "request": "launch",
             "type": "chrome",
