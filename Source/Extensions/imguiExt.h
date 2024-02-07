@@ -1,4 +1,4 @@
-
+#include <imgui.h>
 
 #define IM_COL32_GET_R(col) ((ImU8*)&col)[0]
 #define IM_COL32_GET_G(col) ((ImU8*)&col)[1]
@@ -7,6 +7,13 @@
 namespace Serialization {struct KaraokeToken;}
 namespace ImGui{
     namespace Ext{
+        typedef void (*HTMLEvent)();
+        void CreateHTMLButton(const char* anID, const char* anEvent, const char* aJSFunctonName);
+        void CreateHTMLButton(const char* anID, const char* anEvent, HTMLEvent aCallback);
+        void CreateHTMLInput(const char* anID, const char* aType, const char* anEvent, const char* aJSFunctonName);
+        void CreateHTMLInput(const char* anID, const char* aType, const char* anEvent, HTMLEvent aCallback);
+        void DestroyHTMLElement(const char* anID);
+
         bool TimedSyllable(Serialization::KaraokeToken aSyllable, float aCurrentTime);
         void SetColor(unsigned int aCol);
         void ClearColor();
