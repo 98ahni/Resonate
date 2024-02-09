@@ -10,6 +10,8 @@
 #include <imgui_impl_opengl3.h>
 #include "Extensions/TouchInput.h"
 #include "Extensions/imguiExt.h"
+#include "Extensions/FileHandler.h"
+#include "Serialization/KaraokeData.h"
 
 bool g_showInputDebugger = false;
 char* g_testStr = new char[50];
@@ -26,7 +28,10 @@ void loop(void* window){
             if(ImGui::MenuItem("Open Project"))
             {
             }
-            ImGui::Ext::CreateHTMLInput("OpenProject", "file", "change", [](){});
+            ImGui::Ext::CreateHTMLInput("OpenProject", "file", "change", []()
+            {
+                Serialization::KaraokeDocument::Get().Load(FileHandler::OpenFolder());
+            });
             ImGui::EndMenu();
         }
         else
