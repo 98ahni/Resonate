@@ -10,9 +10,13 @@ namespace ImGui{
         typedef void (*HTMLEvent)();
         void CreateHTMLButton(const char* anID, const char* anEvent, const char* aJSFunctonName);
         void CreateHTMLButton(const char* anID, const char* anEvent, HTMLEvent aCallback);
+        void CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char* anID, const char* anEvent, const char* aJSFunctonName);
+        void CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char* anID, const char* anEvent, HTMLEvent aCallback);
         void CreateHTMLInput(const char* anID, const char* aType, const char* anEvent, const char* aJSFunctonName);
         void CreateHTMLInput(const char* anID, const char* aType, const char* anEvent, HTMLEvent aCallback);
-        void DestroyHTMLElement(const char* anID);
+        void CreateHTMLInput(ImVec2 aPosition, ImVec2 aSize, const char* anID, const char* aType, const char* anEvent, const char* aJSFunctonName);
+        void CreateHTMLInput(ImVec2 aPosition, ImVec2 aSize, const char* anID, const char* aType, const char* anEvent, HTMLEvent aCallback);
+        void DestroyHTMLElement(const char* anID, int aDelayMillis = 0);
 
         bool TimedSyllable(Serialization::KaraokeToken aSyllable, float aCurrentTime);
         void SetColor(unsigned int aCol);
