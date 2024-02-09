@@ -9,6 +9,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "Extensions/TouchInput.h"
+#include "Extensions/imguiExt.h"
 
 bool g_showInputDebugger = false;
 char* g_testStr = new char[50];
@@ -17,6 +18,24 @@ EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
 void loop(void* window){
     MainWindow_NewFrame(window);
+
+    if(ImGui::BeginMainMenuBar())
+    {
+        if(ImGui::BeginMenu("File"))
+        {
+            if(ImGui::MenuItem("Open Project"))
+            {
+            }
+            ImGui::Ext::CreateHTMLInput("OpenProject", "file", "change", [](){});
+            ImGui::EndMenu();
+        }
+        else
+        {
+            ImGui::Ext::DestroyHTMLElement("OpenProject", 100);
+        }
+        ImGui::EndMainMenuBar();
+    }
+
     if(g_showInputDebugger)
     {
         ImGui::Begin("Input Debugger", &g_showInputDebugger);
