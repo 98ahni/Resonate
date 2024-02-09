@@ -6,7 +6,7 @@ const { execSync } = require('node:child_process');
 var os = require('os');
 
 // Skip compile steps:
-const SKIP_ImguiCompile = false;
+const SKIP_ImguiCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
 
@@ -26,22 +26,48 @@ const execOutFunc = function(err, output)
 }
 
 let projectPath = "/workspaces/Resonate/";
-let compilerPath = "";
+let compilerPath = "emcc";
 if(WIN32)
 {
-    projectPath = __dirname + "/../";
-    compilerPath = "";
-    execSync('cd "..\\..\\..\\Visual Studio 2022\\Visual Studio Projects\\emsdk-main\\upstream\\emscripten\\"', execOutFunc);
+    //projectPath = __dirname + "/../";
+    projectPath = "./";
+    compilerPath = "\"D:\\Documents\\Visual Studio 2022\\Visual Studio Projects\\emsdk-main\\upstream\\emscripten\\emcc\"";
+    //execSync('cd "..\\..\\..\\Visual Studio 2022\\Visual Studio Projects\\emsdk-main\\upstream\\emscripten\\"', execOutFunc);
 }
 
 //(async() =>{
-let readImguiDone = false;
-let readSourceDone = false;
-let imguiFiles = 
-fs.readdirSync(projectPath + 'imgui/', { recursive: true });//, (err, files)=>{readImguiDone = true; if(err){console.error('Files not found (imgui)'); return;} imguiFiles = files; });
-let sourceFiles = 
-fs.readdirSync(projectPath + 'Source/', { recursive: true });//, (err, files)=>{readSourceDone = true; if(err){console.error('Files not found (Source)'); return;} sourceFiles = files; });
+//let readImguiDone = false;
+//let readSourceDone = false;
+let imguiFiles = [];
+let sourceFiles = [];
 let objectFiles = [];
+if(WIN32)
+{
+    function getFiles(baseDir, currdir)
+    {
+        let output = [];
+        let files = fs.readdirSync(baseDir + currdir);
+        files.forEach(file => {
+            if(fs.lstatSync(path.join(baseDir + currdir, file)).isDirectory())
+            {
+                output.push(...getFiles(baseDir, path.join(currdir, file)));
+            }
+            else if(fs.lstatSync(path.join(baseDir + currdir, file)).isFile())
+            {
+                output.push(path.join(currdir, file));
+            }
+        });
+        return output;
+    }
+
+    imguiFiles = getFiles(projectPath + 'imgui/', '');
+    sourceFiles = getFiles(projectPath + 'Source/', '');
+}
+else
+{
+    imguiFiles = fs.readdirSync(projectPath + 'imgui/', { recursive: true });//, (err, files)=>{readImguiDone = true; if(err){console.error('Files not found (imgui)'); return;} imguiFiles = files; });
+    sourceFiles = fs.readdirSync(projectPath + 'Source/', { recursive: true });//, (err, files)=>{readSourceDone = true; if(err){console.error('Files not found (Source)'); return;} sourceFiles = files; });
+}
 
 if(!WIN32) {exec('sudo su root');}
 
@@ -57,7 +83,7 @@ imguiFiles.forEach(file => {
     {
         if(!SKIP_ImguiCompile)
         {
-            execSync(compilerPath + 'emcc \"' + projectPath + 'imgui/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', execOutFunc);
+            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'imgui/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');
     }
@@ -67,14 +93,14 @@ sourceFiles.forEach(file => {
     {
         if(!SKIP_SourceCompile)
         {
-            execSync(compilerPath + 'emcc \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', execOutFunc);
+            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');
     }
 });
 if(!SKIP_Linking)
 {
-    execSync(compilerPath + 'emcc \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind -O2 --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" -g3 -lglfw -lGL -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH', execOutFunc);// --embed-file Emscripten/Assets/
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind -O2 --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" -g3 -lglfw -lGL -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH', {env: process.env})));// --embed-file Emscripten/Assets/
 }
 
 // run the `ls` command using exec
@@ -92,6 +118,13 @@ app.get('/', async(req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Resonate.html'));
 });
 app.listen(PORT);
+
+if(WIN32)
+{
+    const rt = exec("start http://localhost:8080/");
+    rt.on("data", (data)=>{console.log(data);});
+    //rt.on("close", (code)=>{process.exit(code);});
+}
 
 //fs.readFile('/bin/Resonate.html', function (err, html) {
 

@@ -120,6 +120,8 @@ readAsync = (filename, onload, onerror, binary = true) => {
     throw toThrow;
   };
 
+  Module['inspect'] = () => '[Emscripten Module object]';
+
 } else
 
 // Note that this includes Node.js workers when relevant (pthreads is enabled).
@@ -137,10 +139,10 @@ if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
   // and scriptDirectory will correctly be replaced with an empty string.
   // If scriptDirectory contains a query (starting with ?) or a fragment (starting with #),
   // they are removed because they could contain a slash.
-  if (scriptDirectory.startsWith('blob:')) {
-    scriptDirectory = '';
+  if (scriptDirectory.indexOf('blob:') !== 0) {
+    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf('/')+1);
   } else {
-    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, '').lastIndexOf('/')+1);
+    scriptDirectory = '';
   }
 
   // Differentiate the Web Worker from the Node Worker case, as reading must
@@ -315,7 +317,7 @@ function initRuntime() {
   runtimeInitialized = true;
 
   
-if (!Module['noFSInit'] && !FS.init.initialized)
+if (!Module["noFSInit"] && !FS.init.initialized)
   FS.init();
 FS.ignorePermissions = false;
 
@@ -387,14 +389,18 @@ function getUniqueRunDependency(id) {
 function addRunDependency(id) {
   runDependencies++;
 
-  Module['monitorRunDependencies']?.(runDependencies);
+  if (Module['monitorRunDependencies']) {
+    Module['monitorRunDependencies'](runDependencies);
+  }
 
 }
 
 function removeRunDependency(id) {
   runDependencies--;
 
-  Module['monitorRunDependencies']?.(runDependencies);
+  if (Module['monitorRunDependencies']) {
+    Module['monitorRunDependencies'](runDependencies);
+  }
 
   if (runDependencies == 0) {
     if (runDependencyWatcher !== null) {
@@ -411,7 +417,9 @@ function removeRunDependency(id) {
 
 /** @param {string|number=} what */
 function abort(what) {
-  Module['onAbort']?.(what);
+  if (Module['onAbort']) {
+    Module['onAbort'](what);
+  }
 
   what = 'Aborted(' + what + ')';
   // TODO(sbc): Should we remove printing and leave it up to whoever
@@ -478,7 +486,7 @@ function getBinarySync(file) {
   if (readBinary) {
     return readBinary(file);
   }
-  throw 'both async and sync fetching of the wasm failed';
+  throw "both async and sync fetching of the wasm failed";
 }
 
 function getBinaryPromise(binaryFile) {
@@ -494,7 +502,7 @@ function getBinaryPromise(binaryFile) {
     ) {
       return fetch(binaryFile, { credentials: 'same-origin' }).then((response) => {
         if (!response['ok']) {
-          throw `failed to load wasm binary file at '${binaryFile}'`;
+          throw "failed to load wasm binary file at '" + binaryFile + "'";
         }
         return response['arrayBuffer']();
       }).catch(() => getBinarySync(binaryFile));
@@ -628,17 +636,22 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  67339: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 67462: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 67564: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  71106: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 71229: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 71331: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
-function show_input_debugger() {_ShowInputDebugger(); }
+function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { let reader = new FileReader(); const supportsFileSystemAccess = "showDirectoryPicker" in window && (() => { try { return window.self === window.top; } catch { return false; } })(); if (supportsFileSystemAccess) { let directoryStructure = undefined; let directoryName = undefined; const getFiles = async(dirHandle, path = dirHandle.name) => { for await(const entry of dirHandle.values()) { const nestedPath = '${path}/${entry.name}'; if (entry.kind === "file") { const read = (data) => new Promise((resolve, reject) => { reader.onload = (event) => resolve(event.target.result); reader.onerror = reject; reader.readAsArrayBuffer(data); }); let result = await read(entry); const uint8_view = new Uint8Array(result); FS.writeFile(nestedPath, uint8_view); files.push( entry.getFile().then((file) => { file.directoryHandle = dirHandle; file.handle = entry; return Object.defineProperty(file, "webkitRelativePath", { configurable : true, enumerable : true, get : () => nestedPath, }); })); } else if (entry.kind === "directory") { dirs.push(getFiles(entry, nestedPath)); } } return [ ...(await Promise.all(dirs)).flat(), ...(await Promise.all(files)), ]; }; try { const handle = await showDirectoryPicker({ mode, }); directoryStructure = getFiles(handle, undefined); directoryName = handle.name; } catch (err) { if (err.name !== "AbortError") { console.error(err.name, err.message); } } return directoryName; } return new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.webkitdirectory = true; input.addEventListener( 'change', () => { let files = Array.from(input.files); for(const file of files) { const read = (data) => new Promise((resolve, reject) => { reader.onload = (event) => resolve(event.target.result); reader.onerror = reject; reader.readAsArrayBuffer(data); }); read(file).then((result) =>{ const uint8_view = new Uint8Array(result); FS.writeFile(nestedPath, uint8_view); }); } resolve(files[0]); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } }); }); }
+function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(id); if(btn != 'undefined'){ btn = document.createElement('button'); btn.id = id; document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } if(typeof callback == 'string'){ btn.addEventListener(event, window[callback], true); }else{ btn.addEventListener(event, _ExecCallback(callback), true); } btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0; }
+function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let input = document.getElementById(id); if(input != 'undefined'){ input = document.createElement('input'); input.id = id; document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } if(typeof callback == 'string'){ input.addEventListener(event, window[callback], true); }else{ input.addEventListener(event, _ExecCallback(callback), true); } input.type = type; input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
+function destroy_element(id) { let input = document.getElementById(id); if(input != 'undefined'){ input = document.createElement('input'); input.id = id; document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } }
+function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(id); if(input != 'undefined'){ input = document.createElement('input'); input.id = id; document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } }); }
 function force_click_event(node) { try { node.dispatchEvent(new MouseEvent('click')); } catch(e) { var evt = document.createEvent('MouseEvents'); evt.initMouseEvent('click', true, false, window, 0, 0, 0, 80, 20, false, false, false, false, 0, null); node.dispatchEvent(evt); } }
 function has_physical_touch() { return window.matchMedia('(any-pointer: coarse)').matches; }
 function __asyncjs__show_touch_keyboard(is_num_board,pos_y) { return Asyncify.handleAsync(async () => { let input = document.createElement('input'); input.id = 'temp-text-input'; if(is_num_board) { input.type = 'number'; } else { input.type = 'text'; } input.addEventListener('input', (evt) => { if(evt.inputType == "deleteContentBackward") { _TouchExtraKeyEvents(0, true); evt.stopPropagation(); setTimeout(()=>{_TouchExtraKeyEvents(0, false); }, 60); } if(evt.inputType == "deleteContentForeward") { _TouchExtraKeyEvents(1, true); evt.stopPropagation(); setTimeout(()=>{_TouchExtraKeyEvents(1, false); }, 60); } }); input.style.position = 'fixed'; input.style.left = '-1000px'; input.style.top = pos_y + 'px'; document.body.insertBefore(input, document.getElementById('canvas')); }); }
 function always_show_touch_keyboard() { let input = document.createElement('input'); input.id = 'mobile-text-input'; input.type = 'text'; input.addEventListener('focusout', (evt) => { alert('Focus lost!'); }); document.body.insertBefore(input, document.getElementById('canvas')); }
 function hide_touch_keyboard() { let input = document.getElementById('temp-text-input'); input.remove(); }
 function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
+function show_input_debugger() {_ShowInputDebugger(); }
 function init_file_system() { FS.mount(MEMFS, { root: '.' }, '.'); }
 function get_has_web_gpu() { return navigator.gpu !== undefined; }
 function __asyncjs__webgpu_create_device() { return Asyncify.handleAsync(async () => { WebGPU.initManagers(); console.log("Create Start!"); const adapter = await navigator.gpu.requestAdapter(); const device = await adapter.requestDevice(); Module.preinitializedWebGPUDevice = device; console.log("Create End!"); }); }
@@ -786,67 +799,65 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       abort(`Assertion failed: ${UTF8ToString(condition)}, at: ` + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
     };
 
-  class ExceptionInfo {
-      // excPtr - Thrown object pointer to wrap. Metadata pointer is calculated from it.
-      constructor(excPtr) {
-        this.excPtr = excPtr;
-        this.ptr = excPtr - 24;
-      }
+  /** @constructor */
+  function ExceptionInfo(excPtr) {
+      this.excPtr = excPtr;
+      this.ptr = excPtr - 24;
   
-      set_type(type) {
+      this.set_type = function(type) {
         HEAPU32[(((this.ptr)+(4))>>2)] = type;
-      }
+      };
   
-      get_type() {
+      this.get_type = function() {
         return HEAPU32[(((this.ptr)+(4))>>2)];
-      }
+      };
   
-      set_destructor(destructor) {
+      this.set_destructor = function(destructor) {
         HEAPU32[(((this.ptr)+(8))>>2)] = destructor;
-      }
+      };
   
-      get_destructor() {
+      this.get_destructor = function() {
         return HEAPU32[(((this.ptr)+(8))>>2)];
-      }
+      };
   
-      set_caught(caught) {
+      this.set_caught = function(caught) {
         caught = caught ? 1 : 0;
         HEAP8[(((this.ptr)+(12))>>0)] = caught;
-      }
+      };
   
-      get_caught() {
+      this.get_caught = function() {
         return HEAP8[(((this.ptr)+(12))>>0)] != 0;
-      }
+      };
   
-      set_rethrown(rethrown) {
+      this.set_rethrown = function(rethrown) {
         rethrown = rethrown ? 1 : 0;
         HEAP8[(((this.ptr)+(13))>>0)] = rethrown;
-      }
+      };
   
-      get_rethrown() {
+      this.get_rethrown = function() {
         return HEAP8[(((this.ptr)+(13))>>0)] != 0;
-      }
+      };
   
       // Initialize native structure fields. Should be called once after allocated.
-      init(type, destructor) {
+      this.init = function(type, destructor) {
         this.set_adjusted_ptr(0);
         this.set_type(type);
         this.set_destructor(destructor);
       }
   
-      set_adjusted_ptr(adjustedPtr) {
+      this.set_adjusted_ptr = function(adjustedPtr) {
         HEAPU32[(((this.ptr)+(16))>>2)] = adjustedPtr;
-      }
+      };
   
-      get_adjusted_ptr() {
+      this.get_adjusted_ptr = function() {
         return HEAPU32[(((this.ptr)+(16))>>2)];
-      }
+      };
   
       // Get pointer which is expected to be received by catch clause in C++ code. It may be adjusted
       // when the pointer is casted to some of the exception object base classes (e.g. when virtual
       // inheritance is used). When a pointer is thrown this method should return the thrown pointer
       // itself.
-      get_exception_ptr() {
+      this.get_exception_ptr = function() {
         // Work around a fastcomp bug, this code is still included for some reason in a build without
         // exceptions support.
         var isPointer = ___cxa_is_pointer_type(this.get_type());
@@ -856,7 +867,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         var adjusted = this.get_adjusted_ptr();
         if (adjusted !== 0) return adjusted;
         return this.excPtr;
-      }
+      };
     }
   
   var exceptionLast = 0;
@@ -871,6 +882,11 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       throw exceptionLast;
     };
 
+  var setErrNo = (value) => {
+      HEAP32[((___errno_location())>>2)] = value;
+      return value;
+    };
+  
   var PATH = {
   isAbs:(path) => path.charAt(0) === '/',
   splitPath:(filename) => {
@@ -969,7 +985,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         }
       }
       // we couldn't find a proper implementation, as Math.random() is not suitable for /dev/random, see emscripten-core/emscripten/pull/7096
-      abort('initRandomDevice');
+      abort("initRandomDevice");
     };
   var randomFill = (view) => {
       // Lazily init on the first invocation.
@@ -1328,53 +1344,55 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           // no supported
           throw new FS.ErrnoError(63);
         }
-        MEMFS.ops_table ||= {
-          dir: {
-            node: {
-              getattr: MEMFS.node_ops.getattr,
-              setattr: MEMFS.node_ops.setattr,
-              lookup: MEMFS.node_ops.lookup,
-              mknod: MEMFS.node_ops.mknod,
-              rename: MEMFS.node_ops.rename,
-              unlink: MEMFS.node_ops.unlink,
-              rmdir: MEMFS.node_ops.rmdir,
-              readdir: MEMFS.node_ops.readdir,
-              symlink: MEMFS.node_ops.symlink
+        if (!MEMFS.ops_table) {
+          MEMFS.ops_table = {
+            dir: {
+              node: {
+                getattr: MEMFS.node_ops.getattr,
+                setattr: MEMFS.node_ops.setattr,
+                lookup: MEMFS.node_ops.lookup,
+                mknod: MEMFS.node_ops.mknod,
+                rename: MEMFS.node_ops.rename,
+                unlink: MEMFS.node_ops.unlink,
+                rmdir: MEMFS.node_ops.rmdir,
+                readdir: MEMFS.node_ops.readdir,
+                symlink: MEMFS.node_ops.symlink
+              },
+              stream: {
+                llseek: MEMFS.stream_ops.llseek
+              }
             },
-            stream: {
-              llseek: MEMFS.stream_ops.llseek
+            file: {
+              node: {
+                getattr: MEMFS.node_ops.getattr,
+                setattr: MEMFS.node_ops.setattr
+              },
+              stream: {
+                llseek: MEMFS.stream_ops.llseek,
+                read: MEMFS.stream_ops.read,
+                write: MEMFS.stream_ops.write,
+                allocate: MEMFS.stream_ops.allocate,
+                mmap: MEMFS.stream_ops.mmap,
+                msync: MEMFS.stream_ops.msync
+              }
+            },
+            link: {
+              node: {
+                getattr: MEMFS.node_ops.getattr,
+                setattr: MEMFS.node_ops.setattr,
+                readlink: MEMFS.node_ops.readlink
+              },
+              stream: {}
+            },
+            chrdev: {
+              node: {
+                getattr: MEMFS.node_ops.getattr,
+                setattr: MEMFS.node_ops.setattr
+              },
+              stream: FS.chrdev_stream_ops
             }
-          },
-          file: {
-            node: {
-              getattr: MEMFS.node_ops.getattr,
-              setattr: MEMFS.node_ops.setattr
-            },
-            stream: {
-              llseek: MEMFS.stream_ops.llseek,
-              read: MEMFS.stream_ops.read,
-              write: MEMFS.stream_ops.write,
-              allocate: MEMFS.stream_ops.allocate,
-              mmap: MEMFS.stream_ops.mmap,
-              msync: MEMFS.stream_ops.msync
-            }
-          },
-          link: {
-            node: {
-              getattr: MEMFS.node_ops.getattr,
-              setattr: MEMFS.node_ops.setattr,
-              readlink: MEMFS.node_ops.readlink
-            },
-            stream: {}
-          },
-          chrdev: {
-            node: {
-              getattr: MEMFS.node_ops.getattr,
-              setattr: MEMFS.node_ops.setattr
-            },
-            stream: FS.chrdev_stream_ops
-          }
-        };
+          };
+        }
         var node = FS.createNode(parent, name, mode, dev);
         if (FS.isDir(node.mode)) {
           node.node_ops = MEMFS.ops_table.dir.node;
@@ -1517,7 +1535,10 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         },
   readdir(node) {
           var entries = ['.', '..'];
-          for (var key of Object.keys(node.contents)) {
+          for (var key in node.contents) {
+            if (!node.contents.hasOwnProperty(key)) {
+              continue;
+            }
             entries.push(key);
           }
           return entries;
@@ -1648,6 +1669,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   var asyncLoad = (url, onload, onerror, noRunDep) => {
       var dep = !noRunDep ? getUniqueRunDependency(`al ${url}`) : '';
       readAsync(url, (arrayBuffer) => {
+        assert(arrayBuffer, `Loading data file "${url}" failed (no arrayBuffer).`);
         onload(new Uint8Array(arrayBuffer));
         if (dep) removeRunDependency(dep);
       }, (event) => {
@@ -1687,15 +1709,15 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       var dep = getUniqueRunDependency(`cp ${fullname}`); // might have several active requests for the same fullname
       function processData(byteArray) {
         function finish(byteArray) {
-          preFinish?.();
+          if (preFinish) preFinish();
           if (!dontCreateFile) {
             FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
           }
-          onload?.();
+          if (onload) onload();
           removeRunDependency(dep);
         }
         if (FS_handledByPreloadPlugin(byteArray, fullname, finish, () => {
-          onerror?.();
+          if (onerror) onerror();
           removeRunDependency(dep);
         })) {
           return;
@@ -1704,7 +1726,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       }
       addRunDependency(dep);
       if (typeof url == 'string') {
-        asyncLoad(url, processData, onerror);
+        asyncLoad(url, (byteArray) => processData(byteArray), onerror);
       } else {
         processData(url);
       }
@@ -1746,20 +1768,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   currentPath:"/",
   initialized:false,
   ignorePermissions:true,
-  ErrnoError:class {
-        // We set the `name` property to be able to identify `FS.ErrnoError`
-        // - the `name` is a standard ECMA-262 property of error objects. Kind of good to have it anyway.
-        // - when using PROXYFS, an error can come from an underlying FS
-        // as different FS objects have their own FS.ErrnoError each,
-        // the test `err instanceof FS.ErrnoError` won't detect an error coming from another filesystem, causing bugs.
-        // we'll use the reliable test `err.name == "ErrnoError"` instead
-        constructor(errno) {
-          // TODO(sbc): Use the inline member delclaration syntax once we
-          // support it in acorn and closure.
-          this.name = 'ErrnoError';
-          this.errno = errno;
-        }
-      },
+  ErrnoError:null,
   genericErrors:{
   },
   filesystems:null,
@@ -1866,7 +1875,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   lookupNode(parent, name) {
         var errCode = FS.mayLookup(parent);
         if (errCode) {
-          throw new FS.ErrnoError(errCode);
+          throw new FS.ErrnoError(errCode, parent);
         }
         var hash = FS.hashName(parent.id, name);
         for (var node = FS.nameTable[hash]; node; node = node.name_next) {
@@ -1937,7 +1946,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         return 0;
       },
   mayLookup(dir) {
-        if (!FS.isDir(dir.mode)) return 54;
         var errCode = FS.nodePermissions(dir, 'x');
         if (errCode) return errCode;
         if (!dir.node_ops.lookup) return 2;
@@ -2064,7 +2072,9 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           // override node's stream ops with the device's
           stream.stream_ops = device.stream_ops;
           // forward the open call
-          stream.stream_ops.open?.(stream);
+          if (stream.stream_ops.open) {
+            stream.stream_ops.open(stream);
+          }
         },
   llseek() {
           throw new FS.ErrnoError(70);
@@ -2902,12 +2912,34 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         var stdout = FS.open('/dev/stdout', 1);
         var stderr = FS.open('/dev/stderr', 1);
       },
-  staticInit() {
+  ensureErrnoError() {
+        if (FS.ErrnoError) return;
+        FS.ErrnoError = /** @this{Object} */ function ErrnoError(errno, node) {
+          // We set the `name` property to be able to identify `FS.ErrnoError`
+          // - the `name` is a standard ECMA-262 property of error objects. Kind of good to have it anyway.
+          // - when using PROXYFS, an error can come from an underlying FS
+          // as different FS objects have their own FS.ErrnoError each,
+          // the test `err instanceof FS.ErrnoError` won't detect an error coming from another filesystem, causing bugs.
+          // we'll use the reliable test `err.name == "ErrnoError"` instead
+          this.name = 'ErrnoError';
+          this.node = node;
+          this.setErrno = /** @this{Object} */ function(errno) {
+            this.errno = errno;
+          };
+          this.setErrno(errno);
+          this.message = 'FS error';
+  
+        };
+        FS.ErrnoError.prototype = new Error();
+        FS.ErrnoError.prototype.constructor = FS.ErrnoError;
         // Some errors may happen quite a bit, to avoid overhead we reuse them (and suffer a lack of stack info)
         [44].forEach((code) => {
           FS.genericErrors[code] = new FS.ErrnoError(code);
           FS.genericErrors[code].stack = '<generic error, no stack>';
         });
+      },
+  staticInit() {
+        FS.ensureErrnoError();
   
         FS.nameTable = new Array(4096);
   
@@ -2923,6 +2955,8 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       },
   init(input, output, error) {
         FS.init.initialized = true;
+  
+        FS.ensureErrnoError();
   
         // Allow Module.stdin etc. to provide defaults, if none explicitly passed to us here
         Module['stdin'] = input || Module['stdin'];
@@ -3034,7 +3068,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           },
           close(stream) {
             // flush any pending line data
-            if (output?.buffer?.length) {
+            if (output && output.buffer && output.buffer.length) {
               output(10);
             }
           },
@@ -3285,7 +3319,15 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         return PATH.join2(dir, path);
       },
   doStat(func, path, buf) {
-        var stat = func(path);
+        try {
+          var stat = func(path);
+        } catch (e) {
+          if (e && e.node && PATH.normalize(path) !== PATH.normalize(FS.getPath(e.node))) {
+            // an error occurred while trying to look up the path; we should just report ENOTDIR
+            return -54;
+          }
+          throw e;
+        }
         HEAP32[((buf)>>2)] = stat.dev;
         HEAP32[(((buf)+(4))>>2)] = stat.mode;
         HEAPU32[(((buf)+(8))>>2)] = stat.nlink;
@@ -3363,18 +3405,27 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           stream.flags |= arg;
           return 0;
         }
-        case 12: {
+        case 5: {
           var arg = SYSCALLS.getp();
           var offset = 0;
           // We're always unlocked.
           HEAP16[(((arg)+(offset))>>1)] = 2;
           return 0;
         }
-        case 13:
-        case 14:
+        case 6:
+        case 7:
           return 0; // Pretend that the locking is successful.
+        case 16:
+        case 8:
+          return -28; // These are for sockets. We don't have them fully implemented yet.
+        case 9:
+          // musl trusts getown return values, due to a bug where they must be, as they overlap with errors. just return -1 here, so fcntl() returns that, and we set errno ourselves.
+          setErrNo(28);
+          return -1;
+        default: {
+          return -28;
+        }
       }
-      return -28;
     } catch (e) {
     if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
     return -e.errno;
@@ -3618,32 +3669,32 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       });
     };
 
-  
-  class HandleAllocator {
-      constructor() {
-        // TODO(sbc): Use class fields once we allow/enable es2022 in
-        // JavaScript input to acorn and closure.
-        // Reserve slot 0 so that 0 is always an invalid handle
-        this.allocated = [undefined];
-        this.freelist = [];
-      }
-      get(id) {
-        return this.allocated[id];
-      };
-      has(id) {
-        return this.allocated[id] !== undefined;
-      };
-      allocate(handle) {
-        var id = this.freelist.pop() || this.allocated.length;
-        this.allocated[id] = handle;
-        return id;
-      };
-      free(id) {
-        // Set the slot to `undefined` rather than using `delete` here since
-        // apparently arrays with holes in them can be less efficient.
-        this.allocated[id] = undefined;
-        this.freelist.push(id);
-      };
+  function handleAllocatorInit() {
+      Object.assign(HandleAllocator.prototype, /** @lends {HandleAllocator.prototype} */ {
+        get(id) {
+          return this.allocated[id];
+        },
+        has(id) {
+          return this.allocated[id] !== undefined;
+        },
+        allocate(handle) {
+          var id = this.freelist.pop() || this.allocated.length;
+          this.allocated[id] = handle;
+          return id;
+        },
+        free(id) {
+          // Set the slot to `undefined` rather than using `delete` here since
+          // apparently arrays with holes in them can be less efficient.
+          this.allocated[id] = undefined;
+          this.freelist.push(id);
+        }
+      });
+    }
+  /** @constructor */
+  function HandleAllocator() {
+      // Reserve slot 0 so that 0 is always an invalid handle
+      this.allocated = [undefined];
+      this.freelist = [];
     }
   var emval_handles = new HandleAllocator();;
   var __emval_decref = (handle) => {
@@ -3673,7 +3724,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         {value: true},
         {value: false},
       );
-      Object.assign(emval_handles, /** @lends {emval_handles} */ { reserved: emval_handles.allocated.length }),
+      emval_handles.reserved = emval_handles.allocated.length
       Module['count_emval_handles'] = count_emval_handles;
     };
   var Emval = {
@@ -3696,27 +3747,30 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       },
   };
   
+  
+  
   /** @suppress {globalThis} */
   function simpleReadValueFromPointer(pointer) {
       return this['fromWireType'](HEAP32[((pointer)>>2)]);
     }
+  var __embind_register_emval = (rawType, name) => {
+      name = readLatin1String(name);
+      registerType(rawType, {
+        name,
+        'fromWireType': (handle) => {
+          var rv = Emval.toValue(handle);
+          __emval_decref(handle);
+          return rv;
+        },
+        'toWireType': (destructors, value) => Emval.toHandle(value),
+        'argPackAdvance': GenericWireTypeSize,
+        'readValueFromPointer': simpleReadValueFromPointer,
+        destructorFunction: null, // This type does not need a destructor
   
-  var EmValType = {
-      name: 'emscripten::val',
-      'fromWireType': (handle) => {
-        var rv = Emval.toValue(handle);
-        __emval_decref(handle);
-        return rv;
-      },
-      'toWireType': (destructors, value) => Emval.toHandle(value),
-      'argPackAdvance': GenericWireTypeSize,
-      'readValueFromPointer': simpleReadValueFromPointer,
-      destructorFunction: null, // This type does not need a destructor
-  
-      // TODO: do we need a deleteObject here?  write a test where
-      // emval is passed into JS via an interface
+        // TODO: do we need a deleteObject here?  write a test where
+        // emval is passed into JS via an interface
+      });
     };
-  var __embind_register_emval = (rawType) => registerType(rawType, EmValType);
 
   var embindRepr = (v) => {
       if (v === null) {
@@ -3930,7 +3984,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             length = value.length;
           }
   
-          // assumes POINTER_SIZE alignment
+          // assumes 4-byte alignment
           var base = _malloc(4 + length + 1);
           var ptr = base + 4;
           HEAPU32[((base)>>2)] = length;
@@ -4005,7 +4059,9 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
   var stringToUTF16 = (str, outPtr, maxBytesToWrite) => {
       // Backwards compatibility: if max bytes is not specified, assume unsafe unbounded write is allowed.
-      maxBytesToWrite ??= 0x7FFFFFFF;
+      if (maxBytesToWrite === undefined) {
+        maxBytesToWrite = 0x7FFFFFFF;
+      }
       if (maxBytesToWrite < 2) return 0;
       maxBytesToWrite -= 2; // Null terminator.
       var startPtr = outPtr;
@@ -4049,7 +4105,9 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
   var stringToUTF32 = (str, outPtr, maxBytesToWrite) => {
       // Backwards compatibility: if max bytes is not specified, assume unsafe unbounded write is allowed.
-      maxBytesToWrite ??= 0x7FFFFFFF;
+      if (maxBytesToWrite === undefined) {
+        maxBytesToWrite = 0x7FFFFFFF;
+      }
       if (maxBytesToWrite < 4) return 0;
       var startPtr = outPtr;
       var endPtr = startPtr + maxBytesToWrite - 4;
@@ -4132,10 +4190,10 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             throwBindingError(`Cannot pass non-string to C++ string type ${name}`);
           }
   
-          // assumes POINTER_SIZE alignment
+          // assumes 4-byte alignment
           var length = lengthBytesUTF(value);
           var ptr = _malloc(4 + length + charSize);
-          HEAPU32[((ptr)>>2)] = length >> shift;
+          HEAPU32[ptr >> 2] = length >> shift;
   
           encodeString(value, ptr + 4, length + charSize);
   
@@ -4290,10 +4348,11 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
   var runtimeKeepaliveCounter = 0;
   var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
+  
   var _proc_exit = (code) => {
       EXITSTATUS = code;
       if (!keepRuntimeAlive()) {
-        Module['onExit']?.(code);
+        if (Module['onExit']) Module['onExit'](code);
         ABORT = true;
       }
       quit_(code, new ExitStatus(code));
@@ -4339,7 +4398,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
     };
   
   var warnOnce = (text) => {
-      warnOnce.shown ||= {};
+      if (!warnOnce.shown) warnOnce.shown = {};
       if (!warnOnce.shown[text]) {
         warnOnce.shown[text] = 1;
         if (ENVIRONMENT_IS_NODE) text = 'warning: ' + text;
@@ -4402,7 +4461,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             }
           }
           callUserCallback(func);
-          Module['postMainLoop']?.();
+          if (Module['postMainLoop']) Module['postMainLoop']();
         },
   },
   isFullscreen:false,
@@ -4442,11 +4501,11 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             ctx.drawImage(img, 0, 0);
             preloadedImages[name] = canvas;
             URL.revokeObjectURL(url);
-            onload?.(byteArray);
+            if (onload) onload(byteArray);
           };
           img.onerror = (event) => {
             err(`Image ${url} could not be decoded`);
-            onerror?.();
+            if (onerror) onerror();
           };
           img.src = url;
         };
@@ -4462,13 +4521,13 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             if (done) return;
             done = true;
             preloadedAudios[name] = audio;
-            onload?.(byteArray);
+            if (onload) onload(byteArray);
           }
           function fail() {
             if (done) return;
             done = true;
             preloadedAudios[name] = new Audio(); // empty shim
-            onerror?.();
+            if (onerror) onerror();
           }
           var b = new Blob([byteArray], { type: Browser.getMimetype(name) });
           var url = URL.createObjectURL(b); // XXX we never revoke this!
@@ -4633,8 +4692,8 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
               Browser.updateCanvasDimensions(canvas);
             }
           }
-          Module['onFullScreen']?.(Browser.isFullscreen);
-          Module['onFullscreen']?.(Browser.isFullscreen);
+          if (Module['onFullScreen']) Module['onFullScreen'](Browser.isFullscreen);
+          if (Module['onFullscreen']) Module['onFullscreen'](Browser.isFullscreen);
         }
   
         if (!Browser.fullscreenHandlersInstalled) {
@@ -4723,8 +4782,10 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         }[name.substr(name.lastIndexOf('.')+1)];
       },
   getUserMedia(func) {
-        window.getUserMedia ||= navigator['getUserMedia'] ||
+        if (!window.getUserMedia) {
+          window.getUserMedia = navigator['getUserMedia'] ||
                                 navigator['mozGetUserMedia'];
+        }
         window.getUserMedia(func);
       },
   getMovementX(event) {
@@ -4782,36 +4843,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   },
   lastTouches:{
   },
-  calculateMouseCoords(pageX, pageY) {
-        // Calculate the movement based on the changes
-        // in the coordinates.
-        var rect = Module["canvas"].getBoundingClientRect();
-        var cw = Module["canvas"].width;
-        var ch = Module["canvas"].height;
-  
-        // Neither .scrollX or .pageXOffset are defined in a spec, but
-        // we prefer .scrollX because it is currently in a spec draft.
-        // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
-        var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
-        var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
-        var adjustedX = pageX - (scrollX + rect.left);
-        var adjustedY = pageY - (scrollY + rect.top);
-  
-        // the canvas might be CSS-scaled compared to its backbuffer;
-        // SDL-using content will want mouse coordinates in terms
-        // of backbuffer units.
-        adjustedX = adjustedX * (cw / rect.width);
-        adjustedY = adjustedY * (ch / rect.height);
-  
-        return { x: adjustedX, y: adjustedY };
-      },
-  setMouseCoords(pageX, pageY) {
-        const {x, y} = Browser.calculateMouseCoords(pageX, pageY);
-        Browser.mouseMovementX = x - Browser.mouseX;
-        Browser.mouseMovementY = y - Browser.mouseY;
-        Browser.mouseX = x;
-        Browser.mouseY = y;
-      },
   calculateMouseEvent(event) { // event should be mousemove, mousedown or mouseup
         if (Browser.pointerLock) {
           // When the pointer is locked, calculate the coordinates
@@ -4836,27 +4867,57 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             Browser.mouseY += Browser.mouseMovementY;
           }
         } else {
+          // Otherwise, calculate the movement based on the changes
+          // in the coordinates.
+          var rect = Module["canvas"].getBoundingClientRect();
+          var cw = Module["canvas"].width;
+          var ch = Module["canvas"].height;
+  
+          // Neither .scrollX or .pageXOffset are defined in a spec, but
+          // we prefer .scrollX because it is currently in a spec draft.
+          // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
+          var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
+          var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
+  
           if (event.type === 'touchstart' || event.type === 'touchend' || event.type === 'touchmove') {
             var touch = event.touch;
             if (touch === undefined) {
               return; // the "touch" property is only defined in SDL
   
             }
-            var coords = Browser.calculateMouseCoords(touch.pageX, touch.pageY);
+            var adjustedX = touch.pageX - (scrollX + rect.left);
+            var adjustedY = touch.pageY - (scrollY + rect.top);
+  
+            adjustedX = adjustedX * (cw / rect.width);
+            adjustedY = adjustedY * (ch / rect.height);
+  
+            var coords = { x: adjustedX, y: adjustedY };
   
             if (event.type === 'touchstart') {
               Browser.lastTouches[touch.identifier] = coords;
               Browser.touches[touch.identifier] = coords;
             } else if (event.type === 'touchend' || event.type === 'touchmove') {
               var last = Browser.touches[touch.identifier];
-              last ||= coords;
+              if (!last) last = coords;
               Browser.lastTouches[touch.identifier] = last;
               Browser.touches[touch.identifier] = coords;
             }
             return;
           }
   
-          Browser.setMouseCoords(event.pageX, event.pageY);
+          var x = event.pageX - (scrollX + rect.left);
+          var y = event.pageY - (scrollY + rect.top);
+  
+          // the canvas might be CSS-scaled compared to its backbuffer;
+          // SDL-using content will want mouse coordinates in terms
+          // of backbuffer units.
+          x = x * (cw / rect.width);
+          y = y * (ch / rect.height);
+  
+          Browser.mouseMovementX = x - Browser.mouseX;
+          Browser.mouseMovementY = y - Browser.mouseY;
+          Browser.mouseX = x;
+          Browser.mouseY = y;
         }
       },
   resizeListeners:[],
@@ -5089,7 +5150,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         // to queue the newest produced audio samples.
         // TODO: Consider adding pre- and post- rAF callbacks so that GL.newRenderingFrameStarted() and SDL.audio.queueNewAudioData()
         //       do not need to be hardcoded into this function, but can be more generic.
-        if (typeof SDL == 'object') SDL.audio?.queueNewAudioData?.();
+        if (typeof SDL == 'object' && SDL.audio && SDL.audio.queueNewAudioData) SDL.audio.queueNewAudioData();
   
         Browser.mainLoop.scheduler();
       }
@@ -5115,7 +5176,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       setMainLoop(browserIterationFunc, fps, simulateInfiniteLoop, arg);
     };
 
-  
   var withStackSave = (f) => {
       var stack = stackSave();
       var ret = f();
@@ -5123,13 +5183,20 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       return ret;
     };
   var JSEvents = {
+  inEventHandler:0,
   removeAllEventListeners() {
-        while (JSEvents.eventHandlers.length) {
-          JSEvents._removeHandler(JSEvents.eventHandlers.length - 1);
+        for (var i = JSEvents.eventHandlers.length-1; i >= 0; --i) {
+          JSEvents._removeHandler(i);
         }
+        JSEvents.eventHandlers = [];
         JSEvents.deferredCalls = [];
       },
-  inEventHandler:0,
+  registerRemoveEventListeners() {
+        if (!JSEvents.removeEventListenersRegistered) {
+          __ATEXIT__.push(JSEvents.removeAllEventListeners);
+          JSEvents.removeEventListenersRegistered = true;
+        }
+      },
   deferredCalls:[],
   deferCall(targetFunction, precedence, argsList) {
         function arraysHaveEqualContent(arrA, arrB) {
@@ -5204,25 +5271,25 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (!eventHandler.target) {
           return -4;
         }
-        if (eventHandler.callbackfunc) {
-          eventHandler.eventListenerFunc = function(event) {
-            // Increment nesting count for the event handler.
-            ++JSEvents.inEventHandler;
-            JSEvents.currentEventHandler = eventHandler;
-            // Process any old deferred calls the user has placed.
-            JSEvents.runDeferredCalls();
-            // Process the actual event, calls back to user C code handler.
-            eventHandler.handlerFunc(event);
-            // Process any new deferred calls that were placed right now from this event handler.
-            JSEvents.runDeferredCalls();
-            // Out of event handler - restore nesting count.
-            --JSEvents.inEventHandler;
-          };
+        var jsEventHandler = function jsEventHandler(event) {
+          // Increment nesting count for the event handler.
+          ++JSEvents.inEventHandler;
+          JSEvents.currentEventHandler = eventHandler;
+          // Process any old deferred calls the user has placed.
+          JSEvents.runDeferredCalls();
+          // Process the actual event, calls back to user C code handler.
+          eventHandler.handlerFunc(event);
+          // Process any new deferred calls that were placed right now from this event handler.
+          JSEvents.runDeferredCalls();
+          // Out of event handler - restore nesting count.
+          --JSEvents.inEventHandler;
+        };
   
-          eventHandler.target.addEventListener(eventHandler.eventTypeString,
-                                               eventHandler.eventListenerFunc,
-                                               eventHandler.useCapture);
+        if (eventHandler.callbackfunc) {
+          eventHandler.eventListenerFunc = jsEventHandler;
+          eventHandler.target.addEventListener(eventHandler.eventTypeString, jsEventHandler, eventHandler.useCapture);
           JSEvents.eventHandlers.push(eventHandler);
+          JSEvents.registerRemoveEventListeners();
         } else {
           for (var i = 0; i < JSEvents.eventHandlers.length; ++i) {
             if (JSEvents.eventHandlers[i].target == eventHandler.target
@@ -5237,7 +5304,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (!target) return '';
         if (target == window) return '#window';
         if (target == screen) return '#screen';
-        return target?.nodeName || '';
+        return (target && target.nodeName) ? target.nodeName : '';
       },
   fullscreenEnabled() {
         return document.fullscreenEnabled
@@ -5489,65 +5556,43 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (entryPointPtr) desc["entryPoint"] = UTF8ToString(entryPointPtr);
         return desc;
       },
-  Int_BufferMapState:{
-  unmapped:0,
-  pending:1,
-  mapped:2,
-  },
-  Int_CompilationMessageType:{
-  error:0,
-  warning:1,
-  info:2,
-  },
-  Int_DeviceLostReason:{
+  DeviceLostReason:{
   undefined:0,
   destroyed:1,
   },
-  Int_PreferredFormat:{
+  PreferredFormat:{
   rgba8unorm:18,
   bgra8unorm:23,
   },
-  WGSLFeatureName:[,"readonly_and_readwrite_storage_textures","packed_4x8_integer_dot_product","unrestricted_pointer_parameters","pointer_composite_access"],
-  AddressMode:[,"clamp-to-edge","repeat","mirror-repeat"],
-  BlendFactor:[,"zero","one","src","one-minus-src","src-alpha","one-minus-src-alpha","dst","one-minus-dst","dst-alpha","one-minus-dst-alpha","src-alpha-saturated","constant","one-minus-constant"],
-  BlendOperation:[,"add","subtract","reverse-subtract","min","max"],
+  BufferMapState:["unmapped","pending","mapped"],
+  AddressMode:["repeat","mirror-repeat","clamp-to-edge"],
+  BlendFactor:["zero","one","src","one-minus-src","src-alpha","one-minus-src-alpha","dst","one-minus-dst","dst-alpha","one-minus-dst-alpha","src-alpha-saturated","constant","one-minus-constant"],
+  BlendOperation:["add","subtract","reverse-subtract","min","max"],
   BufferBindingType:[,"uniform","storage","read-only-storage"],
-  BufferMapState:{
-  1:"unmapped",
-  2:"pending",
-  3:"mapped",
-  },
-  CompareFunction:[,"never","less","equal","less-equal","greater","not-equal","greater-equal","always"],
+  CompareFunction:[,"never","less","less-equal","greater","greater-equal","equal","not-equal","always"],
   CompilationInfoRequestStatus:["success","error","device-lost","unknown"],
-  CullMode:[,"none","front","back"],
-  ErrorFilter:{
-  1:"validation",
-  2:"out-of-memory",
-  3:"internal",
-  },
-  FeatureName:[,"depth-clip-control","depth32float-stencil8","timestamp-query","texture-compression-bc","texture-compression-etc2","texture-compression-astc","indirect-first-instance","shader-f16","rg11b10ufloat-renderable","bgra8unorm-storage","float32-filterable"],
-  FilterMode:[,"nearest","linear"],
-  FrontFace:[,"ccw","cw"],
+  CullMode:["none","front","back"],
+  ErrorFilter:["validation","out-of-memory","internal"],
+  FeatureName:[,"depth-clip-control","depth32float-stencil8","timestamp-query","texture-compression-bc","texture-compression-etc2","texture-compression-astc","indirect-first-instance","shader-f16","rg11b10ufloat-renderable","bgra8unorm-storage","float32filterable"],
+  FilterMode:["nearest","linear"],
+  FrontFace:["ccw","cw"],
   IndexFormat:[,"uint16","uint32"],
   LoadOp:[,"clear","load"],
-  MipmapFilterMode:[,"nearest","linear"],
+  MipmapFilterMode:["nearest","linear"],
   PowerPreference:[,"low-power","high-performance"],
-  PrimitiveTopology:[,"point-list","line-list","line-strip","triangle-list","triangle-strip"],
-  QueryType:{
-  1:"occlusion",
-  2:"timestamp",
-  },
+  PrimitiveTopology:["point-list","line-list","line-strip","triangle-list","triangle-strip"],
+  QueryType:["occlusion","timestamp"],
   SamplerBindingType:[,"filtering","non-filtering","comparison"],
-  StencilOperation:[,"keep","zero","replace","invert","increment-clamp","decrement-clamp","increment-wrap","decrement-wrap"],
-  StorageTextureAccess:[,"write-only","read-only","read-write"],
+  StencilOperation:["keep","zero","replace","invert","increment-clamp","decrement-clamp","increment-wrap","decrement-wrap"],
+  StorageTextureAccess:[,"write-only"],
   StoreOp:[,"store","discard"],
-  TextureAspect:[,"all","stencil-only","depth-only"],
-  TextureDimension:[,"1d","2d","3d"],
-  TextureFormat:[,"r8unorm","r8snorm","r8uint","r8sint","r16uint","r16sint","r16float","rg8unorm","rg8snorm","rg8uint","rg8sint","r32float","r32uint","r32sint","rg16uint","rg16sint","rg16float","rgba8unorm","rgba8unorm-srgb","rgba8snorm","rgba8uint","rgba8sint","bgra8unorm","bgra8unorm-srgb","rgb10a2uint","rgb10a2unorm","rg11b10ufloat","rgb9e5ufloat","rg32float","rg32uint","rg32sint","rgba16uint","rgba16sint","rgba16float","rgba32float","rgba32uint","rgba32sint","stencil8","depth16unorm","depth24plus","depth24plus-stencil8","depth32float","depth32float-stencil8","bc1-rgba-unorm","bc1-rgba-unorm-srgb","bc2-rgba-unorm","bc2-rgba-unorm-srgb","bc3-rgba-unorm","bc3-rgba-unorm-srgb","bc4-r-unorm","bc4-r-snorm","bc5-rg-unorm","bc5-rg-snorm","bc6h-rgb-ufloat","bc6h-rgb-float","bc7-rgba-unorm","bc7-rgba-unorm-srgb","etc2-rgb8unorm","etc2-rgb8unorm-srgb","etc2-rgb8a1unorm","etc2-rgb8a1unorm-srgb","etc2-rgba8unorm","etc2-rgba8unorm-srgb","eac-r11unorm","eac-r11snorm","eac-rg11unorm","eac-rg11snorm","astc-4x4-unorm","astc-4x4-unorm-srgb","astc-5x4-unorm","astc-5x4-unorm-srgb","astc-5x5-unorm","astc-5x5-unorm-srgb","astc-6x5-unorm","astc-6x5-unorm-srgb","astc-6x6-unorm","astc-6x6-unorm-srgb","astc-8x5-unorm","astc-8x5-unorm-srgb","astc-8x6-unorm","astc-8x6-unorm-srgb","astc-8x8-unorm","astc-8x8-unorm-srgb","astc-10x5-unorm","astc-10x5-unorm-srgb","astc-10x6-unorm","astc-10x6-unorm-srgb","astc-10x8-unorm","astc-10x8-unorm-srgb","astc-10x10-unorm","astc-10x10-unorm-srgb","astc-12x10-unorm","astc-12x10-unorm-srgb","astc-12x12-unorm","astc-12x12-unorm-srgb"],
+  TextureAspect:["all","stencil-only","depth-only"],
+  TextureDimension:["1d","2d","3d"],
+  TextureFormat:[,"r8unorm","r8snorm","r8uint","r8sint","r16uint","r16sint","r16float","rg8unorm","rg8snorm","rg8uint","rg8sint","r32float","r32uint","r32sint","rg16uint","rg16sint","rg16float","rgba8unorm","rgba8unorm-srgb","rgba8snorm","rgba8uint","rgba8sint","bgra8unorm","bgra8unorm-srgb","rgb10a2unorm","rg11b10ufloat","rgb9e5ufloat","rg32float","rg32uint","rg32sint","rgba16uint","rgba16sint","rgba16float","rgba32float","rgba32uint","rgba32sint","stencil8","depth16unorm","depth24plus","depth24plus-stencil8","depth32float","depth32float-stencil8","bc1-rgba-unorm","bc1-rgba-unorm-srgb","bc2-rgba-unorm","bc2-rgba-unorm-srgb","bc3-rgba-unorm","bc3-rgba-unorm-srgb","bc4-r-unorm","bc4-r-snorm","bc5-rg-unorm","bc5-rg-snorm","bc6h-rgb-ufloat","bc6h-rgb-float","bc7-rgba-unorm","bc7-rgba-unorm-srgb","etc2-rgb8unorm","etc2-rgb8unorm-srgb","etc2-rgb8a1unorm","etc2-rgb8a1unorm-srgb","etc2-rgba8unorm","etc2-rgba8unorm-srgb","eac-r11unorm","eac-r11snorm","eac-rg11unorm","eac-rg11snorm","astc-4x4-unorm","astc-4x4-unorm-srgb","astc-5x4-unorm","astc-5x4-unorm-srgb","astc-5x5-unorm","astc-5x5-unorm-srgb","astc-6x5-unorm","astc-6x5-unorm-srgb","astc-6x6-unorm","astc-6x6-unorm-srgb","astc-8x5-unorm","astc-8x5-unorm-srgb","astc-8x6-unorm","astc-8x6-unorm-srgb","astc-8x8-unorm","astc-8x8-unorm-srgb","astc-10x5-unorm","astc-10x5-unorm-srgb","astc-10x6-unorm","astc-10x6-unorm-srgb","astc-10x8-unorm","astc-10x8-unorm-srgb","astc-10x10-unorm","astc-10x10-unorm-srgb","astc-12x10-unorm","astc-12x10-unorm-srgb","astc-12x12-unorm","astc-12x12-unorm-srgb"],
   TextureSampleType:[,"float","unfilterable-float","depth","sint","uint"],
   TextureViewDimension:[,"1d","2d","2d-array","cube","cube-array","3d"],
-  VertexFormat:[,"uint8x2","uint8x4","sint8x2","sint8x4","unorm8x2","unorm8x4","snorm8x2","snorm8x4","uint16x2","uint16x4","sint16x2","sint16x4","unorm16x2","unorm16x4","snorm16x2","snorm16x4","float16x2","float16x4","float32","float32x2","float32x3","float32x4","uint32","uint32x2","uint32x3","uint32x4","sint32","sint32x2","sint32x3","sint32x4","unorm10-10-10-2"],
-  VertexStepMode:[,"vertex-buffer-not-used","vertex","instance"],
+  VertexFormat:[,"uint8x2","uint8x4","sint8x2","sint8x4","unorm8x2","unorm8x4","snorm8x2","snorm8x4","uint16x2","uint16x4","sint16x2","sint16x4","unorm16x2","unorm16x4","snorm16x2","snorm16x4","float16x2","float16x4","float32","float32x2","float32x3","float32x4","uint32","uint32x2","uint32x3","uint32x4","sint32","sint32x2","sint32x3","sint32x4"],
+  VertexStepMode:["vertex","instance",],
   FeatureNameString2Enum:{
   undefined:"0",
   'depth-clip-control':"1",
@@ -5560,7 +5605,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   'shader-f16':"8",
   'rg11b10ufloat-renderable':"9",
   'bgra8unorm-storage':"10",
-  'float32-filterable':"11",
+  float32filterable:"11",
   },
   };
   var _emscripten_webgpu_get_device = () => {
@@ -5715,51 +5760,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       return !!(ctx.multiDrawWebgl = ctx.getExtension('WEBGL_multi_draw'));
     };
   
-  var getEmscriptenSupportedExtensions = function(ctx) {
-      // Restrict the list of advertised extensions to those that we actually
-      // support.
-      var supportedExtensions = [
-        // WebGL 1 extensions
-        'ANGLE_instanced_arrays',
-        'EXT_blend_minmax',
-        'EXT_disjoint_timer_query',
-        'EXT_frag_depth',
-        'EXT_shader_texture_lod',
-        'EXT_sRGB',
-        'OES_element_index_uint',
-        'OES_fbo_render_mipmap',
-        'OES_standard_derivatives',
-        'OES_texture_float',
-        'OES_texture_half_float',
-        'OES_texture_half_float_linear',
-        'OES_vertex_array_object',
-        'WEBGL_color_buffer_float',
-        'WEBGL_depth_texture',
-        'WEBGL_draw_buffers',
-        // WebGL 2 extensions
-        'EXT_color_buffer_float',
-        'EXT_disjoint_timer_query_webgl2',
-        'EXT_texture_norm16',
-        'WEBGL_clip_cull_distance',
-        // WebGL 1 and WebGL 2 extensions
-        'EXT_color_buffer_half_float',
-        'EXT_float_blend',
-        'EXT_texture_compression_bptc',
-        'EXT_texture_compression_rgtc',
-        'EXT_texture_filter_anisotropic',
-        'KHR_parallel_shader_compile',
-        'OES_texture_float_linear',
-        'WEBGL_compressed_texture_s3tc',
-        'WEBGL_compressed_texture_s3tc_srgb',
-        'WEBGL_debug_renderer_info',
-        'WEBGL_debug_shaders',
-        'WEBGL_lose_context',
-        'WEBGL_multi_draw',
-      ];
-      // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
-      return (ctx.getSupportedExtensions() || []).filter(ext => supportedExtensions.includes(ext));
-    };
-  
   
   var GL = {
   counter:1,
@@ -5797,8 +5797,8 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   getSource:(shader, count, string, length) => {
         var source = '';
         for (var i = 0; i < count; ++i) {
-          var len = length ? HEAPU32[(((length)+(i*4))>>2)] : undefined;
-          source += UTF8ToString(HEAPU32[(((string)+(i*4))>>2)], len);
+          var len = length ? HEAP32[(((length)+(i*4))>>2)] : -1;
+          source += UTF8ToString(HEAP32[(((string)+(i*4))>>2)], len < 0 ? undefined : len);
         }
         return source;
       },
@@ -5864,7 +5864,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         // Active Emscripten GL layer context object.
         GL.currentContext = GL.contexts[contextHandle];
         // Active WebGL context object.
-        Module.ctx = GLctx = GL.currentContext?.GLctx;
+        Module.ctx = GLctx = GL.currentContext && GL.currentContext.GLctx;
         return !(contextHandle && !GLctx);
       },
   getContext:(contextHandle) => {
@@ -5889,7 +5889,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   initExtensions:(context) => {
         // If this function is called without a specific context object, init the
         // extensions of the currently active context.
-        context ||= GL.currentContext;
+        if (!context) context = GL.currentContext;
   
         if (context.initExtensionsDone) return;
         context.initExtensionsDone = true;
@@ -5925,7 +5925,10 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
         webgl_enable_WEBGL_multi_draw(GLctx);
   
-        getEmscriptenSupportedExtensions(GLctx).forEach((ext) => {
+        // .getSupportedExtensions() can return null if context is lost, so coerce
+        // to empty array.
+        var exts = GLctx.getSupportedExtensions() || [];
+        exts.forEach((ext) => {
           // WEBGL_lose_context, WEBGL_debug_renderer_info and WEBGL_debug_shaders
           // are not enabled by default.
           if (!ext.includes('lose_context') && !ext.includes('debug')) {
@@ -5933,6 +5936,12 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             GLctx.getExtension(ext);
           }
         });
+      },
+  getExtensions() {
+        // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
+        var exts = GLctx.getSupportedExtensions() || [];
+        exts = exts.concat(exts.map((e) => "GL_" + e));
+        return exts;
       },
   };
   function _glActiveTexture(x0) { GLctx.activeTexture(x0) }
@@ -6127,13 +6136,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       HEAPU32[(((ptr)+(4))>>2)] = (num - lower)/4294967296;
     };
   
-  
-  var webglGetExtensions = function $webglGetExtensions() {
-      var exts = getEmscriptenSupportedExtensions(GLctx);
-      exts = exts.concat(exts.map((e) => "GL_" + e));
-      return exts;
-    };
-  
   var emscriptenWebGLGet = (name_, p, type) => {
       // Guard against user passing a null pointer.
       // Note that GLES2 spec does not say anything about how passing a null
@@ -6175,7 +6177,11 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             GL.recordError(0x502 /* GL_INVALID_OPERATION */);
             return;
           }
-          ret = webglGetExtensions().length;
+          // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
+          var exts = GLctx.getSupportedExtensions() || [];
+          // each extension is duplicated, first in unprefixed WebGL form, and
+          // then a second time with "GL_" prefix.
+          ret = 2 * exts.length;
           break;
         case 0x821B: // GL_MAJOR_VERSION
         case 0x821C: // GL_MINOR_VERSION
@@ -6659,7 +6665,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
   
   /** @constructor */
-  function GLFW_Window(id, width, height, framebufferWidth, framebufferHeight, title, monitor, share) {
+  function GLFW_Window(id, width, height, title, monitor, share) {
         this.id = id;
         this.x = 0;
         this.y = 0;
@@ -6668,14 +6674,12 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         this.storedY = 0; // Used to store Y before fullscreen
         this.width = width;
         this.height = height;
-        this.framebufferWidth = framebufferWidth;
-        this.framebufferHeight = framebufferHeight;
         this.storedWidth = width; // Used to store width before fullscreen
         this.storedHeight = height; // Used to store height before fullscreen
         this.title = title;
         this.monitor = monitor;
         this.share = share;
-        this.attributes = Object.assign({}, GLFW.hints);
+        this.attributes = GLFW.hints;
         this.inputModes = {
           0x00033001:0x00034001, // GLFW_CURSOR (GLFW_CURSOR_NORMAL)
           0x00033002:0, // GLFW_STICKY_KEYS
@@ -6734,9 +6738,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   versionString:null,
   initialTime:null,
   extensions:null,
-  devicePixelRatioMQL:null,
   hints:null,
-  primaryTouchId:null,
   defaultHints:{
   131073:0,
   131074:0,
@@ -6888,7 +6890,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           case 0x11:return 341; // DOM_VK_CONTROL -> GLFW_KEY_LEFT_CONTROL
           case 0x12:return 342; // DOM_VK_ALT -> GLFW_KEY_LEFT_ALT
           case 0x5B:return 343; // DOM_VK_WIN -> GLFW_KEY_LEFT_SUPER
-          case 0xE0:return 343; // DOM_VK_META -> GLFW_KEY_LEFT_SUPER
           // case 0x10:return 344; // DOM_VK_SHIFT -> GLFW_KEY_RIGHT_SHIFT (DOM_KEY_LOCATION_RIGHT)
           // case 0x11:return 345; // DOM_VK_CONTROL -> GLFW_KEY_RIGHT_CONTROL (DOM_KEY_LOCATION_RIGHT)
           // case 0x12:return 346; // DOM_VK_ALT -> GLFW_KEY_RIGHT_ALT (DOM_KEY_LOCATION_RIGHT)
@@ -6903,7 +6904,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (win.keys[340]) mod |= 0x0001; // GLFW_MOD_SHIFT
         if (win.keys[341]) mod |= 0x0002; // GLFW_MOD_CONTROL
         if (win.keys[342]) mod |= 0x0004; // GLFW_MOD_ALT
-        if (win.keys[343] || win.keys[348]) mod |= 0x0008; // GLFW_MOD_SUPER
+        if (win.keys[343]) mod |= 0x0008; // GLFW_MOD_SUPER
         // add caps and num lock keys? only if lock_key_mod is set
         return mod;
       },
@@ -6963,31 +6964,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   onMousemove:(event) => {
         if (!GLFW.active) return;
   
-        if (event.type === 'touchmove') {
-          // Handling for touch events that are being converted to mouse input.
-  
-          // Don't let the browser fire a duplicate mouse event.
-          event.preventDefault();
-  
-          let primaryChanged = false;
-          for (let i of event.changedTouches) {
-            // If our chosen primary touch moved, update Browser mouse coords
-            if (GLFW.primaryTouchId === i.identifier) {
-              Browser.setMouseCoords(i.pageX, i.pageY);
-              primaryChanged = true;
-              break;
-            }
-          }
-  
-          if (!primaryChanged) {
-            // Do not send mouse events if some touch other than the primary triggered this.
-            return;
-          }
-  
-        } else {
-          // Handling for non-touch mouse input events.
-          Browser.calculateMouseEvent(event);
-        }
+        Browser.calculateMouseEvent(event);
   
         if (event.target != Module["canvas"] || !GLFW.active.cursorPosFunc) return;
   
@@ -7029,51 +7006,11 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   onMouseButtonChanged:(event, status) => {
         if (!GLFW.active) return;
   
+        Browser.calculateMouseEvent(event);
+  
         if (event.target != Module["canvas"]) return;
   
-        // Is this from a touch event?
-        const isTouchType = event.type === 'touchstart' || event.type === 'touchend' || event.type === 'touchcancel';
-  
-        // Only emulating mouse left-click behavior for touches.
-        let eventButton = 0;
-        if (isTouchType) {
-          // Handling for touch events that are being converted to mouse input.
-  
-          // Don't let the browser fire a duplicate mouse event.
-          event.preventDefault();
-  
-          let primaryChanged = false;
-  
-          // Set a primary touch if we have none.
-          if (GLFW.primaryTouchId === null && event.type === 'touchstart' && event.targetTouches.length > 0) {
-            // Pick the first touch that started in the canvas and treat it as primary.
-            const chosenTouch = event.targetTouches[0];
-            GLFW.primaryTouchId = chosenTouch.identifier;
-  
-            Browser.setMouseCoords(chosenTouch.pageX, chosenTouch.pageY);
-            primaryChanged = true;
-          } else if (event.type === 'touchend' || event.type === 'touchcancel') {
-            // Clear the primary touch if it ended.
-            for (let i of event.changedTouches) {
-              // If our chosen primary touch ended, remove it.
-              if (GLFW.primaryTouchId === i.identifier) {
-                GLFW.primaryTouchId = null;
-                primaryChanged = true;
-                break;
-              }
-            }
-          }
-  
-          if (!primaryChanged) {
-            // Do not send mouse events if some touch other than the primary triggered this.
-            return;
-          }
-  
-        } else {
-          // Handling for non-touch mouse input events.
-          Browser.calculateMouseEvent(event);
-          eventButton = GLFW.DOMToGLFWMouseButton(event);
-        }
+        var eventButton = GLFW.DOMToGLFWMouseButton(event);
   
         if (status == 1) { // GLFW_PRESS
           GLFW.active.buttons |= (1 << eventButton);
@@ -7084,7 +7021,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           GLFW.active.buttons &= ~(1 << eventButton);
         }
   
-        // Send mouse event to GLFW.
         if (GLFW.active.mouseButtonFunc) {
           ((a1, a2, a3, a4) => dynCall_viiii.apply(null, [GLFW.active.mouseButtonFunc, a1, a2, a3, a4]))(GLFW.active.id, eventButton, status, GLFW.getModBits(GLFW.active));
         }
@@ -7116,46 +7052,44 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
         event.preventDefault();
       },
-  onCanvasResize:(width, height, framebufferWidth, framebufferHeight) => {
+  onCanvasResize:(width, height) => {
         if (!GLFW.active) return;
   
-        var resizeNeeded = false;
+        var resizeNeeded = true;
   
         // If the client is requesting fullscreen mode
         if (document["fullscreen"] || document["fullScreen"] || document["mozFullScreen"] || document["webkitIsFullScreen"]) {
-          if (!GLFW.active.fullscreen) {
-            resizeNeeded = width != screen.width || height != screen.height;
-            GLFW.active.storedX = GLFW.active.x;
-            GLFW.active.storedY = GLFW.active.y;
-            GLFW.active.storedWidth = GLFW.active.width;
-            GLFW.active.storedHeight = GLFW.active.height;
-            GLFW.active.x = GLFW.active.y = 0;
-            GLFW.active.width = screen.width;
-            GLFW.active.height = screen.height;
-            GLFW.active.fullscreen = true;
-          }
+          GLFW.active.storedX = GLFW.active.x;
+          GLFW.active.storedY = GLFW.active.y;
+          GLFW.active.storedWidth = GLFW.active.width;
+          GLFW.active.storedHeight = GLFW.active.height;
+          GLFW.active.x = GLFW.active.y = 0;
+          GLFW.active.width = screen.width;
+          GLFW.active.height = screen.height;
+          GLFW.active.fullscreen = true;
+  
         // If the client is reverting from fullscreen mode
         } else if (GLFW.active.fullscreen == true) {
-          resizeNeeded = width != GLFW.active.storedWidth || height != GLFW.active.storedHeight;
           GLFW.active.x = GLFW.active.storedX;
           GLFW.active.y = GLFW.active.storedY;
           GLFW.active.width = GLFW.active.storedWidth;
           GLFW.active.height = GLFW.active.storedHeight;
           GLFW.active.fullscreen = false;
+  
+        // If the width/height values do not match current active window sizes
+        } else if (GLFW.active.width != width || GLFW.active.height != height) {
+            GLFW.active.width = width;
+            GLFW.active.height = height;
+        } else {
+          resizeNeeded = false;
         }
   
+        // If any of the above conditions were true, we need to resize the canvas
         if (resizeNeeded) {
-          // width or height is changed (fullscreen / exit fullscreen) which will call this listener back
-          // with proper framebufferWidth/framebufferHeight
-          Browser.setCanvasSize(GLFW.active.width, GLFW.active.height);
-        } else if (GLFW.active.width != width ||
-                   GLFW.active.height != height ||
-                   GLFW.active.framebufferWidth != framebufferWidth ||
-                   GLFW.active.framebufferHeight != framebufferHeight) {
-          GLFW.active.width = width;
-          GLFW.active.height = height;
-          GLFW.active.framebufferWidth = framebufferWidth;
-          GLFW.active.framebufferHeight = framebufferHeight;
+          // resets the canvas size to counter the aspect preservation of Browser.updateCanvasDimensions
+          Browser.setCanvasSize(GLFW.active.width, GLFW.active.height, true);
+          // TODO: Client dimensions (clientWidth/clientHeight) vs pixel dimensions (width/height) of
+          // the canvas should drive window and framebuffer size respectfully.
           GLFW.onWindowSizeChanged();
           GLFW.onFramebufferSizeChanged();
         }
@@ -7171,7 +7105,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (!GLFW.active) return;
   
         if (GLFW.active.framebufferSizeFunc) {
-          ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.framebufferSizeFunc, a1, a2, a3]))(GLFW.active.id, GLFW.active.framebufferWidth, GLFW.active.framebufferHeight);
+          ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.framebufferSizeFunc, a1, a2, a3]))(GLFW.active.id, GLFW.active.width, GLFW.active.height);
         }
       },
   onWindowContentScaleChanged:(scale) => {
@@ -7205,7 +7139,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   refreshJoysticks:() => {
         // Produce a new Gamepad API sample if we are ticking a new game frame, or if not using emscripten_set_main_loop() at all to drive animation.
         if (Browser.mainLoop.currentFrameNumber !== GLFW.lastGamepadStateFrame || !Browser.mainLoop.currentFrameNumber) {
-          GLFW.lastGamepadState = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads || []);
+          GLFW.lastGamepadState = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
           GLFW.lastGamepadStateFrame = Browser.mainLoop.currentFrameNumber;
   
           for (var joy = 0; joy < GLFW.lastGamepadState.length; ++joy) {
@@ -7498,11 +7432,14 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (!win) return;
   
         if (GLFW.active.id == win.id) {
-          Browser.setCanvasSize(width, height); // triggers the listener (onCanvasResize) + windowSizeFunc
+          Browser.setCanvasSize(width, height);
+          win.width = width;
+          win.height = height;
         }
-      },
-  defaultWindowHints:() => {
-        GLFW.hints = Object.assign({}, GLFW.defaultHints);
+  
+        if (win.windowSizeFunc) {
+          ((a1, a2, a3) => dynCall_viii.apply(null, [win.windowSizeFunc, a1, a2, a3]))(win.id, width, height);
+        }
       },
   createWindow:(width, height, title, monitor, share) => {
         var i, id;
@@ -7546,8 +7483,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         if (!Module.ctx && useWebGL) return 0;
   
         // Get non alive id
-        const canvas = Module['canvas'];
-        var win = new GLFW_Window(id, canvas.clientWidth, canvas.clientHeight, canvas.width, canvas.height, title, monitor, share);
+        var win = new GLFW_Window(id, width, height, title, monitor, share);
   
         // Set window to array
         if (id - 1 == GLFW.windows.length) {
@@ -7557,7 +7493,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         }
   
         GLFW.active = win;
-        GLFW.adjustCanvasDimensions();
         return win.id;
       },
   destroyWindow:(winid) => {
@@ -7579,162 +7514,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         Module.ctx = Browser.destroyContext(Module['canvas'], true, true);
       },
   swapBuffers:(winid) => {
-      },
-  requestFullscreen(lockPointer, resizeCanvas) {
-        Browser.lockPointer = lockPointer;
-        Browser.resizeCanvas = resizeCanvas;
-        if (typeof Browser.lockPointer == 'undefined') Browser.lockPointer = true;
-        if (typeof Browser.resizeCanvas == 'undefined') Browser.resizeCanvas = false;
-  
-        var canvas = Module['canvas'];
-        function fullscreenChange() {
-          Browser.isFullscreen = false;
-          var canvasContainer = canvas.parentNode;
-          if ((document['fullscreenElement'] || document['mozFullScreenElement'] ||
-            document['msFullscreenElement'] || document['webkitFullscreenElement'] ||
-            document['webkitCurrentFullScreenElement']) === canvasContainer) {
-            canvas.exitFullscreen = Browser.exitFullscreen;
-            if (Browser.lockPointer) canvas.requestPointerLock();
-            Browser.isFullscreen = true;
-            if (Browser.resizeCanvas) {
-              Browser.setFullscreenCanvasSize();
-            } else {
-              Browser.updateCanvasDimensions(canvas);
-              Browser.updateResizeListeners();
-            }
-          } else {
-            // remove the full screen specific parent of the canvas again to restore the HTML structure from before going full screen
-            canvasContainer.parentNode.insertBefore(canvas, canvasContainer);
-            canvasContainer.parentNode.removeChild(canvasContainer);
-  
-            if (Browser.resizeCanvas) {
-              Browser.setWindowedCanvasSize();
-            } else {
-              Browser.updateCanvasDimensions(canvas);
-              Browser.updateResizeListeners();
-            }
-          }
-          if (Module['onFullScreen']) Module['onFullScreen'](Browser.isFullscreen);
-          if (Module['onFullscreen']) Module['onFullscreen'](Browser.isFullscreen);
-        }
-  
-        if (!Browser.fullscreenHandlersInstalled) {
-          Browser.fullscreenHandlersInstalled = true;
-          document.addEventListener('fullscreenchange', fullscreenChange, false);
-          document.addEventListener('mozfullscreenchange', fullscreenChange, false);
-          document.addEventListener('webkitfullscreenchange', fullscreenChange, false);
-          document.addEventListener('MSFullscreenChange', fullscreenChange, false);
-        }
-  
-        // create a new parent to ensure the canvas has no siblings. this allows browsers to optimize full screen performance when its parent is the full screen root
-        var canvasContainer = document.createElement("div");
-        canvas.parentNode.insertBefore(canvasContainer, canvas);
-        canvasContainer.appendChild(canvas);
-  
-        // use parent of canvas as full screen root to allow aspect ratio correction (Firefox stretches the root to screen size)
-        canvasContainer.requestFullscreen = canvasContainer['requestFullscreen'] ||
-          canvasContainer['mozRequestFullScreen'] ||
-          canvasContainer['msRequestFullscreen'] ||
-          (canvasContainer['webkitRequestFullscreen'] ? () => canvasContainer['webkitRequestFullscreen'](Element['ALLOW_KEYBOARD_INPUT']) : null) ||
-          (canvasContainer['webkitRequestFullScreen'] ? () => canvasContainer['webkitRequestFullScreen'](Element['ALLOW_KEYBOARD_INPUT']) : null);
-  
-        canvasContainer.requestFullscreen();
-      },
-  updateCanvasDimensions(canvas, wNative, hNative) {
-        const scale = GLFW.getHiDPIScale();
-  
-        if (wNative && hNative) {
-          canvas.widthNative = wNative;
-          canvas.heightNative = hNative;
-        } else {
-          wNative = canvas.widthNative;
-          hNative = canvas.heightNative;
-        }
-        var w = wNative;
-        var h = hNative;
-        if (Module['forcedAspectRatio'] && Module['forcedAspectRatio'] > 0) {
-          if (w/h < Module['forcedAspectRatio']) {
-            w = Math.round(h * Module['forcedAspectRatio']);
-          } else {
-            h = Math.round(w / Module['forcedAspectRatio']);
-          }
-        }
-        if (((document['fullscreenElement'] || document['mozFullScreenElement'] ||
-          document['msFullscreenElement'] || document['webkitFullscreenElement'] ||
-          document['webkitCurrentFullScreenElement']) === canvas.parentNode) && (typeof screen != 'undefined')) {
-          var factor = Math.min(screen.width / w, screen.height / h);
-          w = Math.round(w * factor);
-          h = Math.round(h * factor);
-        }
-        if (Browser.resizeCanvas) {
-          wNative = w;
-          hNative = h;
-        }
-        const wNativeScaled = Math.floor(wNative * scale);
-        const hNativeScaled = Math.floor(hNative * scale);
-        if (canvas.width  != wNativeScaled) canvas.width  = wNativeScaled;
-        if (canvas.height != hNativeScaled) canvas.height = hNativeScaled;
-        if (typeof canvas.style != 'undefined') {
-          if (wNativeScaled != wNative || hNativeScaled != hNative) {
-            canvas.style.setProperty( "width", wNative + "px", "important");
-            canvas.style.setProperty("height", hNative + "px", "important");
-          } else {
-            canvas.style.removeProperty( "width");
-            canvas.style.removeProperty("height");
-          }
-        }
-      },
-  calculateMouseCoords(pageX, pageY) {
-        // Calculate the movement based on the changes
-        // in the coordinates.
-        var rect = Module["canvas"].getBoundingClientRect();
-        var cw = Module["canvas"].clientWidth;
-        var ch = Module["canvas"].clientHeight;
-  
-        // Neither .scrollX or .pageXOffset are defined in a spec, but
-        // we prefer .scrollX because it is currently in a spec draft.
-        // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
-        var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
-        var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
-        var adjustedX = pageX - (scrollX + rect.left);
-        var adjustedY = pageY - (scrollY + rect.top);
-  
-        // the canvas might be CSS-scaled compared to its backbuffer;
-        // SDL-using content will want mouse coordinates in terms
-        // of backbuffer units.
-        adjustedX = adjustedX * (cw / rect.width);
-        adjustedY = adjustedY * (ch / rect.height);
-  
-        return { x: adjustedX, y: adjustedY };
-      },
-  setWindowAttrib:(winid, attrib, value) => {
-        var win = GLFW.WindowFromId(winid);
-        if (!win) return;
-        const isHiDPIAware = GLFW.isHiDPIAware();
-        win.attributes[attrib] = value;
-        if (isHiDPIAware !== GLFW.isHiDPIAware())
-          GLFW.adjustCanvasDimensions();
-      },
-  getDevicePixelRatio() {
-        return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
-      },
-  isHiDPIAware() {
-        if (GLFW.active)
-          return GLFW.active.attributes[0x0002200C] > 0; // GLFW_SCALE_TO_MONITOR
-        else
-          return false;
-      },
-  adjustCanvasDimensions() {
-        const canvas = Module['canvas'];
-        Browser.updateCanvasDimensions(canvas, canvas.clientWidth, canvas.clientHeight);
-        Browser.updateResizeListeners();
-      },
-  getHiDPIScale() {
-        return GLFW.isHiDPIAware() ? GLFW.scale : 1.0;
-      },
-  onDevicePixelRatioChange() {
-        GLFW.onWindowContentScaleChanged(GLFW.getDevicePixelRatio());
-        GLFW.adjustCanvasDimensions();
       },
   GLFW2ParamToGLFW3Param:(param) => {
         var table = {
@@ -7790,8 +7569,8 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
       var win = GLFW.WindowFromId(winid);
       if (win) {
-        ww = win.framebufferWidth;
-        wh = win.framebufferHeight;
+        ww = win.width;
+        wh = win.height;
       }
   
       if (width) {
@@ -7890,16 +7669,20 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
 
   var _glfwGetWindowSize = (winid, width, height) => GLFW.getWindowSize(winid, width, height);
 
+  var _emscripten_get_device_pixel_ratio = () => {
+      return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
+    };
+  
   
   
   var _glfwInit = () => {
       if (GLFW.windows) return 1; // GL_TRUE
   
       GLFW.initialTime = GLFW.getTime();
-      GLFW.defaultWindowHints();
+      GLFW.hints = GLFW.defaultHints;
       GLFW.windows = new Array()
       GLFW.active = null;
-      GLFW.scale  = GLFW.getDevicePixelRatio();
+      GLFW.scale  = _emscripten_get_device_pixel_ratio();
   
       window.addEventListener("gamepadconnected", GLFW.onGamepadConnected, true);
       window.addEventListener("gamepaddisconnected", GLFW.onGamepadDisconnected, true);
@@ -7907,11 +7690,13 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       window.addEventListener("keypress", GLFW.onKeyPress, true);
       window.addEventListener("keyup", GLFW.onKeyup, true);
       window.addEventListener("blur", GLFW.onBlur, true);
-  
-      // watch for devicePixelRatio changes
-      GLFW.devicePixelRatioMQL = window.matchMedia('(resolution: ' + GLFW.getDevicePixelRatio() + 'dppx)');
-      GLFW.devicePixelRatioMQL.addEventListener('change', GLFW.onDevicePixelRatioChange);
-  
+      // from https://stackoverflow.com/a/70514686/7484780 . maybe add this to browser.js?
+      // no idea how to remove this listener.
+      (function updatePixelRatio(){
+        window.matchMedia("(resolution: " + window.devicePixelRatio + "dppx)")
+        .addEventListener('change', updatePixelRatio, {once: true});
+        GLFW.onWindowContentScaleChanged(_emscripten_get_device_pixel_ratio());
+        })();
       Module["canvas"].addEventListener("touchmove", GLFW.onMousemove, true);
       Module["canvas"].addEventListener("touchstart", GLFW.onMouseButtonDown, true);
       Module["canvas"].addEventListener("touchcancel", GLFW.onMouseButtonUp, true);
@@ -7926,20 +7711,9 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       Module["canvas"].addEventListener('drop', GLFW.onDrop, true);
       Module["canvas"].addEventListener('dragover', GLFW.onDragover, true);
   
-      // Overriding implementation to account for HiDPI
-      Browser.requestFullscreen = GLFW.requestFullscreen;
-      Browser.calculateMouseCoords = GLFW.calculateMouseCoords;
-      Browser.updateCanvasDimensions = GLFW.updateCanvasDimensions;
-  
       Browser.resizeListeners.push((width, height) => {
-        if (GLFW.isHiDPIAware()) {
-          var canvas = Module['canvas'];
-          GLFW.onCanvasResize(canvas.clientWidth, canvas.clientHeight, width, height);
-        } else {
-          GLFW.onCanvasResize(width, height, width, height);
-        }
+         GLFW.onCanvasResize(width, height);
       });
-  
       return 1; // GL_TRUE
     };
 
@@ -8047,9 +7821,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       Module["canvas"].removeEventListener('drop', GLFW.onDrop, true);
       Module["canvas"].removeEventListener('dragover', GLFW.onDragover, true);
   
-      if (GLFW.devicePixelRatioMQL)
-        GLFW.devicePixelRatioMQL.removeEventListener('change', GLFW.onDevicePixelRatioChange);
-  
       Module["canvas"].width = Module["canvas"].height = 1;
       GLFW.windows = null;
       GLFW.active = null;
@@ -8091,20 +7862,16 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           return undefined;
         }
   
-        var depthSlice = HEAP32[(((caPtr)+(8))>>2)];
-        if (depthSlice == -1) depthSlice = undefined;
+        var loadOpInt = HEAPU32[(((caPtr)+(12))>>2)];
   
-        var loadOpInt = HEAPU32[(((caPtr)+(16))>>2)];
-  
-        var storeOpInt = HEAPU32[(((caPtr)+(20))>>2)];
+        var storeOpInt = HEAPU32[(((caPtr)+(16))>>2)];
   
         var clearValue = WebGPU.makeColor(caPtr + 24);
   
         return {
           "view": WebGPU.mgrTextureView.get(viewPtr),
-          "depthSlice": depthSlice,
           "resolveTarget": WebGPU.mgrTextureView.get(
-            HEAPU32[(((caPtr)+(12))>>2)]),
+            HEAPU32[(((caPtr)+(8))>>2)]),
           "clearValue": clearValue,
           "loadOp":  WebGPU.LoadOp[loadOpInt],
           "storeOp": WebGPU.StoreOp[storeOpInt],
@@ -8130,13 +7897,13 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
             HEAPU32[(((dsaPtr)+(4))>>2)]],
           "depthStoreOp": WebGPU.StoreOp[
             HEAPU32[(((dsaPtr)+(8))>>2)]],
-          "depthReadOnly": !!(HEAPU32[(((dsaPtr)+(16))>>2)]),
+          "depthReadOnly": (HEAP8[(((dsaPtr)+(16))>>0)] !== 0),
           "stencilClearValue": HEAPU32[(((dsaPtr)+(28))>>2)],
           "stencilLoadOp": WebGPU.LoadOp[
             HEAPU32[(((dsaPtr)+(20))>>2)]],
           "stencilStoreOp": WebGPU.StoreOp[
             HEAPU32[(((dsaPtr)+(24))>>2)]],
-          "stencilReadOnly": !!(HEAPU32[(((dsaPtr)+(32))>>2)]),
+          "stencilReadOnly": (HEAP8[(((dsaPtr)+(32))>>0)] !== 0),
         };
       }
   
@@ -8193,6 +7960,8 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
       return WebGPU.mgrCommandBuffer.create(commandEncoder["finish"]());
     };
+
+  var _wgpuCreateInstance = (descriptor) => 1;
 
   var readI53FromI64 = (ptr) => {
       return HEAPU32[((ptr)>>2)] + HEAP32[(((ptr)+(4))>>2)] * 4294967296;
@@ -8275,7 +8044,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         return {
           "type": WebGPU.BufferBindingType[typeInt],
           "hasDynamicOffset":
-            !!(HEAPU32[(((entryPtr)+(8))>>2)]),
+            (HEAP8[(((entryPtr)+(8))>>0)] !== 0),
           "minBindingSize":
             HEAPU32[((((entryPtr + 4))+(16))>>2)] * 0x100000000 + HEAPU32[(((entryPtr)+(16))>>2)],
         };
@@ -8305,7 +8074,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           "viewDimension": WebGPU.TextureViewDimension[
             HEAPU32[(((entryPtr)+(8))>>2)]],
           "multisampled":
-            !!(HEAPU32[(((entryPtr)+(12))>>2)]),
+            (HEAP8[(((entryPtr)+(12))>>0)] !== 0),
         };
       }
   
@@ -8366,7 +8135,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   var _wgpuDeviceCreateBuffer = (deviceId, descriptor) => {
       
   
-      var mappedAtCreation = !!(HEAPU32[(((descriptor)+(24))>>2)]);
+      var mappedAtCreation = (HEAP8[(((descriptor)+(24))>>0)] !== 0);
   
       var desc = {
         "label": undefined,
@@ -8455,6 +8224,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
       function makeBlendState(bsPtr) {
         if (!bsPtr) return undefined;
+        
         return {
           "alpha": makeBlendComponent(bsPtr + 12),
           "color": makeBlendComponent(bsPtr + 0),
@@ -8500,7 +8270,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         return {
           "format": WebGPU.TextureFormat[
             HEAPU32[(((dssPtr)+(4))>>2)]],
-          "depthWriteEnabled": !!(HEAPU32[(((dssPtr)+(8))>>2)]),
+          "depthWriteEnabled": (HEAP8[(((dssPtr)+(8))>>0)] !== 0),
           "depthCompare": WebGPU.CompareFunction[
             HEAPU32[(((dssPtr)+(12))>>2)]],
           "stencilFront": makeStencilStateFace(dssPtr + 16),
@@ -8534,7 +8304,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       function makeVertexBuffer(vbPtr) {
         if (!vbPtr) return undefined;
         var stepModeInt = HEAPU32[(((vbPtr)+(8))>>2)];
-        return stepModeInt === 1 ? null : {
+        return stepModeInt === 2 ? null : {
           "arrayStride": HEAPU32[(((vbPtr + 4))>>2)] * 0x100000000 + HEAPU32[((vbPtr)>>2)],
           "stepMode": WebGPU.VertexStepMode[stepModeInt],
           "attributes": makeVertexAttributes(
@@ -8577,7 +8347,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         return {
           "count": HEAPU32[(((msPtr)+(4))>>2)],
           "mask": HEAPU32[(((msPtr)+(8))>>2)],
-          "alphaToCoverageEnabled": !!(HEAPU32[(((msPtr)+(12))>>2)]),
+          "alphaToCoverageEnabled": (HEAP8[(((msPtr)+(12))>>0)] !== 0),
         };
       }
   
@@ -8743,7 +8513,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       var viewFormatCount = HEAPU32[(((descriptor)+(40))>>2)];
       if (viewFormatCount) {
         var viewFormatsPtr = HEAPU32[(((descriptor)+(44))>>2)];
-        // viewFormatsPtr pointer to an array of TextureFormat which is an enum of size uint32_t
         desc["viewFormats"] = Array.from(HEAP32.subarray((viewFormatsPtr)>>2, (viewFormatsPtr + viewFormatCount * 4)>>2),
           function(format) { return WebGPU.TextureFormat[format]; });
       }
@@ -8771,14 +8540,13 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           var type;
           if (ev.error instanceof GPUValidationError) type = Validation;
           else if (ev.error instanceof GPUOutOfMemoryError) type = OutOfMemory;
-          // TODO: Implement GPUInternalError
   
           WebGPU.errorCallback(callback, type, ev.error.message, userdata);
         });
       };
     };
 
-  var findCanvasEventTarget = findEventTarget;
+  var findCanvasEventTarget = (target) => findEventTarget(target);
   
   
   var _wgpuInstanceCreateSurface = (instanceId, descriptor) => {
@@ -8799,6 +8567,10 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
       return WebGPU.mgrSurface.create(context);
     };
+
+  var _wgpuInstanceReference = (instance) => {};
+
+  var _wgpuInstanceRelease = (instance) => {};
 
   var _wgpuPipelineLayoutRelease = (id) => WebGPU.mgrPipelineLayout.release(id);
 
@@ -8916,7 +8688,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
 
   var _wgpuSurfaceGetPreferredFormat = (surfaceId, adapterId) => {
       var format = navigator["gpu"]["getPreferredCanvasFormat"]();
-      return WebGPU.Int_PreferredFormat[format];
+      return WebGPU.PreferredFormat[format];
     };
 
   var _wgpuSurfaceRelease = (id) => WebGPU.mgrSurface.release(id);
@@ -9002,31 +8774,37 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   instrumentWasmImports(imports) {
         var importPattern = /^(invoke_.*|__asyncjs__.*)$/;
   
-        for (let [x, original] of Object.entries(imports)) {
-          let sig = original.sig;
-          if (typeof original == 'function') {
-            let isAsyncifyImport = original.isAsync || importPattern.test(x);
-          }
+        for (var x in imports) {
+          (function(x) {
+            var original = imports[x];
+            var sig = original.sig;
+            if (typeof original == 'function') {
+              var isAsyncifyImport = original.isAsync || importPattern.test(x);
+            }
+          })(x);
         }
       },
   instrumentWasmExports(exports) {
         var ret = {};
-        for (let [x, original] of Object.entries(exports)) {
-          if (typeof original == 'function') {
-            ret[x] = function() {
-              Asyncify.exportCallStack.push(x);
-              try {
-                return original.apply(null, arguments);
-              } finally {
-                if (!ABORT) {
-                  var y = Asyncify.exportCallStack.pop();
-                  Asyncify.maybeStopUnwind();
+        for (var x in exports) {
+          (function(x) {
+            var original = exports[x];
+            if (typeof original == 'function') {
+              ret[x] = function() {
+                Asyncify.exportCallStack.push(x);
+                try {
+                  return original.apply(null, arguments);
+                } finally {
+                  if (!ABORT) {
+                    var y = Asyncify.exportCallStack.pop();
+                    Asyncify.maybeStopUnwind();
+                  }
                 }
-              }
-            };
-          } else {
-            ret[x] = original;
-          }
+              };
+            } else {
+              ret[x] = original;
+            }
+          })(x);
         }
         return ret;
       },
@@ -9192,7 +8970,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
           _free(Asyncify.currData);
           Asyncify.currData = null;
           // Call all sleep callbacks now that the sleep-resume is all done.
-          Asyncify.sleepCallbacks.forEach(callUserCallback);
+          Asyncify.sleepCallbacks.forEach((func) => callUserCallback(func));
         } else {
           abort(`invalid state: ${Asyncify.state}`);
         }
@@ -9258,6 +9036,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
 embind_init_charCodes();
 BindingError = Module['BindingError'] = class BindingError extends Error { constructor(message) { super(message); this.name = 'BindingError'; }};
 InternalError = Module['InternalError'] = class InternalError extends Error { constructor(message) { super(message); this.name = 'InternalError'; }};
+handleAllocatorInit();
 init_emval();;
 
       // exports
@@ -9548,6 +9327,8 @@ var wasmImports = {
   /** @export */
   wgpuCommandEncoderFinish: _wgpuCommandEncoderFinish,
   /** @export */
+  wgpuCreateInstance: _wgpuCreateInstance,
+  /** @export */
   wgpuDeviceCreateBindGroup: _wgpuDeviceCreateBindGroup,
   /** @export */
   wgpuDeviceCreateBindGroupLayout: _wgpuDeviceCreateBindGroupLayout,
@@ -9573,6 +9354,10 @@ var wasmImports = {
   wgpuDeviceSetUncapturedErrorCallback: _wgpuDeviceSetUncapturedErrorCallback,
   /** @export */
   wgpuInstanceCreateSurface: _wgpuInstanceCreateSurface,
+  /** @export */
+  wgpuInstanceReference: _wgpuInstanceReference,
+  /** @export */
+  wgpuInstanceRelease: _wgpuInstanceRelease,
   /** @export */
   wgpuPipelineLayoutRelease: _wgpuPipelineLayoutRelease,
   /** @export */
@@ -9625,29 +9410,32 @@ var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports['__wasm_call_ct
 var _malloc = Module['_malloc'] = (a0) => (_malloc = Module['_malloc'] = wasmExports['malloc'])(a0);
 var _free = Module['_free'] = (a0) => (_free = Module['_free'] = wasmExports['free'])(a0);
 var _main = Module['_main'] = (a0, a1) => (_main = Module['_main'] = wasmExports['__main_argc_argv'])(a0, a1);
-var _ShowInputDebugger = Module['_ShowInputDebugger'] = () => (_ShowInputDebugger = Module['_ShowInputDebugger'] = wasmExports['ShowInputDebugger'])();
-var _main = Module['_main'] = (a0, a1) => (_main = Module['_main'] = wasmExports['main'])(a0, a1);
+var _ExecCallback = Module['_ExecCallback'] = (a0) => (_ExecCallback = Module['_ExecCallback'] = wasmExports['ExecCallback'])(a0);
 var _TouchStart = Module['_TouchStart'] = (a0, a1, a2) => (_TouchStart = Module['_TouchStart'] = wasmExports['TouchStart'])(a0, a1, a2);
 var _TouchEnd = Module['_TouchEnd'] = (a0, a1, a2) => (_TouchEnd = Module['_TouchEnd'] = wasmExports['TouchEnd'])(a0, a1, a2);
 var _TouchCancel = Module['_TouchCancel'] = (a0, a1, a2) => (_TouchCancel = Module['_TouchCancel'] = wasmExports['TouchCancel'])(a0, a1, a2);
 var _TouchMove = Module['_TouchMove'] = (a0, a1, a2) => (_TouchMove = Module['_TouchMove'] = wasmExports['TouchMove'])(a0, a1, a2);
 var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = (a0, a1) => (_TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = wasmExports['TouchExtraKeyEvents'])(a0, a1);
+var _ShowInputDebugger = Module['_ShowInputDebugger'] = () => (_ShowInputDebugger = Module['_ShowInputDebugger'] = wasmExports['ShowInputDebugger'])();
+var _main = Module['_main'] = (a0, a1) => (_main = Module['_main'] = wasmExports['main'])(a0, a1);
+var ___getTypeName = (a0) => (___getTypeName = wasmExports['__getTypeName'])(a0);
+var ___errno_location = () => (___errno_location = wasmExports['__errno_location'])();
 var _memalign = (a0, a1) => (_memalign = wasmExports['memalign'])(a0, a1);
 var setTempRet0 = (a0) => (setTempRet0 = wasmExports['setTempRet0'])(a0);
 var stackSave = () => (stackSave = wasmExports['stackSave'])();
 var stackRestore = (a0) => (stackRestore = wasmExports['stackRestore'])(a0);
 var stackAlloc = (a0) => (stackAlloc = wasmExports['stackAlloc'])(a0);
 var ___cxa_is_pointer_type = (a0) => (___cxa_is_pointer_type = wasmExports['__cxa_is_pointer_type'])(a0);
-var dynCall_viii = Module['dynCall_viii'] = (a0, a1, a2, a3) => (dynCall_viii = Module['dynCall_viii'] = wasmExports['dynCall_viii'])(a0, a1, a2, a3);
-var dynCall_viiii = Module['dynCall_viiii'] = (a0, a1, a2, a3, a4) => (dynCall_viiii = Module['dynCall_viiii'] = wasmExports['dynCall_viiii'])(a0, a1, a2, a3, a4);
 var dynCall_vii = Module['dynCall_vii'] = (a0, a1, a2) => (dynCall_vii = Module['dynCall_vii'] = wasmExports['dynCall_vii'])(a0, a1, a2);
-var dynCall_iiii = Module['dynCall_iiii'] = (a0, a1, a2, a3) => (dynCall_iiii = Module['dynCall_iiii'] = wasmExports['dynCall_iiii'])(a0, a1, a2, a3);
-var dynCall_ii = Module['dynCall_ii'] = (a0, a1) => (dynCall_ii = Module['dynCall_ii'] = wasmExports['dynCall_ii'])(a0, a1);
-var dynCall_iii = Module['dynCall_iii'] = (a0, a1, a2) => (dynCall_iii = Module['dynCall_iii'] = wasmExports['dynCall_iii'])(a0, a1, a2);
 var dynCall_vidd = Module['dynCall_vidd'] = (a0, a1, a2, a3) => (dynCall_vidd = Module['dynCall_vidd'] = wasmExports['dynCall_vidd'])(a0, a1, a2, a3);
+var dynCall_viiii = Module['dynCall_viiii'] = (a0, a1, a2, a3, a4) => (dynCall_viiii = Module['dynCall_viiii'] = wasmExports['dynCall_viiii'])(a0, a1, a2, a3, a4);
 var dynCall_viiiii = Module['dynCall_viiiii'] = (a0, a1, a2, a3, a4, a5) => (dynCall_viiiii = Module['dynCall_viiiii'] = wasmExports['dynCall_viiiii'])(a0, a1, a2, a3, a4, a5);
+var dynCall_ii = Module['dynCall_ii'] = (a0, a1) => (dynCall_ii = Module['dynCall_ii'] = wasmExports['dynCall_ii'])(a0, a1);
+var dynCall_iiii = Module['dynCall_iiii'] = (a0, a1, a2, a3) => (dynCall_iiii = Module['dynCall_iiii'] = wasmExports['dynCall_iiii'])(a0, a1, a2, a3);
 var dynCall_vi = Module['dynCall_vi'] = (a0, a1) => (dynCall_vi = Module['dynCall_vi'] = wasmExports['dynCall_vi'])(a0, a1);
 var dynCall_vif = Module['dynCall_vif'] = (a0, a1, a2) => (dynCall_vif = Module['dynCall_vif'] = wasmExports['dynCall_vif'])(a0, a1, a2);
+var dynCall_viii = Module['dynCall_viii'] = (a0, a1, a2, a3) => (dynCall_viii = Module['dynCall_viii'] = wasmExports['dynCall_viii'])(a0, a1, a2, a3);
+var dynCall_iii = Module['dynCall_iii'] = (a0, a1, a2) => (dynCall_iii = Module['dynCall_iii'] = wasmExports['dynCall_iii'])(a0, a1, a2);
 var dynCall_v = Module['dynCall_v'] = (a0) => (dynCall_v = Module['dynCall_v'] = wasmExports['dynCall_v'])(a0);
 var dynCall_jiji = Module['dynCall_jiji'] = (a0, a1, a2, a3, a4) => (dynCall_jiji = Module['dynCall_jiji'] = wasmExports['dynCall_jiji'])(a0, a1, a2, a3, a4);
 var dynCall_iidiiii = Module['dynCall_iidiiii'] = (a0, a1, a2, a3, a4, a5, a6) => (dynCall_iidiiii = Module['dynCall_iidiiii'] = wasmExports['dynCall_iidiiii'])(a0, a1, a2, a3, a4, a5, a6);
@@ -9656,8 +9444,8 @@ var _asyncify_start_unwind = (a0) => (_asyncify_start_unwind = wasmExports['asyn
 var _asyncify_stop_unwind = () => (_asyncify_stop_unwind = wasmExports['asyncify_stop_unwind'])();
 var _asyncify_start_rewind = (a0) => (_asyncify_start_rewind = wasmExports['asyncify_start_rewind'])(a0);
 var _asyncify_stop_rewind = () => (_asyncify_stop_rewind = wasmExports['asyncify_stop_rewind'])();
-var ___start_em_js = Module['___start_em_js'] = 63296;
-var ___stop_em_js = Module['___stop_em_js'] = 67339;
+var ___start_em_js = Module['___start_em_js'] = 63024;
+var ___stop_em_js = Module['___stop_em_js'] = 71106;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
