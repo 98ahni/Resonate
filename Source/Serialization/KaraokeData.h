@@ -7,9 +7,9 @@ namespace Serialization
     {
         std::string myValue;
         bool myOwnsStart;
-        float myStartTime;
+        uint myStartTime;
         bool myOwnsEnd;
-        float myEndTime;
+        uint myEndTime;
     };
     typedef std::vector<std::vector<KaraokeToken>> KaraokeData;
     typedef std::vector<KaraokeToken> KaraokeLine;
@@ -23,6 +23,8 @@ namespace Serialization
         void Load(std::string aPath);
 
     private:
+        uint StringToTime(std::string aTimeStr);
+
         static KaraokeDocument* ourInstance;
         KaraokeData myTokens;
     };
