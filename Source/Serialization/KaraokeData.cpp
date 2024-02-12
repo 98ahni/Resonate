@@ -1,6 +1,7 @@
 #include "KaraokeData.h"
 #include <filesystem>
 #include <fstream>
+#include <locale>
 
 namespace Serialization
 {
@@ -36,6 +37,12 @@ namespace Serialization
         while(std::getline(docFile, line))
         {
             myTokens.push_back(std::vector<KaraokeToken>());
+            std::tm tm{};
+            std::get_time(&tm, "%M:%S:%m");
         }
+    }
+    uint KaraokeDocument::StringToTime(std::string aTimeStr)
+    {
+        return uint();
     }
 }
