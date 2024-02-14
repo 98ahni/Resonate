@@ -78,12 +78,20 @@ if(!WIN32) {exec('sudo su root');}
 
 //if(WIN32) {exec('cd "../../../Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/"');}
 
+var lastCompileTime = 0;
+if(fs.existsSync(projectPath + 'bin/public/Resonate.wasm'))
+{
+    lastCompileTime = fs.statSync(projectPath + 'bin/public/Resonate.wasm').mtimeMs;
+}
+let hasUnlinkedFiles = false;
+
 imguiFiles.forEach(file => {
     if(path.extname(file).startsWith('.c'))
     {
-        if(!SKIP_ImguiCompile)
+        if(!SKIP_ImguiCompile && lastCompileTime < fs.statSync(projectPath + 'imgui/' + file).mtimeMs)
         {
             console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'imgui/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
+            hasUnlinkedFiles = true;
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');
     }
@@ -91,14 +99,15 @@ imguiFiles.forEach(file => {
 sourceFiles.forEach(file => {
     if(path.extname(file).startsWith('.c'))
     {
-        if(!SKIP_SourceCompile)
+        if(!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs)
         {
             console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
+            hasUnlinkedFiles = true;
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');
     }
 });
-if(!SKIP_Linking)
+if(!SKIP_Linking && hasUnlinkedFiles)
 {
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind -O2 --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" -g3 -lglfw -lGL -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH', {env: process.env})));// --embed-file Emscripten/Assets/
 }

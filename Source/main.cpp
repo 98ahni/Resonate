@@ -3,6 +3,7 @@
 #include "Windows/MainWindow.h"
 #include "Windows/Base/WindowManager.h"
 #include "Windows/TimingEditor.h"
+#include "Windows/AudioPlayback.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
 #include <imgui.h>
@@ -18,25 +19,32 @@ char* g_testStr = new char[50];
 extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
+bool g_closeFileTab = false;
+extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
+{
+    std::string folderPath = FileHandler::OpenFolder();
+    Serialization::KaraokeDocument::Get().Load(folderPath);
+    AudioPlayback::SetPlaybackFile(folderPath);
+    g_closeFileTab = true;
+}
+
 void loop(void* window){
     MainWindow_NewFrame(window);
 
     if(ImGui::BeginMainMenuBar())
     {
-        if(ImGui::BeginMenu("File"))
+        if(!g_closeFileTab && ImGui::BeginMenu("File"))
         {
             if(ImGui::MenuItem("Open Project"))
             {
             }
-            ImGui::Ext::CreateHTMLInput("OpenProject", "file", "change", []()
-            {
-                Serialization::KaraokeDocument::Get().Load(FileHandler::OpenFolder());
-            });
+            ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");
             ImGui::EndMenu();
         }
         else
         {
-            ImGui::Ext::DestroyHTMLElement("OpenProject", 100);
+            g_closeFileTab = false;
+            ImGui::Ext::DestroyHTMLElement("OpenProject");
         }
         ImGui::EndMainMenuBar();
     }
@@ -72,6 +80,7 @@ int main(){
 
     WindowManager::Init();
     WindowManager::AddWindow<TimingEditor>("Timing");
+    WindowManager::AddWindow<AudioPlayback>("Audio");
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;
