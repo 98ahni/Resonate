@@ -17,6 +17,7 @@
             "name": "EmscriptenWin32",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/Source/**",
                 "${workspaceFolder}/imgui/**",
                 "${workspaceFolder}/imgui/backends/**",
                 "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/**",
