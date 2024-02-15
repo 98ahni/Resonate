@@ -16,6 +16,7 @@ public:
 private:
     static inline AudioPlayback* ourInstance;
     emscripten::val myAudio;
+    float mySpeed;
     uint myProgress;
     uint myDuration;
 };

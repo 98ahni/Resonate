@@ -636,9 +636,9 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  104148: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 104271: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 104373: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  104517: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 104640: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 104742: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.webkitdirectory = true; input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile('/' + file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(Emval.toValue(id)); if(btn === null){ btn = document.createElement('button'); btn.id = Emval.toValue(id); document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } if(typeof Emval.toValue(callback) == 'string'){ btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }else{ btn.addEventListener(Emval.toValue(event), function(evt){_ExecCallback(Emval.toValue(callback))}, true); } btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0; }
@@ -653,7 +653,9 @@ function hide_touch_keyboard() { let input = document.getElementById('temp-text-
 function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
 function show_input_debugger() {_ShowInputDebugger(); }
 function create_audio_element() { global_audio_element = new Audio(); return Emval.toHandle(global_audio_element); } var global_audio_element; if(false){ }
-function set_audio_playback_file(fs_path) { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'}); const audioURL = URL.createObjectURL(audioBlob); const audio = global_audio_element; audio.src = audioURL; audio.preservesPitch = true; audio.onended = (event) => {_AudioOnEnded();}; audio.onpause = (event) => {_AudioOnPause();}; audio.onplay = (event) => {_AudioOnPlay();}; audio.ontimeupdate = (event) => {_AudioOnTimeUpdate(audio.currentTime);}; return Emval.toHandle(new Promise((resolve) => { audio.ondurationchange = (event) =>{ resolve(audio.duration); } })); }
+function set_audio_playback_file(fs_path) { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'}); const audioURL = URL.createObjectURL(audioBlob); const audio = global_audio_element; audio.src = audioURL; audio.preservesPitch = true; audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();}; audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();}; audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();}; audio.ontimeupdate = (event) => {console.log("Time update " + audio.currentTime); _AudioOnTimeUpdate(Emval.toHandle(audio.currentTime));}; return Emval.toHandle(new Promise((resolve) => { audio.ondurationchange = (event) =>{ resolve(audio.duration); } })); }
+function set_audio_playback_progress(progress) { const audio = global_audio_element; audio.currentTime = Emval.toValue(progress); }
+function set_audio_playback_speed(play_rate) { const audio = global_audio_element; audio.playbackRate = Emval.toValue(play_rate); }
 function audio_element_play() { global_audio_element.play(); }
 function audio_element_pause() { global_audio_element.pause(); }
 function init_file_system() { FS.mount(MEMFS, { root: '.' }, '.'); }
@@ -4701,6 +4703,13 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       var destructors = Emval.toValue(handle);
       runDestructors(destructors);
       __emval_decref(handle);
+    };
+
+  
+  var __emval_take_value = (type, arg) => {
+      type = requireRegisteredType(type, '_emval_take_value');
+      var v = type['readValueFromPointer'](arg);
+      return Emval.toHandle(v);
     };
 
   var _abort = () => {
@@ -9657,6 +9666,8 @@ var wasmImports = {
   /** @export */
   _emval_run_destructors: __emval_run_destructors,
   /** @export */
+  _emval_take_value: __emval_take_value,
+  /** @export */
   abort: _abort,
   /** @export */
   audio_element_pause: audio_element_pause,
@@ -9895,6 +9906,10 @@ var wasmImports = {
   /** @export */
   set_audio_playback_file: set_audio_playback_file,
   /** @export */
+  set_audio_playback_progress: set_audio_playback_progress,
+  /** @export */
+  set_audio_playback_speed: set_audio_playback_speed,
+  /** @export */
   strftime_l: _strftime_l,
   /** @export */
   touch_input_handler: touch_input_handler,
@@ -10046,7 +10061,7 @@ var _asyncify_stop_unwind = () => (_asyncify_stop_unwind = wasmExports['asyncify
 var _asyncify_start_rewind = (a0) => (_asyncify_start_rewind = wasmExports['asyncify_start_rewind'])(a0);
 var _asyncify_stop_rewind = () => (_asyncify_stop_rewind = wasmExports['asyncify_stop_rewind'])();
 var ___start_em_js = Module['___start_em_js'] = 96264;
-var ___stop_em_js = Module['___stop_em_js'] = 104148;
+var ___stop_em_js = Module['___stop_em_js'] = 104517;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
