@@ -6,6 +6,7 @@ const { execSync } = require('node:child_process');
 var os = require('os');
 
 // Skip compile steps:
+const REBUILD = false;
 const SKIP_ImguiCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
@@ -88,7 +89,7 @@ let hasUnlinkedFiles = false;
 imguiFiles.forEach(file => {
     if(path.extname(file).startsWith('.c'))
     {
-        if(!SKIP_ImguiCompile && lastCompileTime < fs.statSync(projectPath + 'imgui/' + file).mtimeMs)
+        if(REBUILD || (!SKIP_ImguiCompile && lastCompileTime < fs.statSync(projectPath + 'imgui/' + file).mtimeMs))
         {
             console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'imgui/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;
@@ -99,7 +100,7 @@ imguiFiles.forEach(file => {
 sourceFiles.forEach(file => {
     if(path.extname(file).startsWith('.c'))
     {
-        if(!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs)
+        if(REBUILD || (!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs))
         {
             console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++20 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;

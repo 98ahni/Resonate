@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/system/include/**",
-                "${workspaceFolder}/.vscode/emsdk/upstream/include/c++/v1/**"
+                "${workspaceFolder}/.vscode/emsdk/upstream/include/c++/v1/**",
+                "${workspaceFolder}/Source"
             ],
             "defines": [],
             "compilerPath": "${workspaceFolder}/.vscode/emsdk/upstream/bin/clang++",
