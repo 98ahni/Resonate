@@ -20,13 +20,23 @@ namespace Serialization
     {
         return myTokens[aLine];
     }
+    KaraokeLine &KaraokeDocument::GetValidLineAfter(size_t aLine)
+    {
+        // TODO: insert return statement here
+        return myTokens[aLine];
+    }
+    KaraokeLine &KaraokeDocument::GetValidLineBefore(size_t aLine)
+    {
+        // TODO: insert return statement here
+        return myTokens[aLine];
+    }
     KaraokeToken &KaraokeDocument::GetToken(size_t aLine, size_t aToken)
     {
         return myTokens[aLine][aToken];
     }
     KaraokeToken &KaraokeDocument::GetTokenAfter(size_t aLine, size_t aToken)
     {
-        if(myTokens[aLine].size() < aToken + 1)
+        if(aToken + 1 < myTokens[aLine].size())
         {
             return myTokens[aLine][aToken + 1];
         }
@@ -42,6 +52,43 @@ namespace Serialization
             }
         }
         return ourNullToken;
+    }
+    KaraokeToken &KaraokeDocument::GetTokenBefore(size_t aLine, size_t aToken)
+    {
+        if(aToken - 1 >= 0)
+        {
+            return myTokens[aLine][aToken - 1];
+        }
+        else if(aLine - 1 >= 0)
+        {
+            if(myTokens[aLine - 1].size() > 0)
+            {
+                return myTokens[aLine - 1][myTokens[aLine - 1].size() - 1];
+            }
+            else
+            {
+                return GetTokenBefore(aLine - 1, 0);
+            }
+        }
+        return ourNullToken;
+    }
+    KaraokeToken &KaraokeDocument::GetTimedTokenAfter(size_t aLine, size_t aToken)
+    {
+        // TODO: insert return statement here
+        return ourNullToken;
+    }
+    KaraokeToken &KaraokeDocument::GetTimedTokenBefore(size_t aLine, size_t aToken)
+    {
+        // TODO: insert return statement here
+        return ourNullToken;
+    }
+    void KaraokeDocument::Clear()
+    {
+        for(int i = 0; i < myTokens.size(); i++)
+        {
+            myTokens[i].clear();
+        }
+        myTokens.clear();
     }
     void KaraokeDocument::Load(std::string aPath)
     {
@@ -63,15 +110,19 @@ namespace Serialization
             printf("No text document found!\n");
             return;
         }
+        Clear();
+        myPath = aPath;
         std::ifstream docFile(aPath);
         std::string line;
         while(std::getline(docFile, line))
         {
             ParseLine(line);
         }
+        docFile.close();
     }
     void KaraokeDocument::Parse(std::string aDocument)
     {
+        Clear();
         std::vector<std::string> lines = StringTools::Split(aDocument, "\n");
         for(int i = 0; i < lines.size(); i++)
         {
@@ -81,16 +132,26 @@ namespace Serialization
     void KaraokeDocument::ParseLine(std::string aLine)
     {
             myTokens.push_back(std::vector<KaraokeToken>());
-            std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\](.(?!(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])))*."), true);
+            std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])?(.(?!(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])))*.?"), true);
             for(int i = 0; i < rawTokens.size(); i++)
             {
                 std::vector<std::string> timeStamp = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), true);
                 std::vector<std::string> token = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), false);
-                myTokens.back().push_back({token.size() > 1 ? token[1] : "", !timeStamp.empty(), timeStamp.empty() ? 0 : StringToTime(timeStamp[0])});
-                if(token.size()) printf("%s", token[0].c_str());
-                for(int j = 1; j < token.size(); j++)
-                    printf(", %s", token[j].c_str());
-                printf("\n");
+                if(timeStamp.size())
+                {
+                    for(int t = 0; t < timeStamp.size(); t++)
+                    {
+                        myTokens.back().push_back({token[t + 1].size() ? token[t + 1] : "", true, StringToTime(timeStamp[t])});
+                    }
+                }
+                else if(token.size() && token[0] != "")
+                {
+                    myTokens.back().push_back({token[0], false, 0});
+                }
+                //if(token.size()) printf("%i:%s", token[0].size(), token[0].c_str());
+                //for(int j = 1; j < token.size(); j++)
+                //    printf(", %i:%s", token[j].size(), token[j].c_str());
+                //printf("\n");
             }
     }
     std::string KaraokeDocument::Serialize()
@@ -106,9 +167,16 @@ namespace Serialization
         }
         return output;
     }
+    std::string KaraokeDocument::Save()
+    {
+        std::ofstream docFile(myPath);
+        docFile.clear();
+        docFile << Serialize();
+        return myPath;
+    }
     uint KaraokeDocument::StringToTime(std::string aTimeStr)
     {
-        printf("[%s:%s:%s]\n", aTimeStr.substr(1, 2).c_str(), aTimeStr.substr(4, 2).c_str(), aTimeStr.substr(7, 2).c_str());
+        //printf("[%s:%s:%s]\n", aTimeStr.substr(1, 2).c_str(), aTimeStr.substr(4, 2).c_str(), aTimeStr.substr(7, 2).c_str());
         return
         (std::stoi(aTimeStr.substr(1, 2)) * 60 * 100) +
         (std::stoi(aTimeStr.substr(4, 2)) * 100) +

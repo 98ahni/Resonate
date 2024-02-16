@@ -3,6 +3,7 @@
 #include "Windows/MainWindow.h"
 #include "Windows/Base/WindowManager.h"
 #include "Windows/TimingEditor.h"
+#include "Windows/RawText.h"
 #include "Windows/AudioPlayback.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
@@ -27,6 +28,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
     AudioPlayback::SetPlaybackFile(folderPath);
     g_closeFileTab = true;
 }
+extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
+{
+    std::string docPath = Serialization::KaraokeDocument::Get().Save();
+    FileHandler::DownloadDocument(docPath.c_str());
+    g_closeFileTab = true;
+}
 
 void loop(void* window){
     MainWindow_NewFrame(window);
@@ -39,12 +46,26 @@ void loop(void* window){
             {
             }
             ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");
+            if(ImGui::MenuItem("Save Document"))
+            {
+            }
+            ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
             ImGui::EndMenu();
         }
         else
         {
             g_closeFileTab = false;
             ImGui::Ext::DestroyHTMLElement("OpenProject");
+        }
+        if(ImGui::BeginMenu("Syllabify"))
+        {
+            for(int i = 0; i < 0;i++)
+            {
+                if(ImGui::MenuItem("Open Project"))
+                {
+                }
+            }
+            ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
     }
@@ -81,6 +102,7 @@ int main(){
     WindowManager::Init();
     WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");
+    WindowManager::AddWindow<TextEditor>("Raw Text");
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;

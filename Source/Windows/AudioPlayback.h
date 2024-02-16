@@ -10,7 +10,6 @@ public:
     void OnImGuiDraw();
 
     static void SetPlaybackFile(std::string aPath);
-    static void SetPlaybackProgress(uint aProgress);
     static uint GetPlaybackProgress();
 
 private:

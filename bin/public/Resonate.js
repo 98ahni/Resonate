@@ -636,13 +636,14 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  104517: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 104640: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 104742: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  104989: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 105112: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 105214: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.webkitdirectory = true; input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile('/' + file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
-function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(Emval.toValue(id)); if(btn === null){ btn = document.createElement('button'); btn.id = Emval.toValue(id); document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } if(typeof Emval.toValue(callback) == 'string'){ btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }else{ btn.addEventListener(Emval.toValue(event), function(evt){_ExecCallback(Emval.toValue(callback))}, true); } btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0; }
-function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let input = document.getElementById(Emval.toValue(id)); if(input === null){ input = document.createElement('input'); input.id = Emval.toValue(id); document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } if(typeof Emval.toValue(callback) == 'string'){ input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }else{ input.addEventListener(Emval.toValue(event), function(evt){_ExecCallback(Emval.toValue(callback))}, true); } input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
+function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(Emval.toValue(id)); if(btn === null){ btn = document.createElement('button'); btn.id = Emval.toValue(id); document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0; }
+function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let input = document.getElementById(Emval.toValue(id)); if(input === null){ input = document.createElement('input'); input.id = Emval.toValue(id); document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
 function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }); }
 function force_click_event(node) { try { node.dispatchEvent(new MouseEvent('click')); } catch(e) { var evt = document.createEvent('MouseEvents'); evt.initMouseEvent('click', true, false, window, 0, 0, 0, 80, 20, false, false, false, false, 0, null); node.dispatchEvent(evt); } }
@@ -653,7 +654,8 @@ function hide_touch_keyboard() { let input = document.getElementById('temp-text-
 function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
 function show_input_debugger() {_ShowInputDebugger(); }
 function create_audio_element() { global_audio_element = new Audio(); return Emval.toHandle(global_audio_element); } var global_audio_element; if(false){ }
-function set_audio_playback_file(fs_path) { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'}); const audioURL = URL.createObjectURL(audioBlob); const audio = global_audio_element; audio.src = audioURL; audio.preservesPitch = true; audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();}; audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();}; audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();}; audio.ontimeupdate = (event) => {console.log("Time update " + audio.currentTime); _AudioOnTimeUpdate(Emval.toHandle(audio.currentTime));}; return Emval.toHandle(new Promise((resolve) => { audio.ondurationchange = (event) =>{ resolve(audio.duration); } })); }
+function set_audio_playback_file(fs_path) { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'}); const audioURL = URL.createObjectURL(audioBlob); const audio = global_audio_element; audio.src = audioURL; audio.preservesPitch = true; audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();}; audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();}; audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();}; return Emval.toHandle(new Promise((resolve) => { audio.ondurationchange = (event) =>{ resolve(audio.duration); } })); }
+function get_audio_playback_progress() { const audio = global_audio_element; return Emval.toHandle(audio.currentTime); }
 function set_audio_playback_progress(progress) { const audio = global_audio_element; audio.currentTime = Emval.toValue(progress); }
 function set_audio_playback_speed(play_rate) { const audio = global_audio_element; audio.playbackRate = Emval.toValue(play_rate); }
 function audio_element_play() { global_audio_element.play(); }
@@ -9686,6 +9688,8 @@ var wasmImports = {
   /** @export */
   destroy_element: destroy_element,
   /** @export */
+  download_document: download_document,
+  /** @export */
   emscripten_asm_const_int: _emscripten_asm_const_int,
   /** @export */
   emscripten_memcpy_js: _emscripten_memcpy_js,
@@ -9709,6 +9713,8 @@ var wasmImports = {
   fd_seek: _fd_seek,
   /** @export */
   fd_write: _fd_write,
+  /** @export */
+  get_audio_playback_progress: get_audio_playback_progress,
   /** @export */
   get_has_web_gpu: get_has_web_gpu,
   /** @export */
@@ -10011,7 +10017,6 @@ var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports['__wasm_call_ct
 var _malloc = Module['_malloc'] = (a0) => (_malloc = Module['_malloc'] = wasmExports['malloc'])(a0);
 var _free = Module['_free'] = (a0) => (_free = Module['_free'] = wasmExports['free'])(a0);
 var _main = Module['_main'] = (a0, a1) => (_main = Module['_main'] = wasmExports['__main_argc_argv'])(a0, a1);
-var _ExecCallback = Module['_ExecCallback'] = (a0) => (_ExecCallback = Module['_ExecCallback'] = wasmExports['ExecCallback'])(a0);
 var _TouchStart = Module['_TouchStart'] = (a0, a1, a2) => (_TouchStart = Module['_TouchStart'] = wasmExports['TouchStart'])(a0, a1, a2);
 var _TouchEnd = Module['_TouchEnd'] = (a0, a1, a2) => (_TouchEnd = Module['_TouchEnd'] = wasmExports['TouchEnd'])(a0, a1, a2);
 var _TouchCancel = Module['_TouchCancel'] = (a0, a1, a2) => (_TouchCancel = Module['_TouchCancel'] = wasmExports['TouchCancel'])(a0, a1, a2);
@@ -10019,11 +10024,11 @@ var _TouchMove = Module['_TouchMove'] = (a0, a1, a2) => (_TouchMove = Module['_T
 var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = (a0, a1) => (_TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = wasmExports['TouchExtraKeyEvents'])(a0, a1);
 var _ShowInputDebugger = Module['_ShowInputDebugger'] = () => (_ShowInputDebugger = Module['_ShowInputDebugger'] = wasmExports['ShowInputDebugger'])();
 var _LoadProject = Module['_LoadProject'] = () => (_LoadProject = Module['_LoadProject'] = wasmExports['LoadProject'])();
+var _SaveProject = Module['_SaveProject'] = () => (_SaveProject = Module['_SaveProject'] = wasmExports['SaveProject'])();
 var _main = Module['_main'] = (a0, a1) => (_main = Module['_main'] = wasmExports['main'])(a0, a1);
 var _AudioOnEnded = Module['_AudioOnEnded'] = () => (_AudioOnEnded = Module['_AudioOnEnded'] = wasmExports['AudioOnEnded'])();
 var _AudioOnPause = Module['_AudioOnPause'] = () => (_AudioOnPause = Module['_AudioOnPause'] = wasmExports['AudioOnPause'])();
 var _AudioOnPlay = Module['_AudioOnPlay'] = () => (_AudioOnPlay = Module['_AudioOnPlay'] = wasmExports['AudioOnPlay'])();
-var _AudioOnTimeUpdate = Module['_AudioOnTimeUpdate'] = (a0) => (_AudioOnTimeUpdate = Module['_AudioOnTimeUpdate'] = wasmExports['AudioOnTimeUpdate'])(a0);
 var ___getTypeName = (a0) => (___getTypeName = wasmExports['__getTypeName'])(a0);
 var ___errno_location = () => (___errno_location = wasmExports['__errno_location'])();
 var _memalign = (a0, a1) => (_memalign = wasmExports['memalign'])(a0, a1);
@@ -10060,8 +10065,8 @@ var _asyncify_start_unwind = (a0) => (_asyncify_start_unwind = wasmExports['asyn
 var _asyncify_stop_unwind = () => (_asyncify_stop_unwind = wasmExports['asyncify_stop_unwind'])();
 var _asyncify_start_rewind = (a0) => (_asyncify_start_rewind = wasmExports['asyncify_start_rewind'])(a0);
 var _asyncify_stop_rewind = () => (_asyncify_stop_rewind = wasmExports['asyncify_stop_rewind'])();
-var ___start_em_js = Module['___start_em_js'] = 96264;
-var ___stop_em_js = Module['___stop_em_js'] = 104517;
+var ___start_em_js = Module['___start_em_js'] = 96696;
+var ___stop_em_js = Module['___stop_em_js'] = 104989;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
