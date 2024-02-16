@@ -24,12 +24,17 @@ EM_JS(emscripten::EM_VAL, set_audio_playback_file, (emscripten::EM_VAL fs_path),
     audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();};
     audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();};
     audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();};
-    audio.ontimeupdate = (event) => {console.log("Time update " + audio.currentTime); _AudioOnTimeUpdate(Emval.toHandle(audio.currentTime));};
     return Emval.toHandle(new Promise((resolve) => {
         audio.ondurationchange = (event) =>{
             resolve(audio.duration);
         }
     }));
+});
+
+EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
+    const audio = global_audio_element;
+    //console.log("Get time: " + audio.currentTime);
+    return Emval.toHandle(audio.currentTime);
 });
 
 EM_JS(void , set_audio_playback_progress, (emscripten::EM_VAL progress), {
@@ -45,7 +50,6 @@ EM_JS(void , set_audio_playback_speed, (emscripten::EM_VAL play_rate), {
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnEnded(){}
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPause(){}
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPlay(){}
-extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnTimeUpdate(emscripten::EM_VAL aTime){AudioPlayback::SetPlaybackProgress((uint)(100 * VAR_FROM_JS(aTime).as<double>())); }
 
 EM_JS(void, audio_element_play, (), {
     global_audio_element.play();
@@ -71,6 +75,7 @@ void AudioPlayback::OnImGuiDraw()
 {
     if(Gui_Begin())
     {
+        myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100);
         if(ImGui::Button("Play"))
         {
             audio_element_play();
@@ -115,11 +120,6 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     }
     ourInstance->myDuration = 100 * VAR_FROM_JS(set_audio_playback_file(VAR_TO_JS(aPath.c_str()))).await().as<double>();
     printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
-}
-
-void AudioPlayback::SetPlaybackProgress(uint aProgress)
-{
-    ourInstance->myProgress = aProgress;
 }
 
 uint AudioPlayback::GetPlaybackProgress()
