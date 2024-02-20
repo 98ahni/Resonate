@@ -7,13 +7,20 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
     return Emval.toHandle(new Promise((resolve) => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.webkitdirectory = true;
+        if(typeof input.webkitdirectory !== "boolean")
+        {
+            input.multiple = true;
+        }
+        else
+        {
+            input.webkitdirectory = true;
+        }
 
         input.addEventListener(
             'change', () => {
                 let files = Array.from(input.files);
                 let promisedFiles = [];
-                if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists)
+                if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) // Make this work when there is no containing folder.
                 {
                     FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]);
                 }
