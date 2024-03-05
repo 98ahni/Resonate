@@ -96,7 +96,7 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     {
         ImDrawList* drawList = GetWindowDrawList();
         drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, 2);
-        drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + 5, timeStartPos.y}, {timeStartPos.x, timeStartPos.y + 5}, IM_COL32_WHITE);
+        drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + 5, timeStartPos.y + 5}, {timeStartPos.x, timeStartPos.y + 5}, IM_COL32_WHITE);
     }
     return clicked;
 }

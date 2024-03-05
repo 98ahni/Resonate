@@ -82,6 +82,14 @@ namespace Serialization
         // TODO: insert return statement here
         return ourNullToken;
     }
+    uint KaraokeDocument::GetBaseStartColor()
+    {
+        return myBaseStartColor;
+    }
+    uint KaraokeDocument::GetBaseEndColor()
+    {
+        return myBaseEndColor;
+    }
     void KaraokeDocument::Clear()
     {
         for(int i = 0; i < myTokens.size(); i++)
@@ -131,6 +139,15 @@ namespace Serialization
     }
     void KaraokeDocument::ParseLine(std::string aLine)
     {
+        if(aLine.starts_with("start color"))
+        {
+
+            return;
+        }
+        if(aLine.starts_with("end color"))
+        {
+            return;
+        }
             myTokens.push_back(std::vector<KaraokeToken>());
             std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])?(.(?!(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])))*.?"), true);
             for(int i = 0; i < rawTokens.size(); i++)
@@ -185,5 +202,28 @@ namespace Serialization
     std::string KaraokeDocument::TimeToString(uint aTime)
     {
         return (std::stringstream() << "[" << std::setfill('0') << std::setw(2) << (aTime / 100) / 60 << ":" << std::setw(2) << (aTime / 100) % 60 << ":" << std::setw(2) << (aTime % 100) << "]").str();
+    }
+    uint KaraokeDocument::FromHex(std::string someHex)
+    {
+        uint output = 0;
+        for(int i = 0; i < someHex.size(); i++)
+        {
+            
+        }
+        return;
+    }
+    std::string KaraokeDocument::ToHex(uint aNum)
+    {
+        return std::string();
+    }
+    bool KaraokeDocument::IsNull(KaraokeToken &aToken)
+    {
+        return
+        aToken.myHasStart == ourNullToken.myHasStart &&
+        aToken.myValue == ourNullToken.myValue;
+    }
+    bool KaraokeDocument::IsNull(KaraokeLine &aLine)
+    {
+        return aLine.size() == 0;
     }
 }
