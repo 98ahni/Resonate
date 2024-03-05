@@ -104,6 +104,7 @@ namespace Serialization
         if(!std::filesystem::exists(aPath))
         {
             printf("%s does not exist!\n", aPath.c_str());
+            return;
         }
         if(std::filesystem::is_directory(aPath))
         {
@@ -141,11 +142,12 @@ namespace Serialization
     {
         if(aLine.starts_with("start color"))
         {
-
+            (std::stringstream() << std::hex << aLine.substr(14)) >> myBaseStartColor;
             return;
         }
         if(aLine.starts_with("end color"))
         {
+            (std::stringstream() << std::hex << aLine.substr(14)) >> myBaseEndColor;
             return;
         }
             myTokens.push_back(std::vector<KaraokeToken>());

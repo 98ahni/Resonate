@@ -51,7 +51,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
                 }
                 input.remove();
                 Promise.all(promisedFiles).then(() => {
-                    resolve((exDir.length != 0 ? exDir + "/" : "") + files[0].webkitRelativePath.split("/")[0]);
+                    resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]);
                 });
             });
         if ('showPicker' in HTMLInputElement.prototype)
