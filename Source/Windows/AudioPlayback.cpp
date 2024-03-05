@@ -104,6 +104,7 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     if(!std::filesystem::exists(aPath))
     {
         printf("%s does not exist!\n", aPath.c_str());
+        return;
     }
     if(std::filesystem::is_directory(aPath))
     {
