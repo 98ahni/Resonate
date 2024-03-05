@@ -25,6 +25,8 @@ namespace Serialization
         KaraokeToken& GetTokenBefore(size_t aLine, size_t aToken);
         KaraokeToken& GetTimedTokenAfter(size_t aLine, size_t aToken);
         KaraokeToken& GetTimedTokenBefore(size_t aLine, size_t aToken);
+        uint GetBaseStartColor();
+        uint GetBaseEndColor();
 
         void Clear();
         void Load(std::string aPath);
@@ -34,13 +36,19 @@ namespace Serialization
 
         static uint StringToTime(std::string aTimeStr);
         static std::string TimeToString(uint aTime);
+        static uint FromHex(std::string someHex);
+        static std::string ToHex(uint aNum);
+        static bool IsNull(KaraokeToken& aToken);
+        static bool IsNull(KaraokeLine& aLine);
 
     private:
         void ParseLine(std::string aLine);
 
         static KaraokeDocument* ourInstance;
-        inline static KaraokeToken ourNullToken = {"", false, 0xFFFFFFFF};
+        inline static KaraokeToken ourNullToken = {"", false, 0};
         KaraokeData myTokens;
         std::string myPath;
+        uint myBaseStartColor;
+        uint myBaseEndColor;
     };
 }

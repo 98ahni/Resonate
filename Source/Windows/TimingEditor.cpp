@@ -39,6 +39,28 @@ void TimingEditor::OnImGuiDraw()
                 if(charMode)
                 {
                     // Merge/split token at mark
+                    if(myMarkedChar || (myMarkedToken == 0 && !doc.GetToken(myMarkedLine, myMarkedToken).myHasStart))
+                    {
+                        doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken + 1, 
+                            {
+                                doc.GetToken(myMarkedLine, myMarkedToken).myValue.substr(myMarkedChar),
+                                true, 0
+                            });
+                        doc.GetToken(myMarkedLine, myMarkedToken).myValue = doc.GetToken(myMarkedLine, myMarkedToken).myValue.substr(0, myMarkedChar);
+                    }
+                    else
+                    {
+                        auto& lastToken = doc.GetTokenBefore(myMarkedLine, myMarkedToken);
+                        if(Serialization::KaraokeDocument::IsNull(lastToken))
+                        {
+                            doc.GetToken(myMarkedLine, myMarkedToken).myHasStart = false;
+                        }
+                        else
+                        {
+                            lastToken.myValue += doc.GetToken(myMarkedLine, myMarkedToken).myValue;
+                            doc.GetLine(myMarkedLine).erase(doc.GetLine(myMarkedLine).begin() + myMarkedToken);
+                        }
+                    }
                 }
                 else
                 {

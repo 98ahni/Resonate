@@ -1,6 +1,7 @@
 #include "RawText.h"
 #include <misc/cpp/imgui_stdlib.h>
 #include <Serialization/KaraokeData.h>
+#include <Extensions/TouchInput.h>
 
 void TextEditor::OnImGuiDraw()
 {
@@ -23,6 +24,7 @@ void TextEditor::OnImGuiDraw()
         {
             Serialization::KaraokeDocument::Get().Parse(myRawText);
         }
+        TouchInput_ReadyKeyboard();
     }
     Gui_End();
 }

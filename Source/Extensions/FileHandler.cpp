@@ -20,9 +20,21 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
             'change', () => {
                 let files = Array.from(input.files);
                 let promisedFiles = [];
-                if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) // Make this work when there is no containing folder.
+                let exDir = "";
+                if(files[0].webkitRelativePath.toString().includes("/"))
                 {
-                    FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]);
+                    if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) // Make this work when there is no containing folder.
+                    {
+                        FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]);
+                    }
+                }
+                else
+                {
+                    exDir = "/WorkDir";
+                    if(!FS.analyzePath("/WorkDir").exists)
+                    { // Make this work when there is no containing folder.
+                        FS.mkdir("/WorkDir");
+                    }
                 }
                 for(const file of files)
                 {
@@ -31,7 +43,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
                         let reader = new FileReader();
                         reader.onload = (event) => {
                             const uint8_view = new Uint8Array(event.target.result);
-                            FS.writeFile('/' + file.webkitRelativePath, uint8_view);
+                            FS.writeFile(exDir + '/' + file.webkitRelativePath, uint8_view);
                             resolve();
                         };
                         reader.readAsArrayBuffer(file);
@@ -39,7 +51,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
                 }
                 input.remove();
                 Promise.all(promisedFiles).then(() => {
-                    resolve(files[0].webkitRelativePath.split("/")[0]);
+                    resolve((exDir.length != 0 ? exDir + "/" : "") + files[0].webkitRelativePath.split("/")[0]);
                 });
             });
         if ('showPicker' in HTMLInputElement.prototype)
