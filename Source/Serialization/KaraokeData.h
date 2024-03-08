@@ -25,8 +25,13 @@ namespace Serialization
         KaraokeToken& GetTokenBefore(size_t aLine, size_t aToken);
         KaraokeToken& GetTimedTokenAfter(size_t aLine, size_t aToken);
         KaraokeToken& GetTimedTokenBefore(size_t aLine, size_t aToken);
-        uint GetBaseStartColor();
-        uint GetBaseEndColor();
+        bool IsPauseToken(size_t aLine, size_t aToken);
+        bool IsPauseToken(KaraokeToken& aToken);
+        uint GetStartColor();
+        uint GetEndColor();
+        void SetColor(uint aStartColor);
+        void SetColor(uint aStartColor, uint anEndColor);
+        void PopColor();
 
         void Clear();
         void Load(std::string aPath);
@@ -48,7 +53,12 @@ namespace Serialization
         inline static KaraokeToken ourNullToken = {"", false, 0};
         KaraokeData myTokens;
         std::string myPath;
-        uint myBaseStartColor;
-        uint myBaseEndColor;
+        bool myHasBaseStartColor = false;
+        uint myBaseStartColor = 0xFF00E600;
+        bool myHasBaseEndColor = false;
+        uint myBaseEndColor = 0x9FFF80BF;
+        bool myHasOverrideColor = false;
+        uint myOverrideStartColor = 0xFF00E600;
+        uint myOverrideEndColor = 0x9FFF80BF;
     };
 }
