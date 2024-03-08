@@ -90,13 +90,29 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     float end = anEndTime;
     ImVec2 timeStartPos = {pos.x, pos.y + (size.y * 1.2f)};
     ImVec2 timeEndPos = {remap(clamp(aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.2f)};
+    if(aCurrentTime < start)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, Serialization::KaraokeDocument::Get().GetStartColor() | 0xFF000000);
+    }
+    else
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, Serialization::KaraokeDocument::Get().GetEndColor() | 0xFF000000);
+    }
     Text(aValue.data());
+    ImGui::PopStyleColor();
     bool clicked = IsItemClicked(0);
     if(aShowProgress)
     {
         ImDrawList* drawList = GetWindowDrawList();
-        drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, 2);
-        drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + 5, timeStartPos.y + 5}, {timeStartPos.x, timeStartPos.y + 5}, IM_COL32_WHITE);
+        if(aValue.empty() || aValue == " ")
+        {
+            drawList->AddTriangleFilled({size.x + timeStartPos.x - 1, timeStartPos.y + 1}, {size.x + timeStartPos.x - 5, timeStartPos.y + 5}, {size.x + timeStartPos.x - 1, timeStartPos.y + 5}, IM_COL32(255, 200, 255, 255));
+        }
+        else
+        {
+            drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + 5, timeStartPos.y + 5}, {timeStartPos.x, timeStartPos.y + 5}, IM_COL32_WHITE);
+            drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, 2);
+        }
     }
     return clicked;
 }
