@@ -127,3 +127,8 @@ uint AudioPlayback::GetPlaybackProgress()
 {
     return ourInstance->myProgress;
 }
+
+void AudioPlayback::SetPlaybackProgress(uint someProgress)
+{
+    set_audio_playback_progress(VAR_TO_JS(someProgress));
+}
