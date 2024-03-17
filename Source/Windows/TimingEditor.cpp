@@ -18,8 +18,13 @@ void TimingEditor::OnImGuiDraw()
                 uint end = doc.GetTokenAfter(line, token).myHasStart ? doc.GetTokenAfter(line, token).myStartTime : start;
                 if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress(), doc.GetLine(line)[token].myHasStart))
                 {
+                    if(ImGui::IsKeyDown(ImGuiKey_ModShift))
+                    {
+                        AudioPlayback::SetPlaybackProgress(doc.GetToken(line, token).myStartTime);
+                    }
                     myMarkedLine = line;
                     myMarkedToken = token;
+                    myMarkedChar = 0;
                 }
                 ImGui::SameLine();
             }
