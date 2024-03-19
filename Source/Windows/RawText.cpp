@@ -20,7 +20,7 @@ void TextEditor::OnImGuiDraw()
             myHasTakenFocus = false;
         }
 
-        if(ImGui::InputTextMultiline("##RawText", &myRawText, ImGui::GetContentRegionAvail()))
+        if(ImGui::InputTextMultiline("##RawText", &myRawText, ImGui::GetContentRegionAvail()) && myHasTakenFocus)
         {
             Serialization::KaraokeDocument::Get().Parse(myRawText);
         }

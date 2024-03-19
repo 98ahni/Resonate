@@ -130,5 +130,5 @@ uint AudioPlayback::GetPlaybackProgress()
 
 void AudioPlayback::SetPlaybackProgress(uint someProgress)
 {
-    set_audio_playback_progress(VAR_TO_JS(someProgress));
+    set_audio_playback_progress(VAR_TO_JS(((float)someProgress) * .01f));
 }

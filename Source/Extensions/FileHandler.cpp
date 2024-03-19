@@ -43,7 +43,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
                         let reader = new FileReader();
                         reader.onload = (event) => {
                             const uint8_view = new Uint8Array(event.target.result);
-                            FS.writeFile(exDir + '/' + file.webkitRelativePath, uint8_view);
+                            FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view);
                             resolve();
                         };
                         reader.readAsArrayBuffer(file);
@@ -82,6 +82,7 @@ EM_JS(void, download_document, (emscripten::EM_VAL path), {
 std::string FileHandler::OpenFolder(const char* aMode)
 {
     std::string output = VAR_FROM_JS(open_directory(VAR_TO_JS(aMode))).await().as<std::string>();
+    printf(("It gets this far!" + output + "\n").c_str());
     return output + "/";
 }
 

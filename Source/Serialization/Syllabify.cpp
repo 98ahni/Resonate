@@ -3,14 +3,26 @@
 #include <unordered_map>
 #include <fstream>
 #include <Defines.h>
+#include <filesystem>
+#include <locale>
 
 namespace Serialization
 {
     struct PatternData
     {
+        inline static std::map<std::string, std::string> myLanguages;
         static inline std::vector<std::unordered_map<std::string, std::string>> myPatterns;
         inline static std::vector<int> myMaxPatternSize;
     };
+
+    void Init()
+    {
+	    for(const auto& p : std::filesystem::directory_iterator("Syllabify/"))
+        {
+            std::locale loc(p.path().stem().string());
+            
+        }
+    }
 
     void BuildPatterns(std::string aLanguageCode)
     {
@@ -269,5 +281,9 @@ namespace Serialization
             std::vector<std::string> result = Syllabify(txt, aLanguageCode);
             output.insert(output.end(), result.begin(), result.end());
         }
+    }
+    std::map<std::string, std::string> GetAvailableLanguages()
+    {
+        return std::map<std::string, std::string>();
     }
 }

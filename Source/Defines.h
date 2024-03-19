@@ -5,8 +5,8 @@
 
 // Strings
 #define ASSET_PATH "assets/"
-#define SYLLABIFY_PATH(lang_code) "assets/" lang_code ".txt"
-#define SYLLABIFY_PATHSTD(lang_code) ("assets/" + lang_code + ".txt")
+#define SYLLABIFY_PATH(lang_code) "Syllabify/" lang_code ".txt"
+#define SYLLABIFY_PATHSTD(lang_code) ("Syllabify/" + lang_code + ".txt")
 
 // Emscripten
 #define VAR_TO_JS(var) (emscripten::val(var).as_handle())
