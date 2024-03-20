@@ -14,6 +14,8 @@
 #include "Extensions/imguiExt.h"
 #include "Extensions/FileHandler.h"
 #include "Serialization/KaraokeData.h"
+#include "Serialization/Syllabify.h"
+#include "StringTools.h"
 
 bool g_showInputDebugger = false;
 char* g_testStr = new char[50];
@@ -59,11 +61,31 @@ void loop(void* window){
         }
         if(ImGui::BeginMenu("Syllabify"))
         {
-            for(int i = 0; i < 0;i++)
+            if(ImGui::BeginMenu("All"))
             {
-                if(ImGui::MenuItem("Open Project"))
+                for(auto&[code, name] : Serialization::GetAvailableLanguages())
                 {
+                    if(ImGui::MenuItem(name.c_str()))
+                    {
+                        Serialization::BuildPatterns(code);
+                        std::vector<std::string> tokenList = Serialization::Syllabify(Serialization::KaraokeDocument::Get().SerializeAsText(), code);
+                        Serialization::KaraokeDocument::Get().Parse(StringTools::Join(tokenList, "[00:00:00]"));
+                    }
                 }
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Line"))
+            {
+                for(auto&[code, name] : Serialization::GetAvailableLanguages())
+                {
+                    if(ImGui::MenuItem(name.c_str()))
+                    {
+                        Serialization::BuildPatterns(code);
+                        std::vector<std::string> tokenList = Serialization::Syllabify(Serialization::KaraokeDocument::Get().SerializeLineAsText(Serialization::KaraokeDocument::Get().GetLine(((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine())), code);
+                        Serialization::KaraokeDocument::Get().ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), ((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine());
+                    }
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
@@ -98,6 +120,8 @@ int main(){
     //ImGui::GetIO().Fonts->Build();
     //ImGui::GetIO().FontDefault = MainWindow::Font;
     //ImGui::PushFont(roboto);
+
+    Serialization::Syllabify_Init();
 
     WindowManager::Init();
     WindowManager::AddWindow<TimingEditor>("Timing");

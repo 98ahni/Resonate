@@ -4,7 +4,7 @@
 
 namespace Serialization
 {
-    void Init();
+    void Syllabify_Init();
     void BuildPatterns(std::string aLanguageCode);
     void BuildPattern(std::string aLine, int i = 0);
     std::string ApplyPatterns(std::string aText, int aLevel = 0);

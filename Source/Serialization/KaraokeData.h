@@ -36,7 +36,10 @@ namespace Serialization
         void Clear();
         void Load(std::string aPath);
         void Parse(std::string aDocument);
+        void ParseLineAndReplace(std::string aLine, size_t anIndex);
         std::string Serialize();
+        std::string SerializeAsText();
+        std::string SerializeLineAsText(KaraokeLine& aLine);
         std::string Save();
 
         static uint StringToTime(std::string aTimeStr);
