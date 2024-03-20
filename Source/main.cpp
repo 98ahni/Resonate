@@ -58,6 +58,7 @@ void loop(void* window){
         {
             g_closeFileTab = false;
             ImGui::Ext::DestroyHTMLElement("OpenProject");
+            ImGui::Ext::DestroyHTMLElement("SaveProject");
         }
         if(ImGui::BeginMenu("Syllabify"))
         {
@@ -68,8 +69,13 @@ void loop(void* window){
                     if(ImGui::MenuItem(name.c_str()))
                     {
                         Serialization::BuildPatterns(code);
-                        std::vector<std::string> tokenList = Serialization::Syllabify(Serialization::KaraokeDocument::Get().SerializeAsText(), code);
-                        Serialization::KaraokeDocument::Get().Parse(StringTools::Join(tokenList, "[00:00:00]"));
+                        std::string text = Serialization::KaraokeDocument::Get().SerializeAsText();
+                        printf("Done serializing.\n");
+                        std::vector<std::string> tokenList = Serialization::Syllabify(text, code);
+                        text = StringTools::Join(tokenList, "[00:00:00]");
+                        printf("Done syllabifying.\n");
+                        printf("%s\n", text.data());
+                        Serialization::KaraokeDocument::Get().Parse("[00:00:00]" + text + "[00:00:00]");
                     }
                 }
                 ImGui::EndMenu();

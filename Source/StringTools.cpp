@@ -23,13 +23,17 @@ namespace StringTools
 
     std::string Join(std::vector<std::string> aStringList, std::string aJoiner)
     {
-		if(aStringList.empty()) return "";
+		if(aStringList.empty())
+		{
+			printf("The string list was empty.\n");
+			return "";
+		}
 		std::string output = aStringList[0];
 		for(int i = 1; i < aStringList.size(); i++)
 		{
 			output += aJoiner + aStringList[i];
 		}
-        return std::string();
+        return output;
     }
 
     void EraseSubString(std::string& aStringToTrim, std::string aStringToErase)

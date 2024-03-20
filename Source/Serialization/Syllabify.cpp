@@ -34,14 +34,17 @@ namespace Serialization
         PatternData::myPatterns.push_back(std::unordered_map<std::string, std::string>());
         PatternData::myMaxPatternSize.push_back(0);
 
+        printf("Loading language file %s\n", SYLLABIFY_PATHSTD(aLanguageCode).data());
         std::ifstream file(SYLLABIFY_PATHSTD(aLanguageCode).data());
         if (!file)
             return;
 
+        printf("Building pattern %s.\n", aLanguageCode.data());
         std::string line;
         while (getline(file, line))
             BuildPattern(line);
 
+        printf("Pattern %s built.\n", aLanguageCode.data());
         file.close();
     }
 
@@ -114,6 +117,7 @@ namespace Serialization
     
     std::string ApplyPatterns(std::string aText, int aLevel)
     {
+        printf("Applying pattern to \"%s\" with level %i.\n", aText.data(), aLevel);
         const std::string wrappedWord = '.' + aText + '.';
         std::string splits;
         splits.resize(aText.size() - 1);
@@ -164,6 +168,7 @@ namespace Serialization
             }
         }
 
+        printf("ApplyPattern returned \"%s\".\n", splits.data());
         return splits;
     }
 
@@ -179,6 +184,7 @@ namespace Serialization
     
     void SyllabifyWord(std::vector<int>& someSplitPoints, std::string aPartialText, int aStartIndex)
     {
+        printf("Syllabifying word \"%s\".\n", aPartialText.data());
         std::vector<int> index_mapping;
         for (int j = 0; j < aPartialText.size(); j++)
         {
@@ -193,6 +199,7 @@ namespace Serialization
         if (index_mapping.size() != normalized_word.size())
         {
             //error
+            printf("Index map doesn't match word!\n");
         }
 
         const std::string splits = ApplyPatterns(normalized_word);
@@ -242,13 +249,13 @@ namespace Serialization
                     splitPoints.push_back(wordBeforeStart);
 
                 if (!lastIsNum)
-                    SyllabifyWord(splitPoints, aText.substr(wordStart, (i - 1) - wordStart), wordStart);
+                    SyllabifyWord(splitPoints, aText.substr(wordStart, (i/* - 1*/) - wordStart), wordStart);
 
                 wordBeforeStart = -1;
             }
 
             if (!lastIsAlnum /*|| !scriptsMatch*/)
-                wordStart = i - 1;
+                wordStart = i;// - 1;
 
             if (isspace(currentChar))
                 wordBeforeStart = i + 1;
@@ -271,6 +278,7 @@ namespace Serialization
         splitPoints.push_back(aText.size());
 
         std::vector<std::string> output;
+        printf("Amount of splits: %i.\n", splitPoints.size());
         for (int i = 1; i < splitPoints.size(); ++i)
         {
             output.push_back(aText.substr(splitPoints[i - 1], splitPoints[i] - splitPoints[i - 1]));
