@@ -164,6 +164,13 @@ namespace Serialization
             ParseLine(lines[i]);
         }
     }
+    void KaraokeDocument::ParseLineAndReplace(std::string aLine, size_t anIndex)
+    {
+        myTokens.erase(myTokens.begin() + anIndex);
+        ParseLine(aLine);
+        myTokens.insert(myTokens.begin() + anIndex, myTokens.back());
+        myTokens.erase(myTokens.end());
+    }
     void KaraokeDocument::ParseLine(std::string aLine)
     {
         if(aLine.starts_with("start color"))
@@ -220,6 +227,37 @@ namespace Serialization
             }
             output += "\n";
         }
+        return output;
+    }
+    std::string KaraokeDocument::SerializeAsText()
+    {
+        std::string output;
+        if(myHasBaseStartColor)
+        {
+            output += "start color 0x" + ToHex(myBaseStartColor) + "\n";
+        }
+        if(myHasBaseEndColor)
+        {
+            output += "end color 0x" + ToHex(myBaseEndColor) + "\n";
+        }
+        for(int line = 0; line < myTokens.size(); line++)
+        {
+            for(int token = 0; token < myTokens[line].size(); token++)
+            {
+                output += myTokens[line][token].myValue;
+            }
+            output += "\n";
+        }
+        return output;
+    }
+    std::string KaraokeDocument::SerializeLineAsText(KaraokeLine &aLine)
+    {
+        std::string output;
+        for(int token = 0; token < aLine.size(); token++)
+        {
+            output += aLine[token].myValue;
+        }
+        output += "\n";
         return output;
     }
     std::string KaraokeDocument::Save()

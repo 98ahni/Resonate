@@ -21,6 +21,17 @@ namespace StringTools
         return {std::sregex_token_iterator(aStringToSplit.begin(), aStringToSplit.end(), aSplitPattern, aGetMatching ? 0 : -1), std::sregex_token_iterator()};
     }
 
+    std::string Join(std::vector<std::string> aStringList, std::string aJoiner)
+    {
+		if(aStringList.empty()) return "";
+		std::string output = aStringList[0];
+		for(int i = 1; i < aStringList.size(); i++)
+		{
+			output += aJoiner + aStringList[i];
+		}
+        return std::string();
+    }
+
     void EraseSubString(std::string& aStringToTrim, std::string aStringToErase)
 	{
 		size_t index = 0;

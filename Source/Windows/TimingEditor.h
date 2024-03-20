@@ -4,6 +4,9 @@ class TimingEditor : public EditorWindow
 {
 public:
     void OnImGuiDraw();
+    int GetMarkedLine();
+    int GetMarkedToken();
+    int GetMarkedChar();
 
 private:
     void DrawTextMarker();

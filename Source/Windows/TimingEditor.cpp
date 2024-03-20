@@ -166,6 +166,21 @@ void TimingEditor::OnImGuiDraw()
     Gui_End();
 }
 
+int TimingEditor::GetMarkedLine()
+{
+    return myMarkedLine;
+}
+
+int TimingEditor::GetMarkedToken()
+{
+    return myMarkedToken;
+}
+
+int TimingEditor::GetMarkedChar()
+{
+    return myMarkedChar;
+}
+
 void TimingEditor::DrawTextMarker()
 {
     if(((int)(ImGui::GetTime() * 4)) % 2) return;

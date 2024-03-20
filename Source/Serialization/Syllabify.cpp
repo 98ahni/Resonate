@@ -1,10 +1,16 @@
 #include "Syllabify.h"
+#include <emscripten.h>
+#include <emscripten/val.h>
 #include <vector>
 #include <unordered_map>
 #include <fstream>
 #include <Defines.h>
 #include <filesystem>
-#include <locale>
+
+EM_JS(emscripten::EM_VAL, language_code_to_name, (emscripten::EM_VAL language_code),{
+    let names = new Intl.DisplayNames(['en-GB'/*, Emval.toValue(language_code)*/], {type:"language"});
+    return Emval.toHandle(names.of(Emval.toValue(language_code).replace('_', '-')));//.toString());
+});
 
 namespace Serialization
 {
@@ -15,12 +21,11 @@ namespace Serialization
         inline static std::vector<int> myMaxPatternSize;
     };
 
-    void Init()
+    void Syllabify_Init()
     {
 	    for(const auto& p : std::filesystem::directory_iterator("Syllabify/"))
         {
-            std::locale loc(p.path().stem().string());
-            
+            PatternData::myLanguages[p.path().stem().string()] = VAR_FROM_JS(language_code_to_name(VAR_TO_JS(p.path().stem().string()))).as<std::string>();
         }
     }
 
@@ -284,6 +289,6 @@ namespace Serialization
     }
     std::map<std::string, std::string> GetAvailableLanguages()
     {
-        return std::map<std::string, std::string>();
+        return PatternData::myLanguages;
     }
 }
