@@ -2,6 +2,7 @@
 
 void TouchControl::OnImGuiDraw()
 {
+    Gui_Begin();
     if(ImGui::Checkbox("Edit Mode", &myIsCharMode))
     {
     }
@@ -32,4 +33,5 @@ void TouchControl::OnImGuiDraw()
     if(ImGui::Button("End"))
     {
     }
+    Gui_End();
 }

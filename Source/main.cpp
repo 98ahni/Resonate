@@ -5,6 +5,7 @@
 #include "Windows/TimingEditor.h"
 #include "Windows/RawText.h"
 #include "Windows/AudioPlayback.h"
+#include "Windows/TouchControl.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
 #include <imgui.h>
@@ -59,6 +60,25 @@ void loop(void* window){
             g_closeFileTab = false;
             ImGui::Ext::DestroyHTMLElement("OpenProject");
             ImGui::Ext::DestroyHTMLElement("SaveProject");
+        }
+        if(ImGui::BeginMenu("View"))
+        {
+            if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr))
+            {
+                if(WindowManager::GetWindow("Touch Control") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Touch Control"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<TouchControl>("Touch Control");
+                }
+            }
+            if(ImGui::MenuItem("Print ini"))
+            {
+                printf("%s\n", ImGui::SaveIniSettingsToMemory());
+            }
+            ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("Syllabify"))
         {
