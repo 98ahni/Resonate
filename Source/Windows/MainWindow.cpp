@@ -205,7 +205,7 @@ void MainWindow_Init(const char* name, void** outWindow)
 
 	// For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
 	// You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
-	io.IniFilename = nullptr;
+	//io.IniFilename = nullptr;
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
