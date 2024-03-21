@@ -12,8 +12,8 @@ public:
     void RecordEndTime();
     void MoveMarkerUp();
     void MoveMarkerDown();
-    void MoveMarkerLeft();
-    void MoveMarkerRight();
+    void MoveMarkerLeft(bool aIsCharmode = false);
+    void MoveMarkerRight(bool aIsCharmode = false);
 
 private:
     void DrawTextMarker();
