@@ -7,6 +7,13 @@ public:
     int GetMarkedLine();
     int GetMarkedToken();
     int GetMarkedChar();
+    void ToggleTokenHasTime();
+    void RecordStartTime();
+    void RecordEndTime();
+    void MoveMarkerUp();
+    void MoveMarkerDown();
+    void MoveMarkerLeft();
+    void MoveMarkerRight();
 
 private:
     void DrawTextMarker();
