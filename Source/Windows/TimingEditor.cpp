@@ -6,7 +6,7 @@
 void TimingEditor::OnImGuiDraw()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    if(Gui_Begin())
+    if(ImGui::Begin(GetName().c_str()))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
         for(int line = 0; line < doc.GetData().size(); line++)
@@ -101,11 +101,15 @@ void TimingEditor::ToggleTokenHasTime()
                 true, 0
             });
         doc.GetToken(myMarkedLine, myMarkedToken).myValue = doc.GetToken(myMarkedLine, myMarkedToken).myValue.substr(0, myMarkedChar);
+        if(myMarkedToken != 0)
+        {
+            MoveMarkerRight();
+        }
     }
     else
     {
         auto& lastToken = doc.GetTokenBefore(myMarkedLine, myMarkedToken);
-        if(Serialization::KaraokeDocument::IsNull(lastToken))
+        if(myMarkedToken == 0 || Serialization::KaraokeDocument::IsNull(lastToken))
         {
             doc.GetToken(myMarkedLine, myMarkedToken).myHasStart = false;
         }
@@ -113,6 +117,7 @@ void TimingEditor::ToggleTokenHasTime()
         {
             lastToken.myValue += doc.GetToken(myMarkedLine, myMarkedToken).myValue;
             doc.GetLine(myMarkedLine).erase(doc.GetLine(myMarkedLine).begin() + myMarkedToken);
+            MoveMarkerLeft();
         }
     }
 }

@@ -17,5 +17,7 @@ namespace ImGui{
         bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress);
         void SetColor(unsigned int aCol);
         void ClearColor();
+
+        bool ToggleSwitch(const char* aLabel, bool* aValue);
     }
 }

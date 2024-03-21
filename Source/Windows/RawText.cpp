@@ -5,9 +5,9 @@
 
 void TextEditor::OnImGuiDraw()
 {
-    if(Gui_Begin())
+    if(ImGui::Begin(GetName().c_str()))
     {
-        if(ImGui::IsWindowFocused())
+        if(ImGui::IsWindowHovered())
         {
             if(!myHasTakenFocus)
             {

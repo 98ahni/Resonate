@@ -73,7 +73,7 @@ AudioPlayback::AudioPlayback()
 
 void AudioPlayback::OnImGuiDraw()
 {
-    if(Gui_Begin())
+    if(ImGui::Begin(GetName().c_str()))
     {
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100);
         if(ImGui::Button("Play"))

@@ -1,15 +1,17 @@
 #include "TouchControl.h"
 #include "AudioPlayback.h"
 #include "TimingEditor.h"
+#include <Extensions/imguiExt.h>
 
 void TouchControl::OnImGuiDraw()
 {
     if(myEditor == nullptr)
     {
+        printf("Assigned editor to TouchControl.\n");
         myEditor = (TimingEditor*)WindowManager::GetWindow("Timing");
     }
     Gui_Begin();
-    if(ImGui::Checkbox("Edit Mode", &myIsCharMode))
+    if(ImGui::Ext::ToggleSwitch("Edit Mode", &myIsCharMode))
     {
     }
     if(ImGui::Button("Back 5s"))

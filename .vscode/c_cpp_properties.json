@@ -23,7 +23,8 @@
                 "${workspaceFolder}/imgui/backends/**",
                 "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/**",
                 "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/c++/v1/**",
-                "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include"
+                "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include",
+                "${workspaceFolder}/Source"
             ],
             "defines": [],
             "compilerPath": "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/bin/clang++",
