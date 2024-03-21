@@ -1,3 +1,6 @@
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include "imguiExt.h"
 #include <emscripten.h>
 #include <emscripten/val.h>
@@ -125,4 +128,69 @@ void ImGui::Ext::SetColor(unsigned int aCol)
 void ImGui::Ext::ClearColor()
 {
     PopStyleColor(GetCurrentContext()->ColorStack.size());
+}
+
+bool ImGui::Ext::ToggleSwitch(const char *aLabel, bool *aValue)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+    const ImGuiID id = window->GetID(aLabel);
+    const ImVec2 label_size = CalcTextSize(aLabel, NULL, true);
+
+    const float square_sz = GetFrameHeight();
+    const ImVec2 size = ImVec2(square_sz * 2.5f, square_sz);
+    const ImVec2 pos = window->DC.CursorPos;
+    const ImRect total_bb(pos, pos + ImVec2(size.x + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2.0f));
+    ItemSize(total_bb, style.FramePadding.y);
+    if (!ItemAdd(total_bb, id))
+    {
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (*v ? ImGuiItemStatusFlags_Checked : 0));
+        return false;
+    }
+
+    bool hovered, held;
+    bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+    if (pressed)
+    {
+        *aValue = !(*aValue);
+        MarkItemEdited(id);
+    }
+
+    const ImRect check_bb(pos, pos + size);
+    RenderNavHighlight(total_bb, id);
+    RenderFrame(check_bb.Min + style.ItemInnerSpacing, check_bb.Max - style.ItemInnerSpacing, GetColorU32(*aValue ? ImGuiCol_CheckMark : ImGuiCol_FrameBg), true, style.FrameRounding);
+    ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
+    bool mixed_value = (g.LastItemData.InFlags & ImGuiItemFlags_MixedValue) != 0;
+    ImRect pad;
+    if (mixed_value)
+    {
+        // Undocumented tristate/mixed/indeterminate checkbox (#2644)
+        // This may seem awkwardly designed because the aim is to make ImGuiItemFlags_MixedValue supported by all widgets (not just checkbox)
+        pad = ImRect((size.x - square_sz) * .5f, 0, (size.x - square_sz) * .5f, 0);
+        //window->DrawList->AddCircleFilled(check_bb.GetCenter(), square_sz * .5f, GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button));
+    }
+    else if (*aValue)
+    {
+        //const float pad = ImMax(1.0f, IM_TRUNC(square_sz / 6.0f));
+        //RenderCheckMark(window->DrawList, check_bb.Min + ImVec2(pad, pad), check_col, square_sz - pad * 2.0f);
+        pad = ImRect(size.x - square_sz, 0, 0, 0);
+    }
+    else
+    {
+        pad = ImRect(0, 0, size.x - square_sz, 0);
+    }
+    window->DrawList->AddRectFilled(check_bb.Min + pad.Min, check_bb.Max - pad.Max, GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button), style.FrameRounding);
+
+    ImVec2 label_pos = ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
+    if (g.LogEnabled)
+        LogRenderedText(&label_pos, mixed_value ? "[~]" : *aValue ? "[x]" : "[ ]");
+    if (label_size.x > 0.0f)
+        RenderText(label_pos, aLabel);
+
+    IMGUI_TEST_ENGINE_ITEM_INFO(id, aLabel, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (*aValue ? ImGuiItemStatusFlags_Checked : 0));
+    return pressed;
 }
