@@ -22,7 +22,7 @@ EM_JS(void, create_button, (emscripten::EM_VAL id, emscripten::EM_VAL event, ems
     btn.style.top = pos_y + 'px';
     btn.style.width = width + 'px';
     btn.style.height = height + 'px';
-    btn.style.opacity = 0;
+    btn.style.opacity = 100;
 });
 EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscripten::EM_VAL event, emscripten::EM_VAL callback, int pos_x, int pos_y, int width, int height), {
     let input = document.getElementById(Emval.toValue(id));
@@ -55,7 +55,7 @@ EM_ASYNC_JS(void, destroy_element_async, (emscripten::EM_VAL id, int delay_ms), 
 
 void ImGui::Ext::CreateHTMLButton(const char *anID, const char *anEvent, const char *aJSFunctonName)
 {
-    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)ImGui::GetCursorPosX(), (int)ImGui::GetCursorPosY(), (int)ImGui::GetItemRectSize().x, (int)ImGui::GetItemRectSize().y);
+    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)ImGui::GetItemRectMin().x, (int)ImGui::GetItemRectMin().y, (int)ImGui::GetItemRectSize().x, (int)ImGui::GetItemRectSize().y);
 }
 
 void ImGui::Ext::CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char *anID, const char *anEvent, const char *aJSFunctonName)
@@ -65,7 +65,7 @@ void ImGui::Ext::CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char *an
 
 void ImGui::Ext::CreateHTMLInput(const char *anID, const char *aType, const char *anEvent, const char *aJSFunctonName)
 {
-    create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)ImGui::GetCursorPosX(), (int)ImGui::GetCursorPosY(), (int)ImGui::GetItemRectSize().x, (int)ImGui::GetItemRectSize().y);
+    create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)ImGui::GetItemRectMin().x, (int)ImGui::GetItemRectMin().y, (int)ImGui::GetItemRectSize().x, (int)ImGui::GetItemRectSize().y);
 }
 
 void ImGui::Ext::CreateHTMLInput(ImVec2 aPosition, ImVec2 aSize, const char *anID, const char *aType, const char *anEvent, const char *aJSFunctonName)
