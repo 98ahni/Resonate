@@ -9,6 +9,7 @@ public:
     AudioPlayback();
     void OnImGuiDraw();
 
+    static void PrepPlayback();
     static void SetPlaybackFile(std::string aPath);
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
