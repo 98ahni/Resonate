@@ -16,6 +16,10 @@ void TimingEditor::OnImGuiDraw()
                 if(myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
                 uint start = doc.GetLine(line)[token].myHasStart ? doc.GetLine(line)[token].myStartTime : 0;
                 uint end = doc.GetTokenAfter(line, token).myHasStart ? doc.GetTokenAfter(line, token).myStartTime : start;
+                if(doc.GetToken(line, token).myValue.contains('<'))
+                {
+                    doc.ParseEffectToken(doc.GetToken(line, token));
+                }
                 if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress(), doc.GetLine(line)[token].myHasStart))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey_ModShift))
@@ -28,6 +32,7 @@ void TimingEditor::OnImGuiDraw()
                 }
                 ImGui::SameLine();
             }
+            doc.PopColor();
             ImGui::NewLine();
         }
         ImGui::PopStyleVar();

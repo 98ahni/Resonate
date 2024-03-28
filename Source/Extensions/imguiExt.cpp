@@ -22,7 +22,7 @@ EM_JS(void, create_button, (emscripten::EM_VAL id, emscripten::EM_VAL event, ems
     btn.style.top = pos_y + 'px';
     btn.style.width = width + 'px';
     btn.style.height = height + 'px';
-    btn.style.opacity = 100;
+    btn.style.opacity = 0.3;
 });
 EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscripten::EM_VAL event, emscripten::EM_VAL callback, int pos_x, int pos_y, int width, int height), {
     let input = document.getElementById(Emval.toValue(id));

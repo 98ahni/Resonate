@@ -22,13 +22,27 @@ namespace Serialization
     }
     KaraokeLine &KaraokeDocument::GetValidLineAfter(size_t aLine)
     {
-        // TODO: insert return statement here
-        return myTokens[aLine];
+        if(aLine + 1 >= myTokens.size())
+        {
+            return ourNullLine;
+        }
+        if(myTokens[aLine + 1].size() == 0)
+        {
+            return GetValidLineAfter(aLine + 1);
+        }
+        return myTokens[aLine + 1];
     }
     KaraokeLine &KaraokeDocument::GetValidLineBefore(size_t aLine)
     {
-        // TODO: insert return statement here
-        return myTokens[aLine];
+        if(aLine - 1 < 0)
+        {
+            return ourNullLine;
+        }
+        if(myTokens[aLine - 1].size() == 0)
+        {
+            return GetValidLineBefore(aLine - 1);
+        }
+        return myTokens[aLine - 1];
     }
     KaraokeToken &KaraokeDocument::GetToken(size_t aLine, size_t aToken)
     {
@@ -74,13 +88,37 @@ namespace Serialization
     }
     KaraokeToken &KaraokeDocument::GetTimedTokenAfter(size_t aLine, size_t aToken)
     {
-        // TODO: insert return statement here
-        return ourNullToken;
+        KaraokeToken& token = GetTokenAfter(aLine, aToken);
+        if(IsNull(token))
+        {
+            return ourNullToken;
+        }
+        if(token.myHasStart)
+        {
+            return token;
+        }
+        if(aToken + 1 < myTokens[aLine].size())
+        {
+            return GetTimedTokenAfter(aLine, aToken + 1);
+        }
+        return GetTimedTokenAfter(aLine + 1, 0);
     }
     KaraokeToken &KaraokeDocument::GetTimedTokenBefore(size_t aLine, size_t aToken)
     {
-        // TODO: insert return statement here
-        return ourNullToken;
+        KaraokeToken& token = GetTokenBefore(aLine, aToken);
+        if(IsNull(token))
+        {
+            return ourNullToken;
+        }
+        if(token.myHasStart)
+        {
+            return token;
+        }
+        if(aToken - 1 >= 0)
+        {
+            return GetTimedTokenBefore(aLine, aToken - 1);
+        }
+        return GetTimedTokenBefore(aLine - 1, 0);
     }
     bool KaraokeDocument::IsPauseToken(size_t aLine, size_t aToken)
     {
@@ -97,6 +135,34 @@ namespace Serialization
     uint KaraokeDocument::GetEndColor()
     {
         return myHasOverrideColor ? myOverrideEndColor : myBaseEndColor;
+    }
+    bool KaraokeDocument::ParseEffectToken(KaraokeToken &aToken)
+    {
+        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        if(tags.size() == 0)
+        {
+            return false;
+        }
+        bool output = false;
+        for(int i = 0; i < tags.size(); i++)
+        {
+            if(i >= tags.size()) {printf("The for loop broke all logic and found \"%i\" to be less than \"%i\"!\n", i, tags.size()); break;}
+            if(tags[i].empty()) continue;
+            std::string lowTag = StringTools::tolower(tags[i]);
+            if(lowTag.starts_with("<font color"))
+            {
+                std::vector<std::string> colors = StringTools::Split(std::string(lowTag.data()), std::regex("[A-Za-z0-9 ]+"), true);
+                if(colors.size() > 2) SetColor(FromHex(colors[1]), FromHex(colors[2]));
+                if(colors.size() > 1) SetColor(FromHex(colors[1]));
+                output = true;
+            }
+            else if(lowTag.starts_with("<no effect>"))
+            {
+                SetColor(0xFFFFFFFF, 0x7F7F7F7F);
+                output = true;
+            }
+        }
+        return output;
     }
     void KaraokeDocument::SetColor(uint aStartColor)
     {
