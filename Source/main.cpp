@@ -26,6 +26,7 @@ EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 bool g_closeFileTab = false;
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
+    AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);

@@ -45,6 +45,15 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     //}));
 });
 
+EM_JS(void, prep_playback, (), {
+    const audio = global_audio_element;
+    audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+    audio.play().then( () =>
+    {
+        audio.pause();
+    });
+});
+
 EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
     const audio = global_audio_element;
     //console.log("Get time: " + audio.currentTime);
@@ -119,6 +128,10 @@ void AudioPlayback::OnImGuiDraw()
         }
     }
     Gui_End();
+}
+
+void AudioPlayback::PrepPlayback()
+{
 }
 
 void AudioPlayback::SetPlaybackFile(std::string aPath)
