@@ -29,6 +29,7 @@ namespace Serialization
         bool IsPauseToken(KaraokeToken& aToken);
         uint GetStartColor();
         uint GetEndColor();
+        bool ParseEffectToken(KaraokeToken& aToken);
         void SetColor(uint aStartColor);
         void SetColor(uint aStartColor, uint anEndColor);
         void PopColor();
@@ -54,6 +55,7 @@ namespace Serialization
 
         static KaraokeDocument* ourInstance;
         inline static KaraokeToken ourNullToken = {"", false, 0};
+        static inline KaraokeLine ourNullLine = KaraokeLine();
         KaraokeData myTokens;
         std::string myPath;
         bool myHasBaseStartColor = false;

@@ -58,7 +58,7 @@ namespace StringTools
 
 	std::string tolower(const std::string& aString)
 	{
-		std::string output;
+		std::string output{};
 		for (int i = 0; i < aString.size(); i++)
 		{
 			output += (char)std::tolower(aString[i]);
@@ -68,7 +68,7 @@ namespace StringTools
 
 	std::string TOUPPER(const std::string& aString)
 	{
-		std::string output;
+		std::string output{};
 		for (int i = 0; i < aString.size(); i++)
 		{
 			output += (char)std::toupper(aString[i]);

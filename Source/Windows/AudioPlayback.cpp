@@ -30,6 +30,10 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     {
         audio.preservesPitch = true;
     }
+    audio.play().then( () =>
+    {
+        audio.pause();
+    });
     audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();};
     audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();};
     audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();};
@@ -94,10 +98,10 @@ void AudioPlayback::OnImGuiDraw()
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100);
         if(ImGui::Button("Play"))
         {
-            //myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
+            myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
             audio_element_play();
         }
-        ImGui::Ext::CreateHTMLButton("htmlPlay", "click", "audio_element_play");
+        //ImGui::Ext::CreateHTMLButton("htmlPlay", "click", "audio_element_play");
         if(ImGui::Button("Pause"))
         {
             audio_element_pause();
