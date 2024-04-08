@@ -7,9 +7,8 @@
 #include <Serialization/KaraokeData.h>
 #include <Extensions/imguiExt.h>
 
-EM_JS(emscripten::EM_VAL, create_audio_element, (), {
-    global_audio_element = new Audio();
-    return Emval.toHandle(global_audio_element);
+EM_JS(void, create_audio_element, (), {
+    global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
 }
 var global_audio_element;
 if(false){
@@ -22,18 +21,19 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
 	const audioURL = URL.createObjectURL(audioBlob);
     const audio = global_audio_element;//Emval.toValue(audio_element);
     audio.src = audioURL;
-    if(audio.hasAttribute("webkitPreservesPitch"))
-    {
-        audio.webkitPreservesPitch = true;
-    }
-    else
-    {
-        audio.preservesPitch = true;
-    }
-    audio.play().then( () =>
-    {
-        audio.pause();
-    });
+    //if(audio.hasAttribute("webkitPreservesPitch"))
+    //{
+    //    audio.webkitPreservesPitch = true;
+    //}
+    //else
+    //{
+    //    audio.preservesPitch = true;
+    //}
+    audio.play();//.then( () =>
+    //{
+    //    audio.pause();
+    //});
+    //alert(audio.src);
     audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();};
     audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();};
     audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();};
@@ -45,34 +45,37 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     //}));
 });
 
-EM_JS(void, prep_playback, (), {
+EM_JS(void, create_audio_playback, (), {
+    global_audio_element = new Audio();
     const audio = global_audio_element;
     audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-    audio.play().then( () =>
-    {
-        audio.pause();
-    });
+    audio.load();
+    audio.play();//.then( () =>
+    //{
+    //    audio.pause();
+    //});
+    //alert(audio.src);
 });
 
 EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
     const audio = global_audio_element;
     //console.log("Get time: " + audio.currentTime);
-    return Emval.toHandle(audio.currentTime);
+    return Emval.toHandle(audio.seek());
 });
 
 EM_JS(emscripten::EM_VAL, get_audio_duration, (), {
     const audio = global_audio_element;
-    return Emval.toHandle(audio.duration);
+    return Emval.toHandle(audio.duration());
 });
 
 EM_JS(void , set_audio_playback_progress, (emscripten::EM_VAL progress), {
     const audio = global_audio_element;
-    audio.currentTime = Emval.toValue(progress);
+    audio.seek(Emval.toValue(progress));
 });
 
 EM_JS(void , set_audio_playback_speed, (emscripten::EM_VAL play_rate), {
     const audio = global_audio_element;
-    audio.playbackRate = Emval.toValue(play_rate);
+    audio.rate(Emval.toValue(play_rate));
 });
 
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnEnded(){}
@@ -95,22 +98,25 @@ AudioPlayback::AudioPlayback()
         return;
     }
     ourInstance = this;
-    myAudio = VAR_FROM_JS(create_audio_element());
+    //myAudio = VAR_FROM_JS(create_audio_element());
+    create_audio_element();
     myProgress = 0;
     mySpeed = 1.0;
+    myHasAudio = false;
 }
 
 void AudioPlayback::OnImGuiDraw()
 {
     if(ImGui::Begin(GetName().c_str()))
     {
+        if(myHasAudio)
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100);
         if(ImGui::Button("Play"))
         {
             myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
             audio_element_play();
         }
-        //ImGui::Ext::CreateHTMLButton("htmlPlay", "click", "audio_element_play");
+        //ImGui::Ext::CreateHTMLButton("htmlPlay", "touchstart", "audio_element_play");
         if(ImGui::Button("Pause"))
         {
             audio_element_pause();
@@ -119,7 +125,7 @@ void AudioPlayback::OnImGuiDraw()
         ImGui::SameLine();
         if(ImGui::SliderInt("##ProgressBar", (int*)&myProgress, (int)0, (int)myDuration, ""))
         {
-            //myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
+            myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
             set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f));
         }
         if(ImGui::SliderFloat("##SpeedBar", &mySpeed, 0.1f, 1.0f))
@@ -130,8 +136,15 @@ void AudioPlayback::OnImGuiDraw()
     Gui_End();
 }
 
+extern"C" EMSCRIPTEN_KEEPALIVE void jsPrepPlayback()
+{
+    AudioPlayback::PrepPlayback();
+}
 void AudioPlayback::PrepPlayback()
 {
+    if(ourInstance->myHasAudio) return;
+    create_audio_playback();
+    ourInstance->myHasAudio = true;
 }
 
 void AudioPlayback::SetPlaybackFile(std::string aPath)

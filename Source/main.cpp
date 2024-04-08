@@ -26,7 +26,7 @@ EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 bool g_closeFileTab = false;
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
-    AudioPlayback::PrepPlayback();
+    //AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);
@@ -49,7 +49,7 @@ void loop(void* window){
             if(ImGui::MenuItem("Open Project"))
             {
             }
-            ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");
+            ImGui::Ext::CreateHTMLButton("OpenProject", "touchend", "_LoadProject");
             if(ImGui::MenuItem("Save Document"))
             {
             }
