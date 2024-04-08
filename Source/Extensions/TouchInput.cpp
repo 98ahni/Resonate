@@ -146,6 +146,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchStart(int ID, double X, double Y)
 extern "C" EMSCRIPTEN_KEEPALIVE void TouchEnd(int ID, double X, double Y)
 {
 	g_touches.erase(ID);
+	//EM_ASM(_jsPrepPlayback());
 	if(g_mainTouch == ID && g_subTouch == -1)
 	{
 		g_mainTouch = -1;
