@@ -26,9 +26,12 @@ void TimingEditor::OnImGuiDraw()
                     {
                         AudioPlayback::SetPlaybackProgress(doc.GetToken(line, token).myStartTime);
                     }
-                    myMarkedLine = line;
-                    myMarkedToken = token;
-                    myMarkedChar = 0;
+                    else
+                    {
+                        myMarkedLine = line;
+                        myMarkedToken = token;
+                        myMarkedChar = 0;
+                    }
                 }
                 ImGui::SameLine();
             }
@@ -229,6 +232,11 @@ void TimingEditor::MoveMarkerRight(bool aIsCharmode)
         }
         myMarkedChar = 0;
     }
+}
+
+void TimingEditor::DisableInput(bool aDisable)
+{
+    myDisableInput = aDisable;
 }
 
 void TimingEditor::DrawTextMarker()
