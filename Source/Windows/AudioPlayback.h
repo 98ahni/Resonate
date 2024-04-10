@@ -16,6 +16,10 @@ public:
 
 private:
     static inline AudioPlayback* ourInstance;
+
+    void DrawPlaybackProgress(float aDrawUntil);
+    void DrawPlaybackSpeed();
+
     emscripten::val myAudio;
     bool myHasAudio = false;
     float mySpeed;

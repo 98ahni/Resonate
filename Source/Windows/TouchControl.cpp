@@ -52,10 +52,25 @@ void TouchControl::OnImGuiDraw()
     ImVec2 endPosMult = ImVec2(.66f, .66f);
 
     ImGui::SetCursorPos(contentSize * backPosMult + offset);
-    if(ImGui::Button("5s##Back", buttonSize))
+    if(ImGui::Button("##5sBack", buttonSize))
     {
         AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() - 500);
     }
+    // 5s
+    ImVec2 btnCenter = contentSize * backPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos();
+    btnCenter.x += buttonSize.x * .01f;
+    btnCenter.y += buttonSize.x * .005f;
+    drawList->PathArcTo({btnCenter.x - buttonSize.x * .07f, btnCenter.y + buttonSize.x * .04f}, buttonSize.x * .055f, -2.f, 2.4f);
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    drawList->PathLineTo({btnCenter.x - buttonSize.x * .1f, btnCenter.y + buttonSize.x * .004f});
+    drawList->PathLineTo({btnCenter.x - buttonSize.x * .1f, btnCenter.y - buttonSize.x * .1f});
+    drawList->PathLineTo({btnCenter.x - buttonSize.x * .01f, btnCenter.y - buttonSize.x * .1f});
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    drawList->PathArcTo({btnCenter.x + buttonSize.x * .062f, btnCenter.y - buttonSize.x * .015f}, buttonSize.x * .035f, 1.57f, 6.1f);
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    drawList->PathArcTo({btnCenter.x + buttonSize.x * .06f, btnCenter.y + buttonSize.x * .06f}, buttonSize.x * .04f, -1.57f, 3.f);
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    // ~5s
     // Back Arrow
     drawList->PathArcTo(contentSize * backPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos(), buttonSize.x * .3f, -1.57f, 3.54f);
     drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .05f);
@@ -65,12 +80,27 @@ void TouchControl::OnImGuiDraw()
     drawList->AddTriangleFilled(triangleTip, ImVec2(triangleTip.x + buttonSize.x * .12f, triangleTip.y - buttonSize.x * .1f), ImVec2(triangleTip.x + buttonSize.x * .12f, triangleTip.y + buttonSize.x * .1f), IM_COL32_WHITE);
     // ~Back Arrow
     ImGui::SetCursorPos(contentSize * skipPosMult + offset);
-    if(ImGui::Button("5s##Skip", buttonSize))
+    if(ImGui::Button("##5sSkip", buttonSize))
     {
         AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() + 500);
     }
+    // 5s
+    btnCenter = contentSize * skipPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos();
+    btnCenter.x += buttonSize.x * .01f;
+    btnCenter.y += buttonSize.x * .01f; // Different heights looks more centered I guess...
+    drawList->PathArcTo({btnCenter.x - buttonSize.x * .07f, btnCenter.y + buttonSize.x * .04f}, buttonSize.x * .055f, -2.f, 2.4f);
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    drawList->PathLineTo({btnCenter.x - buttonSize.x * .1f, btnCenter.y + buttonSize.x * .004f});
+    drawList->PathLineTo({btnCenter.x - buttonSize.x * .1f, btnCenter.y - buttonSize.x * .1f});
+    drawList->PathLineTo({btnCenter.x - buttonSize.x * .01f, btnCenter.y - buttonSize.x * .1f});
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    drawList->PathArcTo({btnCenter.x + buttonSize.x * .062f, btnCenter.y - buttonSize.x * .015f}, buttonSize.x * .035f, 1.57f, 6.1f);
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    drawList->PathArcTo({btnCenter.x + buttonSize.x * .06f, btnCenter.y + buttonSize.x * .06f}, buttonSize.x * .04f, -1.57f, 3.f);
+    drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .03f);
+    // ~5s
     // Skip Arrow
-    drawList->PathArcTo(contentSize * skipPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos(), buttonSize.x * .3f, 4.71f, .4f);
+    drawList->PathArcTo(contentSize * skipPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos(), buttonSize.x * .3f, -.4f, 4.71f);
     drawList->PathStroke(IM_COL32_WHITE, 0, buttonSize.x * .05f);
     triangleTip = ImVec2(contentSize * skipPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
     triangleTip.y -= buttonSize.x * .3f;
