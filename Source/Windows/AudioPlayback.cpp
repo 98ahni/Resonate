@@ -11,7 +11,7 @@ EM_JS(void, create_audio_element, (), {
     global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
     //global_audio_element.once('playerror')
 }
-var global_audio_element;
+var global_audio_element = null;
 if(false){
 });
 
@@ -21,16 +21,18 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
 	const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'});
 	const audioURL = URL.createObjectURL(audioBlob);
     //global_audio_element = new Howl({src:[audioURL], format:"audio/mp3"});
+    global_audio_element = new Audio();
     const audio = global_audio_element;//Emval.toValue(audio_element);
     //audio.load();
     try
     {
         audio.srcObject = audioBlob;
     }
-    catch (e)
-    {
+    catch (e) {}
+    
+    
         audio.src = audioURL;
-    }
+    alert('made it');
     //if(audio.hasAttribute("webkitPreservesPitch"))
     //{
     //    audio.webkitPreservesPitch = true;
@@ -39,10 +41,10 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     //{
     //    audio.preservesPitch = true;
     //}
-    audio.play().then( () =>
-    {
-        audio.pause();
-    });
+    audio.play();//.then( () =>
+    //{
+    //    audio.pause();
+    //});
     //alert(audio.src);
     //console.log(audio.state());
     //audio.onload = (event) => {console.log("Loaded");};
@@ -156,8 +158,9 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsPrepPlayback()
 }
 void AudioPlayback::PrepPlayback()
 {
-    if(ourInstance->myHasAudio) return;
-    create_audio_playback();
+    if(ourInstance->myHasAudio || ourInstance->myPath.empty()) return;
+    //create_audio_playback();
+    set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
     ourInstance->myHasAudio = true;
 }
 
@@ -182,8 +185,9 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
         printf("No audio file found!\n");
         return;
     }
-    ourInstance->myHasAudio = true;
-    set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
+    ourInstance->myHasAudio = false;
+    ourInstance->myPath = aPath;
+    //set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
     //ourInstance->myDuration = 100 * VAR_FROM_JS(set_audio_playback_file(VAR_TO_JS(aPath.c_str()))).await().as<double>();
     //printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
 }
