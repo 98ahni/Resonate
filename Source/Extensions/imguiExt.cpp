@@ -16,7 +16,7 @@ EM_JS(void, create_button, (emscripten::EM_VAL id, emscripten::EM_VAL event, ems
         btn.id = Emval.toValue(id);
         document.body.insertBefore(btn, document.getElementById('canvas').nextSibling);
     }
-    btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true);
+    btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false);
     btn.style.position = 'fixed';
     btn.style.left = pos_x + 'px';
     btn.style.top = pos_y + 'px';

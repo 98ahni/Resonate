@@ -14,7 +14,7 @@ public:
     void MoveMarkerDown();
     void MoveMarkerLeft(bool aIsCharmode = false);
     void MoveMarkerRight(bool aIsCharmode = false);
-    void DisableInput(bool aDisable);
+    void SetInputUnsafe(bool anUnsafe);
 
 private:
     void DrawTextMarker();
@@ -22,5 +22,6 @@ private:
     int myMarkedLine = 0;
     int myMarkedToken = 0;
     int myMarkedChar = 0;
+    bool myInputIsUnsafe = false;
     bool myDisableInput = false;
 };
