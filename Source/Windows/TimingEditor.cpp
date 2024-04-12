@@ -41,6 +41,10 @@ void TimingEditor::OnImGuiDraw()
         ImGui::PopStyleVar();
         if(ImGui::IsWindowFocused())
         {
+            myDisableInput = false;
+        }
+        if(!myDisableInput)
+        {
             bool charMode = false;
             if(ImGui::IsKeyDown(ImGuiKey_ModCtrl))
             {

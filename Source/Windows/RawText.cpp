@@ -2,6 +2,8 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <Serialization/KaraokeData.h>
 #include <Extensions/TouchInput.h>
+#include "Base/WindowManager.h"
+#include "TimingEditor.h"
 
 void TextEditor::OnImGuiDraw()
 {
@@ -12,6 +14,7 @@ void TextEditor::OnImGuiDraw()
             if(!myHasTakenFocus)
             {
                 myRawText = Serialization::KaraokeDocument::Get().Serialize();
+                ((TimingEditor*)WindowManager::GetWindow("Timing"))->DisableInput(true);
             }
             myHasTakenFocus = true;
         }

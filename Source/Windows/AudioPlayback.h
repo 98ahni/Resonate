@@ -22,6 +22,7 @@ private:
 
     emscripten::val myAudio;
     bool myHasAudio = false;
+    std::string myPath = "";
     float mySpeed;
     uint myProgress;
     uint myDuration;
