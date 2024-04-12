@@ -23,16 +23,20 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     //global_audio_element = new Howl({src:[audioURL], format:"audio/mp3"});
     global_audio_element = new Audio();
     const audio = global_audio_element;//Emval.toValue(audio_element);
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
     //audio.load();
     try
     {
         audio.srcObject = audioBlob;
     }
-    catch (e) {}
-    
-    
+    catch (e)
+    {
         audio.src = audioURL;
-    alert('made it');
+    }
+    const track = audioCtx.createMediaElementSource(audio);
+    track.connect(audioCtx.destination);
+    //alert('made it');
     //if(audio.hasAttribute("webkitPreservesPitch"))
     //{
     //    audio.webkitPreservesPitch = true;
@@ -41,10 +45,10 @@ EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     //{
     //    audio.preservesPitch = true;
     //}
-    audio.play();//.then( () =>
-    //{
-    //    audio.pause();
-    //});
+    audio.play().then( () =>
+    {
+        audio.pause();
+    });
     //alert(audio.src);
     //console.log(audio.state());
     //audio.onload = (event) => {console.log("Loaded");};

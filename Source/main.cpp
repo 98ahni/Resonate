@@ -49,7 +49,7 @@ void loop(void* window){
             if(ImGui::MenuItem("Open Project"))
             {
             }
-            ImGui::Ext::CreateHTMLButton("OpenProject", "touchend", "_LoadProject");
+            ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");
             if(ImGui::MenuItem("Save Document"))
             {
             }

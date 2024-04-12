@@ -13,7 +13,7 @@ void TimingEditor::OnImGuiDraw()
         {
             for(int token = 0; token < doc.GetLine(line).size(); token++)
             {
-                if(myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
+                if(!myDisableInput && myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
                 uint start = doc.GetLine(line)[token].myHasStart ? doc.GetLine(line)[token].myStartTime : 0;
                 uint end = doc.GetTokenAfter(line, token).myHasStart ? doc.GetTokenAfter(line, token).myStartTime : start;
                 if(doc.GetToken(line, token).myValue.contains('<'))
@@ -39,7 +39,7 @@ void TimingEditor::OnImGuiDraw()
             ImGui::NewLine();
         }
         ImGui::PopStyleVar();
-        if(ImGui::IsWindowFocused())
+        if(!myInputIsUnsafe && ImGui::IsWindowFocused())
         {
             myDisableInput = false;
         }
@@ -238,9 +238,10 @@ void TimingEditor::MoveMarkerRight(bool aIsCharmode)
     }
 }
 
-void TimingEditor::DisableInput(bool aDisable)
+void TimingEditor::SetInputUnsafe(bool anUnsafe)
 {
-    myDisableInput = aDisable;
+    myInputIsUnsafe = anUnsafe;
+    myDisableInput = anUnsafe ? true : myDisableInput;
 }
 
 void TimingEditor::DrawTextMarker()
