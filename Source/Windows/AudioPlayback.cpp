@@ -11,8 +11,8 @@ EM_JS(void, create_audio_element, (), {
     //global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
     //global_audio_element.once('playerror')
 }
-var global_audio_context = null;
 var global_audio_element = null;
+var global_audio_context = null;
 var global_audio_blobs = [];
 if(false){
 });
@@ -58,13 +58,21 @@ EM_ASYNC_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
 	const audioData = FS.readFile(Emval.toValue(fs_path));
     const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3'});
     global_audio_blobs.length = 10;
-    const blobBuffer = await audioBlob.arrayBuffer();
-    global_audio_context.decodeAudioData(blobBuffer, (buffer) => {
+    //const blobBuffer = await audioBlob.arrayBuffer();
+    var streatchers = [];
+    global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer) => {
         for(var i = 1; i <= 10; i++){
-            global_audio_blobs[i - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, buffer, 1 / (i * 0.1)));
+            streatchers.push(new Promise((resolve) => {
+                if(i == 10) global_audio_blobs[i - 1] = Module.audioBufferToBlob(buffer);
+                else if(i == 5) global_audio_blobs[i - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, buffer, 2));
+                else global_audio_blobs[i - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, buffer, 1 / (i * 0.1)));
+                console.log('Streched blob nr ' + i);
+                resolve();
+            }));
         }
         set_audio_playback_buffer(Emval.toHandle(10));
     });
+    await Promise.all(streatchers);
 });
 
 EM_JS(void, set_audio_playback_buffer, (emscripten::EM_VAL rate_index), {
@@ -86,7 +94,7 @@ EM_JS(void, create_audio_playback, (), {
     global_audio_element = new Audio();
     const audio = global_audio_element;
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const global_audio_context = new AudioContext();
+    global_audio_context = new AudioContext();
     const track = global_audio_context.createMediaElementSource(global_audio_element);
     track.connect(global_audio_context.destination);
     audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
@@ -99,10 +107,10 @@ EM_JS(void, create_audio_playback, (), {
         audio.preservesPitch = true;
     }
     console.log(global_audio_context.state);   // This console.log() is necessary!
-    global_audio_context.resume().then(()=>{
+    global_audio_context.resume();
+    audio.play().then(()=>{
         audio.pause();
     });
-    audio.play();
 });
 
 EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
@@ -151,6 +159,7 @@ AudioPlayback::AudioPlayback()
     myProgress = 0;
     myDuration = 0;
     mySpeed = 10;
+    myTimeScale = 1;
     myHasAudio = false;
 }
 
@@ -159,10 +168,10 @@ void AudioPlayback::OnImGuiDraw()
     if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNav))
     {
         if(myHasAudio)
-        myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100);
+        myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100 * myTimeScale);
         if(ImGui::Button("Play") && myHasAudio)
         {
-            myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
+            myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
             audio_element_play();
         }
         //ImGui::Ext::CreateHTMLButton("htmlPlay", "touchstart", "audio_element_play");
@@ -246,8 +255,8 @@ void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
     ImGui::SetNextItemWidth(width - 20);
     if(ImGui::SliderInt("##ProgressBar", (int*)&myProgress, (int)0, (int)myDuration, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
-        myDuration = 100 * VAR_FROM_JS(get_audio_duration()).as<double>();
-        set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f));
+        myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
+        set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
     }
 }
 
@@ -259,7 +268,11 @@ void AudioPlayback::DrawPlaybackSpeed()
     ImGui::SetNextItemWidth(width - 20);
     if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
+        bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
         //set_audio_playback_speed(VAR_TO_JS(mySpeed));
         set_audio_playback_buffer(VAR_TO_JS(mySpeed));
+        myTimeScale = mySpeed * .1f;
+        set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
+        if(!isPaused) audio_element_play();
     }
 }

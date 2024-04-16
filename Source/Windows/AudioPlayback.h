@@ -26,4 +26,5 @@ private:
     int mySpeed;
     uint myProgress;
     uint myDuration;
+    float myTimeScale;
 };
