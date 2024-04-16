@@ -14,88 +14,140 @@ function copy (len, array, pos, fn) {
 // from https://github.com/danigb/timestretch/blob/master/lib/index.js
 function stretch (ac, input, scale, options) {
   // OPTIONS
-  var opts = options || {}
+  var opts = options || {};
   // Processing sequence size (100 msec with 44100Hz sample rate)
-  var seqSize = opts.seqSize || 4410
+  var seqSize = opts.seqSize || 4400;
   // Overlapping size (20 msec)
-  var overlap = opts.overlap || 882
+  var overlap = opts.overlap || 0;
   // Best overlap offset seeking window (15 msec)
   // var seekWindow = opts.seekWindow || 662
 
   // The theoretical start of the next sequence
-  var nextOffset = Math.round(seqSize / scale)
-  alert('reached');
+  var nextOffset = Math.round(seqSize / scale);
 
   // Setup the buffers
-  var numSamples = input.length
-  var output = ac.createBuffer(1, numSamples * scale, input.sampleRate)
-  var inL = input.getChannelData(0)
-  var outL = output.getChannelData(0)
+  var numSamples = input.length;
+  var output = ac.createBuffer(input.numberOfChannels, numSamples * scale, input.sampleRate);
 
-  // STATE
-  // where to read then next sequence
-  var read = 0
-  // where to write the next sequence
-  var write = 0
-  // where to read the next fadeout
-  var readOverlap = 0
-
-  while (numSamples - read > seqSize) {
-    // write the first overlap
-    copy(overlap, outL, write, function (i) {
-      var fadeIn = i / overlap
-      var fadeOut = 1 - fadeIn
+  for(var ch = 0; ch < input.numberOfChannels; ch++){
+    var inL = input.getChannelData(ch);
+    var outL = output.getChannelData(ch);
+    
+    // STATE
+    // where to read then next sequence
+    var read = 0;
+    // where to write the next sequence
+    var write = 0;
+    // where to read the next fadeout
+    var readOverlap = 0;
+    
+    while (numSamples - read > seqSize) {
+      // write the first overlap
+      copy(overlap, outL, write, function (i) {
+      var fadeIn = i / overlap;
+      var fadeOut = 1 - fadeIn;
       // Mix the begin of the new sequence with the tail of the sequence last
-      return (inL[read + i] * fadeIn + inL[readOverlap + i] * fadeOut) / 2
+      return (inL[read + i] * fadeIn + inL[readOverlap + i] * fadeOut) / 2;
     })
     copy(seqSize - overlap, outL, write + overlap, function (i) {
       // Copy the tail of the sequence
-      return inL[read + overlap + i]
+      return inL[read + overlap + i];
     })
     // the next overlap is after this sequence
-    readOverlap += read + seqSize
+    readOverlap += read + seqSize;
     // the next sequence is after the nextOffset
-    read += nextOffset
+    read += nextOffset;
     // we wrote a complete sequence
-    write += seqSize
+    write += seqSize;
   }
+}
 
   return output
 }
 
 // from https://stackoverflow.com/questions/62172398/convert-audiobuffer-to-arraybuffer-blob-for-wav-download
-function audioBufferToBlob(audioBuffer) {
+// Returns Uint8Array of WAV bytes
+function getWavBytes(buffer, options) {
+  const type = options.isFloat ? Float32Array : Uint16Array;
+  const numFrames = buffer.byteLength / type.BYTES_PER_ELEMENT;
 
-  var channelData = [],
-    totalLength = 0,
-    channelLength = 0;
+  const headerBytes = getWavHeader(Object.assign({}, options, { numFrames }));
+  const wavBytes = new Uint8Array(headerBytes.length + buffer.byteLength);
 
-  for (var i = 0; i < audioBuffer.numberOfChannels; i++) {
-    channelData.push(audioBuffer.getChannelData(i));
-    totalLength += channelData[i].length;
-    if (i == 0) channelLength = channelData[i].length;
+  // prepend header, then add pcmBytes
+  wavBytes.set(headerBytes, 0);
+  wavBytes.set(new Uint8Array(buffer), headerBytes.length);
+
+  return wavBytes;
+}
+
+// adapted from https://gist.github.com/also/900023
+// returns Uint8Array of WAV header bytes
+function getWavHeader(options) {
+  const numFrames =      options.numFrames;
+  const numChannels =    options.numChannels || 2;
+  const sampleRate =     options.sampleRate || 44100;
+  const bytesPerSample = options.isFloat? 4 : 2;
+  const format =         options.isFloat? 3 : 1;
+
+  const blockAlign = numChannels * bytesPerSample;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = numFrames * blockAlign;
+
+  const buffer = new ArrayBuffer(44);
+  const dv = new DataView(buffer);
+
+  let p = 0;
+
+  function writeString(s) {
+    for (let i = 0; i < s.length; i++) {
+      dv.setUint8(p + i, s.charCodeAt(i));
+    }
+    p += s.length;
   }
 
-  // interleaved
-  const interleaved = new Float32Array(totalLength);
+  function writeUint32(d) {
+    dv.setUint32(p, d, true);
+    p += 4;
+  }
 
-  for (
-    let src = 0, dst = 0;
-    src < channelLength;
-    src++, dst += audioBuffer.numberOfChannels
-  ) {
-    for (var j = 0; j < audioBuffer.numberOfChannels; j++) {
-      interleaved[dst + j] = channelData[j][src];
-    }
-    //interleaved[dst] = left[src];
-    //interleaved[dst + 1] = right[src];
+  function writeUint16(d) {
+    dv.setUint16(p, d, true);
+    p += 2;
+  }
+
+  writeString('RIFF');              // ChunkID
+  writeUint32(dataSize + 36);       // ChunkSize
+  writeString('WAVE');              // Format
+  writeString('fmt ');              // Subchunk1ID
+  writeUint32(16);                  // Subchunk1Size
+  writeUint16(format);              // AudioFormat https://i.stack.imgur.com/BuSmb.png
+  writeUint16(numChannels);         // NumChannels
+  writeUint32(sampleRate);          // SampleRate
+  writeUint32(byteRate);            // ByteRate
+  writeUint16(blockAlign);          // BlockAlign
+  writeUint16(bytesPerSample * 8);  // BitsPerSample
+  writeString('data');              // Subchunk2ID
+  writeUint32(dataSize);            // Subchunk2Size
+
+  return new Uint8Array(buffer);
+}
+function audioBufferToBlob(audioBuffer) {
+  const isSterio = audioBuffer.numberOfChannels >= 2;
+  const [left, right] =  [audioBuffer.getChannelData(0), (isSterio ? audioBuffer.getChannelData(1) : null)];
+
+  // interleaved
+  const interleaved = new Float32Array(left.length + (isSterio ? right.length : left.length));
+  for (let src=0, dst=0; src < left.length; src++, dst+=2) {
+    interleaved[dst] =   left[src];
+    interleaved[dst+1] = (isSterio ? right[src] : left[src]);
   }
 
   // get WAV file bytes and audio params of your audio source
-  const wavBytes = this.getWavBytes(interleaved.buffer, {
+  const wavBytes = getWavBytes(interleaved.buffer, {
     isFloat: true, // floating point or 16-bit integer
-    numChannels: audioBuffer.numberOfChannels,
-    sampleRate: 48000,
+    numChannels: 2,
+    sampleRate: 96000,
   });
   const wav = new Blob([wavBytes], { type: "audio/wav" });
   return wav;
