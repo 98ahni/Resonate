@@ -8,71 +8,101 @@
 #include <Extensions/imguiExt.h>
 
 EM_JS(void, create_audio_element, (), {
-    global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
+    //global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
     //global_audio_element.once('playerror')
 }
+var global_audio_context = null;
 var global_audio_element = null;
+var global_audio_blobs = [];
 if(false){
 });
 
-//EM_JS(emscripten::EM_VAL, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
-EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
+//EM_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
+//	const audioData = FS.readFile(Emval.toValue(fs_path));
+//	//const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'});
+//	const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3'});
+//	const audioURL = URL.createObjectURL(audioBlob);
+//    global_audio_element = new Audio();
+//    const audio = global_audio_element;
+//    const AudioContext = window.AudioContext || window.webkitAudioContext;
+//    const audioCtx = new AudioContext();
+//    try
+//    {
+//        audio.srcObject = audioBlob;
+//    }
+//    catch (e)
+//    {
+//        audio.src = audioURL;
+//    }
+//    const track = audioCtx.createMediaElementSource(global_audio_element);
+//    track.connect(audioCtx.destination);
+//    if(audio.hasAttribute("webkitPreservesPitch"))
+//    {
+//        audio.webkitPreservesPitch = true;
+//    }
+//    else
+//    {
+//        audio.preservesPitch = true;
+//    }
+//    console.log(audioCtx.state);   // This console.log() is necessary!
+//    audioCtx.resume().then(()=>{
+//        audio.pause();
+//    });
+//    audio.play();
+//    audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();};
+//    audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();};
+//    audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();};
+//});
+
+EM_ASYNC_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
 	const audioData = FS.readFile(Emval.toValue(fs_path));
-	const audioBlob = new Blob([audioData.buffer], {type: 'application/octet-binary'});
-	const audioURL = URL.createObjectURL(audioBlob);
-    //global_audio_element = new Howl({src:[audioURL], format:"audio/mp3"});
-    global_audio_element = new Audio();
-    const audio = global_audio_element;//Emval.toValue(audio_element);
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-    //audio.load();
+    const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3'});
+    global_audio_blobs.length = 10;
+    const blobBuffer = await audioBlob.arrayBuffer();
+    global_audio_context.decodeAudioData(blobBuffer, (buffer) => {
+        for(var i = 1; i <= 10; i++){
+            global_audio_blobs[i - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, buffer, 1 / (i * 0.1)));
+        }
+        set_audio_playback_buffer(Emval.toHandle(10));
+    });
+});
+
+EM_JS(void, set_audio_playback_buffer, (emscripten::EM_VAL rate_index), {
+    if(global_audio_blobs.length == 0) {
+        return;
+    }
+    const audio = global_audio_element;
     try
     {
-        audio.srcObject = audioBlob;
+        audio.srcObject = global_audio_blobs[Emval.toValue(rate_index) - 1];
     }
     catch (e)
     {
-        audio.src = audioURL;
+        audio.src = URL.createObjectURL(global_audio_blobs[Emval.toValue(rate_index) - 1]);
     }
-    const track = audioCtx.createMediaElementSource(audio);
-    track.connect(audioCtx.destination);
-    //alert('made it');
-    //if(audio.hasAttribute("webkitPreservesPitch"))
-    //{
-    //    audio.webkitPreservesPitch = true;
-    //}
-    //else
-    //{
-    //    audio.preservesPitch = true;
-    //}
-    audio.play().then( () =>
-    {
-        audio.pause();
-    });
-    //alert(audio.src);
-    //console.log(audio.state());
-    //audio.onload = (event) => {console.log("Loaded");};
-    audio.onended = (event) => {console.log("Ended"); _AudioOnEnded();};
-    audio.onpause = (event) => {console.log("Pause"); _AudioOnPause();};
-    audio.onplay = (event) => {console.log("Play"); _AudioOnPlay();};
-    //return Emval.toHandle(new Promise((resolve) => {
-    //    global_audio_element.addEventListener("durationchange", function eventHandler(event) {
-    //        this.removeEventListener("durationchange", eventHandler);
-    //        resolve(audio.duration);
-    //    });
-    //}));
 });
 
 EM_JS(void, create_audio_playback, (), {
     global_audio_element = new Audio();
     const audio = global_audio_element;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const global_audio_context = new AudioContext();
+    const track = global_audio_context.createMediaElementSource(global_audio_element);
+    track.connect(global_audio_context.destination);
     audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-    //audio.load();
-    audio.play();//.then( () =>
-    //{
-    //    audio.pause();
-    //});
-    //alert(audio.src);
+    if(audio.hasAttribute("webkitPreservesPitch"))
+    {
+        audio.webkitPreservesPitch = true;
+    }
+    else
+    {
+        audio.preservesPitch = true;
+    }
+    console.log(global_audio_context.state);   // This console.log() is necessary!
+    global_audio_context.resume().then(()=>{
+        audio.pause();
+    });
+    audio.play();
 });
 
 EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
@@ -119,7 +149,8 @@ AudioPlayback::AudioPlayback()
     //myAudio = VAR_FROM_JS(create_audio_element());
     //create_audio_element();
     myProgress = 0;
-    mySpeed = 1.0;
+    myDuration = 0;
+    mySpeed = 10;
     myHasAudio = false;
 }
 
@@ -162,9 +193,10 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsPrepPlayback()
 }
 void AudioPlayback::PrepPlayback()
 {
-    if(ourInstance->myHasAudio || ourInstance->myPath.empty()) return;
-    //create_audio_playback();
-    set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
+    if(ourInstance->myHasAudio) return;
+    //if(ourInstance->myHasAudio || ourInstance->myPath.empty()) return;
+    create_audio_playback();
+    //set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
     ourInstance->myHasAudio = true;
 }
 
@@ -191,7 +223,7 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     }
     ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
-    //set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
+    set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
     //ourInstance->myDuration = 100 * VAR_FROM_JS(set_audio_playback_file(VAR_TO_JS(aPath.c_str()))).await().as<double>();
     //printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
 }
@@ -221,14 +253,13 @@ void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
 
 void AudioPlayback::DrawPlaybackSpeed()
 {
-    int pertenth = 10 * mySpeed;
-    ImGui::Text("%i0%%", pertenth);
+    ImGui::Text("%i0%%", mySpeed);
     ImGui::SameLine();
     float width = ImGui::GetWindowSize().x - ImGui::GetCursorPosX();
     ImGui::SetNextItemWidth(width - 20);
-    if(ImGui::SliderInt("##SpeedBar", &pertenth, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
+    if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
-        mySpeed = pertenth * .1f;
-        set_audio_playback_speed(VAR_TO_JS(mySpeed));
+        //set_audio_playback_speed(VAR_TO_JS(mySpeed));
+        set_audio_playback_buffer(VAR_TO_JS(mySpeed));
     }
 }
