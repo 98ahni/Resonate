@@ -1,6 +1,7 @@
 #include "AudioPlayback.h"
 #include <emscripten.h>
 #include <emscripten/val.h>
+//#include <emscripten/wasm_worker.h>
 #include <filesystem>
 #include "Base/WindowManager.h"
 #include <Defines.h>
@@ -60,19 +61,32 @@ EM_ASYNC_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     global_audio_blobs.length = 10;
     //const blobBuffer = await audioBlob.arrayBuffer();
     global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer) => {
-        for(var i = 1; i <= 10; i++){
-            if(i == 10) global_audio_blobs[i - 1] = Module.audioBufferToBlob(buffer);
-            else {
+        global_audio_blobs[9] = Module.audioBufferToBlob(buffer);
+        set_audio_playback_buffer(Emval.toHandle(10));
+    });
+        for(var i = 1; i < 10; i++){
+            
                 const worker = new Worker('plugins/audiostretchworker.js');
-                worker.postMessage([global_audio_context.createBuffer(buffer.numberOfChannels, buffer.length * 1 / (i * 0.1), buffer.sampleRate), buffer, i]);
+                worker.postMessage([audioBlob, i]);
+                //worker.postMessage([global_audio_context.createBuffer(buffer.numberOfChannels, buffer.length * 1 / (i * 0.1), buffer.sampleRate), buffer, i]);
                 worker.onmessage = (result) => {
                     global_audio_blobs[result.data[1] - 1] = result.data[0];
                 };
-            }
+                //_StartAudioStretchWasmWorker(Emval.toHandle(buffer), Emval.toHandle(i));
+            
         }
-        set_audio_playback_buffer(Emval.toHandle(10));
-    });
 });
+//EM_JS(void, audio_stretch_wasm_worker, (emscripten::EM_VAL audio_buffer, emscripten::EM_VAL ind), {
+//    
+//    if(Emval.toValue(ind) == 5) global_audio_blobs[Emval.toValue(ind) - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, Emval.toValue(audio_buffer), 2));
+//    else global_audio_blobs[Emval.toValue(ind) - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, Emval.toValue(audio_buffer), 1 / (Emval.toValue(ind) * 0.1)));
+//    console.log('Streched blob nr ' + Emval.toValue(ind));
+//});
+//extern"C" EMSCRIPTEN_KEEPALIVE void StartAudioStretchWasmWorker(emscripten::EM_VAL anAudioBuffer, emscripten::EM_VAL anInd)
+//{
+//    emscripten_wasm_worker_t handle = emscripten_malloc_wasm_worker(1024);
+//    emscripten_wasm_worker_post_function_sig(handle, (void*)&audio_stretch_wasm_worker, "vv", anAudioBuffer, anInd);
+//}
 
 EM_JS(void, set_audio_playback_buffer, (emscripten::EM_VAL rate_index), {
     if(global_audio_blobs.length == 0) {
