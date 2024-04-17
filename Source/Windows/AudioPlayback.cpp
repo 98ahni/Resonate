@@ -59,20 +59,19 @@ EM_ASYNC_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
     const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3'});
     global_audio_blobs.length = 10;
     //const blobBuffer = await audioBlob.arrayBuffer();
-    var streatchers = [];
     global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer) => {
         for(var i = 1; i <= 10; i++){
-            streatchers.push(new Promise((resolve) => {
-                if(i == 10) global_audio_blobs[i - 1] = Module.audioBufferToBlob(buffer);
-                else if(i == 5) global_audio_blobs[i - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, buffer, 2));
-                else global_audio_blobs[i - 1] = Module.audioBufferToBlob(Module.stretch(global_audio_context, buffer, 1 / (i * 0.1)));
-                console.log('Streched blob nr ' + i);
-                resolve();
-            }));
+            if(i == 10) global_audio_blobs[i - 1] = Module.audioBufferToBlob(buffer);
+            else {
+                const worker = new Worker('plugins/audiostretchworker.js');
+                worker.postMessage([global_audio_context.createBuffer(buffer.numberOfChannels, buffer.length * 1 / (i * 0.1), buffer.sampleRate), buffer, i]);
+                worker.onmessage = (result) => {
+                    global_audio_blobs[result.data[1] - 1] = result.data[0];
+                };
+            }
         }
         set_audio_playback_buffer(Emval.toHandle(10));
     });
-    await Promise.all(streatchers);
 });
 
 EM_JS(void, set_audio_playback_buffer, (emscripten::EM_VAL rate_index), {

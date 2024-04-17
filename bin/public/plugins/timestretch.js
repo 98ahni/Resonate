@@ -12,7 +12,7 @@ function copy (len, array, pos, fn) {
 }
 
 // from https://github.com/danigb/timestretch/blob/master/lib/index.js
-function stretch (ac, input, scale, options) {
+function stretch (empty, input, scale, options) {
   // OPTIONS
   var opts = options || {};
   // Processing sequence size (100 msec with 44100Hz sample rate)
@@ -27,7 +27,8 @@ function stretch (ac, input, scale, options) {
 
   // Setup the buffers
   var numSamples = input.length;
-  var output = ac.createBuffer(input.numberOfChannels, numSamples * scale, input.sampleRate);
+  //var output = ac.createBuffer(input.numberOfChannels, numSamples * scale, input.sampleRate);
+  var output = empty;
 
   for(var ch = 0; ch < input.numberOfChannels; ch++){
     var inL = input.getChannelData(ch);
