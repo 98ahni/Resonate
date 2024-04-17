@@ -7,12 +7,14 @@
  */
 function copy (len, array, pos, fn) {
   for (var i = 0; i < len; i++) {
-    array[pos + i] = fn(i)
+    if(pos + i < array.length)
+      array[pos + i] = fn(i);
+    else array.push(fn(i));
   }
 }
 
 // from https://github.com/danigb/timestretch/blob/master/lib/index.js
-function stretch (empty, input, scale, options) {
+function stretch (channelDataArray, samples, scale, options) {
   // OPTIONS
   var opts = options || {};
   // Processing sequence size (100 msec with 44100Hz sample rate)
@@ -26,13 +28,12 @@ function stretch (empty, input, scale, options) {
   var nextOffset = Math.round(seqSize / scale);
 
   // Setup the buffers
-  var numSamples = input.length;
-  //var output = ac.createBuffer(input.numberOfChannels, numSamples * scale, input.sampleRate);
-  var output = empty;
+  var numSamples = samples;
+  var output = [];
 
-  for(var ch = 0; ch < input.numberOfChannels; ch++){
-    var inL = input.getChannelData(ch);
-    var outL = output.getChannelData(ch);
+  for(var ch = 0; ch < channelDataArray.numberOfChannels; ch++){
+    var inL = channelDataArray[ch];
+    var outL = new Float32Array();
     
     // STATE
     // where to read then next sequence
@@ -61,6 +62,7 @@ function stretch (empty, input, scale, options) {
     // we wrote a complete sequence
     write += seqSize;
   }
+  output.push(outL);
 }
 
   return output
@@ -133,6 +135,7 @@ function getWavHeader(options) {
 
   return new Uint8Array(buffer);
 }
+
 function audioBufferToBlob(audioBuffer) {
   const isSterio = audioBuffer.numberOfChannels >= 2;
   const [left, right] =  [audioBuffer.getChannelData(0), (isSterio ? audioBuffer.getChannelData(1) : null)];
@@ -153,8 +156,29 @@ function audioBufferToBlob(audioBuffer) {
   const wav = new Blob([wavBytes], { type: "audio/wav" });
   return wav;
 }
+function audioDataArrayToBlob(audioDataArray) {
+  const isSterio = audioDataArray.length >= 2;
+  const [left, right] =  [audioDataArray[0], (isSterio ? audioDataArray[1] : null)];
+
+  // interleaved
+  const interleaved = new Float32Array(left.length + (isSterio ? right.length : left.length));
+  for (let src=0, dst=0; src < left.length; src++, dst+=2) {
+    interleaved[dst] =   left[src];
+    interleaved[dst+1] = (isSterio ? right[src] : left[src]);
+  }
+
+  // get WAV file bytes and audio params of your audio source
+  const wavBytes = getWavBytes(interleaved.buffer, {
+    isFloat: true, // floating point or 16-bit integer
+    numChannels: 2,
+    sampleRate: 96000,
+  });
+  const wav = new Blob([wavBytes], { type: "audio/wav" });
+  return wav;
+}
 
 Module['stretch'] = stretch;
 Module['audioBufferToBlob'] = audioBufferToBlob;
+Module['audioDataArrayToBlob'] = audioDataArrayToBlob;
 
 })();
