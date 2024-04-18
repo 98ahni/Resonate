@@ -7,9 +7,12 @@
  */
 function copy (len, array, pos, fn) {
   for (var i = 0; i < len; i++) {
-    if(pos + i < array.length)
+    if(pos + i < array.length){
       array[pos + i] = fn(i);
-    else array.push(fn(i));
+    }
+    else {
+      array.push(fn(i));
+    }
   }
 }
 
@@ -25,15 +28,15 @@ function stretch (channelDataArray, samples, scale, options) {
   // var seekWindow = opts.seekWindow || 662
 
   // The theoretical start of the next sequence
-  var nextOffset = Math.round(seqSize / scale);
+  var nextOffset = seqSize / scale;
 
   // Setup the buffers
   var numSamples = samples;
   var output = [];
 
-  for(var ch = 0; ch < channelDataArray.numberOfChannels; ch++){
+  for(var ch = 0; ch < channelDataArray.length; ch++){
     var inL = channelDataArray[ch];
-    var outL = new Float32Array();
+    var outL = [];
     
     // STATE
     // where to read then next sequence
@@ -46,25 +49,25 @@ function stretch (channelDataArray, samples, scale, options) {
     while (numSamples - read > seqSize) {
       // write the first overlap
       copy(overlap, outL, write, function (i) {
-      var fadeIn = i / overlap;
-      var fadeOut = 1 - fadeIn;
-      // Mix the begin of the new sequence with the tail of the sequence last
-      return (inL[read + i] * fadeIn + inL[readOverlap + i] * fadeOut) / 2;
-    })
-    copy(seqSize - overlap, outL, write + overlap, function (i) {
-      // Copy the tail of the sequence
-      return inL[read + overlap + i];
-    })
-    // the next overlap is after this sequence
-    readOverlap += read + seqSize;
-    // the next sequence is after the nextOffset
-    read += nextOffset;
-    // we wrote a complete sequence
-    write += seqSize;
+        var fadeIn = i / overlap;
+        var fadeOut = 1 - fadeIn;
+        // Mix the begin of the new sequence with the tail of the sequence last
+        return (inL[read + i] * fadeIn + inL[readOverlap + i] * fadeOut) / 2;
+      });
+      copy(seqSize - overlap, outL, write + overlap, function (i) {
+        // Copy the tail of the sequence
+        return inL[read + overlap + i];
+      });
+      // the next overlap is after this sequence
+      readOverlap += read + seqSize;
+      // the next sequence is after the nextOffset
+      read = Math.round(read + nextOffset);
+      // we wrote a complete sequence
+      write += seqSize;
+    }
+    //channelDataArray[ch] = [];      // Memory management
+    output.push(outL);
   }
-  output.push(outL);
-}
-
   return output
 }
 
@@ -167,12 +170,17 @@ function audioDataArrayToBlob(audioDataArray) {
     interleaved[dst+1] = (isSterio ? right[src] : left[src]);
   }
 
+  //audioDataArray = [];      // Memory management
+  //left = undefined;      // Memory management
+  //right = undefined;      // Memory management
+
   // get WAV file bytes and audio params of your audio source
   const wavBytes = getWavBytes(interleaved.buffer, {
     isFloat: true, // floating point or 16-bit integer
     numChannels: 2,
     sampleRate: 96000,
   });
+  //interleaved = undefined;      // Memory management
   const wav = new Blob([wavBytes], { type: "audio/wav" });
   return wav;
 }
