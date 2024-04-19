@@ -31,6 +31,8 @@ namespace Serialization
 
     void BuildPatterns(std::string aLanguageCode)
     {
+        PatternData::myPatterns.clear();
+        PatternData::myMaxPatternSize.clear();
         PatternData::myPatterns.push_back(std::unordered_map<std::string, std::string>());
         PatternData::myMaxPatternSize.push_back(0);
 
