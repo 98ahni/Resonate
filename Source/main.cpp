@@ -6,6 +6,7 @@
 #include "Windows/RawText.h"
 #include "Windows/AudioPlayback.h"
 #include "Windows/TouchControl.h"
+#include "Windows/Todo.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
 #include <imgui.h>
@@ -73,6 +74,17 @@ void loop(void* window){
                 else
                 {
                     WindowManager::AddWindow<TouchControl>("Touch Control");
+                }
+            }
+            if(ImGui::MenuItem("Todo List", 0, WindowManager::GetWindow("Todo") != nullptr))
+            {
+                if(WindowManager::GetWindow("Todo") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Todo"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<TodoWindow>("Todo");
                 }
             }
             if(ImGui::MenuItem("Print ini"))

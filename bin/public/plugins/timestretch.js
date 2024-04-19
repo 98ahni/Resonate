@@ -17,13 +17,15 @@ function copy (len, array, pos, fn) {
 }
 
 // from https://github.com/danigb/timestretch/blob/master/lib/index.js
-function stretch (channelDataArray, samples, scale, options) {
+function stretch (channelDataArray, samples, scale, sampleRate) {
   // OPTIONS
-  var opts = options || {};
+  //var opts = options || {};
   // Processing sequence size (100 msec with 44100Hz sample rate)
-  var seqSize = opts.seqSize || 4400;
+  //var seqSize = opts.seqSize || 4410;
+  var seqSize = sampleRate / 10;
   // Overlapping size (20 msec)
-  var overlap = opts.overlap || 0;
+  //var overlap = opts.overlap || 0;
+  var overlap = 0;
   // Best overlap offset seeking window (15 msec)
   // var seekWindow = opts.seekWindow || 662
 
@@ -139,7 +141,7 @@ function getWavHeader(options) {
   return new Uint8Array(buffer);
 }
 
-function audioBufferToBlob(audioBuffer) {
+function audioBufferToBlob(audioBuffer, sampleRate) {
   const isSterio = audioBuffer.numberOfChannels >= 2;
   const [left, right] =  [audioBuffer.getChannelData(0), (isSterio ? audioBuffer.getChannelData(1) : null)];
 
@@ -154,12 +156,12 @@ function audioBufferToBlob(audioBuffer) {
   const wavBytes = getWavBytes(interleaved.buffer, {
     isFloat: true, // floating point or 16-bit integer
     numChannels: 2,
-    sampleRate: 96000,
+    sampleRate: sampleRate,
   });
   const wav = new Blob([wavBytes], { type: "audio/wav" });
   return wav;
 }
-function audioDataArrayToBlob(audioDataArray) {
+function audioDataArrayToBlob(audioDataArray, sampleRate) {
   const isSterio = audioDataArray.length >= 2;
   const [left, right] =  [audioDataArray[0], (isSterio ? audioDataArray[1] : null)];
 
@@ -178,7 +180,7 @@ function audioDataArrayToBlob(audioDataArray) {
   const wavBytes = getWavBytes(interleaved.buffer, {
     isFloat: true, // floating point or 16-bit integer
     numChannels: 2,
-    sampleRate: 96000,
+    sampleRate: sampleRate,
   });
   //interleaved = undefined;      // Memory management
   const wav = new Blob([wavBytes], { type: "audio/wav" });
