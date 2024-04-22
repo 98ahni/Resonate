@@ -102,17 +102,20 @@ EM_JS(void, create_audio_playback, (), {
     audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
     if(audio.hasAttribute("webkitPreservesPitch"))
     {
-        audio.webkitPreservesPitch = true;
+        audio.webkitPreservesPitch = false;
     }
     else
     {
-        audio.preservesPitch = true;
+        audio.preservesPitch = false;
     }
     console.log(global_audio_context.state);   // This console.log() is necessary!
     global_audio_context.resume();
     audio.play().then(()=>{
         audio.pause();
     });
+    window.onpagehide = (e) => {
+        global_audio_context.close();
+    };
 });
 
 EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
@@ -206,6 +209,7 @@ void AudioPlayback::PrepPlayback()
 {
     if(ourInstance->myHasAudio) return;
     //if(ourInstance->myHasAudio || ourInstance->myPath.empty()) return;
+    EM_ASM(if(global_audio_context !== null)global_audio_context.close(););
     create_audio_playback();
     //set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
     ourInstance->myHasAudio = true;
@@ -213,6 +217,11 @@ void AudioPlayback::PrepPlayback()
 
 void AudioPlayback::SetPlaybackFile(std::string aPath)
 {
+    if(aPath == ourInstance->myPath)
+    {
+        printf("%s is already loaded!\n", aPath.c_str());
+        return;
+    }
     printf("Loading %s.\n", aPath.c_str());
     if(!std::filesystem::exists(aPath))
     {
@@ -232,6 +241,7 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
         printf("No audio file found!\n");
         return;
     }
+    //EM_ASM(if(global_audio_context != 'undefined')global_audio_context.close(););
     ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
     set_audio_playback_file(VAR_TO_JS(aPath.c_str()));

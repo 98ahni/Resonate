@@ -11,6 +11,8 @@ void TodoWindow::OnImGuiDraw()
     TODO("Figure out why the RawText doesn't work until it's been deselected after being selected.");
     TODO("Figure out why the speed slider has to be touched.");
     TODO("Figure out why the create audio function gets called twice.");
+    TODO("Figure out why the audio is inconsistent on Safari.");
+    TODO("Fix line endings not registering timing.");
 
     Gui_End();
 }
