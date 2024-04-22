@@ -155,17 +155,20 @@ int main(){
     MainWindow_Init("Resonate", &_window);
     MainWindow_StyleVarsShadow();
     MainWindow_StyleColorsShadow();
-    //MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Emscripten/Assets/RobotoMono-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 16.0f);
-    //ImGui::GetIO().Fonts->Build();
-    //ImGui::GetIO().FontDefault = MainWindow::Font;
-    //ImGui::PushFont(roboto);
 
     Serialization::Syllabify_Init();
 
     WindowManager::Init();
-    WindowManager::AddWindow<TimingEditor>("Timing");
+    TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");
     WindowManager::AddWindow<TextEditor>("Raw Text");
+
+    // Vv For the video previewer. vV
+    //videoPreview->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 20.0f));
+    timingEditor->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 20.0f));
+    ImGui::GetIO().Fonts->Build();
+    //ImGui::GetIO().FontDefault = MainWindow::Font;
+    //ImGui::PushFont(roboto);
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;
