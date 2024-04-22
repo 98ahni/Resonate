@@ -9,6 +9,7 @@ void TimingEditor::OnImGuiDraw()
     if(ImGui::Begin(GetName().c_str()))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
+        if(myFont) ImGui::PushFont(myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
         {
             for(int token = 0; token < doc.GetLine(line).size(); token++)
@@ -38,6 +39,7 @@ void TimingEditor::OnImGuiDraw()
             doc.PopColor();
             ImGui::NewLine();
         }
+        if(myFont) ImGui::PopFont();
         ImGui::PopStyleVar();
         if(!myInputIsUnsafe && ImGui::IsWindowFocused())
         {
@@ -85,6 +87,11 @@ void TimingEditor::OnImGuiDraw()
         }
     }
     Gui_End();
+}
+
+void TimingEditor::SetFont(ImFont *aFont)
+{
+    myFont = aFont;
 }
 
 int TimingEditor::GetMarkedLine()

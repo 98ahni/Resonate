@@ -1,9 +1,11 @@
 #include "Base/EditorWindow.h"
 
+struct ImFont;
 class TimingEditor : public EditorWindow
 {
 public:
     void OnImGuiDraw();
+    void SetFont(ImFont* aFont);
     int GetMarkedLine();
     int GetMarkedToken();
     int GetMarkedChar();
@@ -19,6 +21,7 @@ public:
 private:
     void DrawTextMarker();
 
+    ImFont* myFont;
     int myMarkedLine = 0;
     int myMarkedToken = 0;
     int myMarkedChar = 0;
