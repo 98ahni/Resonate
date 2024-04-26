@@ -33,6 +33,8 @@ namespace Serialization
         void SetColor(uint aStartColor);
         void SetColor(uint aStartColor, uint anEndColor);
         void PopColor();
+        void InsertLineBreak(size_t aLineToSplit, size_t aToken, size_t aChar);
+        void RevoveLineBreak(size_t aLineToMergeUp);
 
         void Clear();
         void Load(std::string aPath);

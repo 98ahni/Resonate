@@ -182,6 +182,24 @@ namespace Serialization
         myOverrideStartColor = myBaseStartColor;
         myOverrideEndColor = myBaseEndColor;
     }
+    void KaraokeDocument::InsertLineBreak(size_t aLineToSplit, size_t aToken, size_t aChar)
+    {
+        myTokens.insert(myTokens.begin() + aLineToSplit, myTokens[aLineToSplit]);
+        myTokens[aLineToSplit].erase(myTokens[aLineToSplit].begin() + aToken, myTokens[aLineToSplit].end());
+        myTokens[aLineToSplit + 1].erase(myTokens[aLineToSplit + 1].begin(), myTokens[aLineToSplit + 1].begin() + aToken);
+        if(aChar)
+        {
+            myTokens[aLineToSplit][aToken].myValue.erase(myTokens[aLineToSplit][aToken].myValue.begin() + aChar, myTokens[aLineToSplit][aToken].myValue.end());
+            myTokens[aLineToSplit + 1][0].myValue.erase(myTokens[aLineToSplit][aToken].myValue.begin(), myTokens[aLineToSplit][aToken].myValue.begin() + aChar - 1);
+        }
+    }
+    void KaraokeDocument::RevoveLineBreak(size_t aLineToMergeUp)
+    {
+        if(aLineToMergeUp <= 0 || myTokens.size() <= aLineToMergeUp) return;
+        myTokens[aLineToMergeUp - 1].insert(myTokens[aLineToMergeUp - 1].end(), myTokens[aLineToMergeUp].begin(), myTokens[aLineToMergeUp].end());
+        myTokens.erase(myTokens.begin() + aLineToMergeUp);
+    }
+
     void KaraokeDocument::Clear()
     {
         for(int i = 0; i < myTokens.size(); i++)

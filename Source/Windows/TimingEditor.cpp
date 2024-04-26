@@ -147,10 +147,15 @@ void TimingEditor::RecordStartTime()
     // TODO: check if space token or if first on line
     if(myMarkedToken == 0)
     {
-        if(doc.IsPauseToken(doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken))) // Use GetTimedTokenBefore instead.
-        {
+        //auto& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
+        //if(doc.IsPauseToken(prevToken)) // Use GetTimedTokenBefore instead.
+        //{
             RecordEndTime();
-        }
+        //}
+        //else if(!doc.IsNull(prevToken))
+        //{
+            
+        //}
     }
     if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
     {
@@ -166,7 +171,7 @@ void TimingEditor::RecordStartTime()
 void TimingEditor::RecordEndTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    Serialization::KaraokeToken& prevToken = doc.GetTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
+    Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
     // Space token already exists
     if(doc.IsPauseToken(prevToken)) prevToken.myStartTime = AudioPlayback::GetPlaybackProgress();
     // Token is on same line
