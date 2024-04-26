@@ -63,6 +63,24 @@ void loop(void* window){
             ImGui::Ext::DestroyHTMLElement("OpenProject");
             ImGui::Ext::DestroyHTMLElement("SaveProject");
         }
+        if(ImGui::BeginMenu("Edit"))
+        {
+            if(ImGui::MenuItem("Insert Line Break"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                Serialization::KaraokeDocument::Get().InsertLineBreak(timing->GetMarkedLine(), timing->GetMarkedToken(), timing->GetMarkedChar());
+            }
+            if(ImGui::MenuItem("Merge Line Up"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                Serialization::KaraokeDocument::Get().RevoveLineBreak(timing->GetMarkedLine());
+            }
+            if(ImGui::MenuItem("Merge Line Down"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                Serialization::KaraokeDocument::Get().RevoveLineBreak(timing->GetMarkedLine() + 1);
+            }
+        }
         if(ImGui::BeginMenu("View"))
         {
             if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr))
@@ -163,6 +181,7 @@ int main(){
     WindowManager::AddWindow<AudioPlayback>("Audio");
     WindowManager::AddWindow<TextEditor>("Raw Text");
 
+    ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     // Vv For the video previewer. vV
     //videoPreview->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 20.0f));
     timingEditor->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 20.0f));

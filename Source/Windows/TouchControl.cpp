@@ -174,7 +174,7 @@ void TouchControl::OnImGuiDraw()
     }
     // Time Arrow
     triangleTip = ImVec2(contentSize * timePosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
-    triangleTip.x += buttonSize.x * .3f;
+    triangleTip.x -= buttonSize.x * .3f;
     triangleTip.y -= buttonSize.x * .3f;
     drawList->AddTriangleFilled(triangleTip, ImVec2(triangleTip.x - buttonSize.x * .6f, triangleTip.y + buttonSize.x * .6f), ImVec2(triangleTip.x, triangleTip.y + buttonSize.x * .6f), IM_COL32_WHITE);
     // ~Time Arrow
@@ -185,7 +185,7 @@ void TouchControl::OnImGuiDraw()
     }
     // End Arrow
     triangleTip = ImVec2(contentSize * endPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
-    triangleTip.x -= buttonSize.x * .3f;
+    triangleTip.x += buttonSize.x * .3f;
     triangleTip.y -= buttonSize.x * .3f;
     drawList->AddTriangleFilled(triangleTip, ImVec2(triangleTip.x, triangleTip.y + buttonSize.x * .6f), ImVec2(triangleTip.x + buttonSize.x * .6f, triangleTip.y + buttonSize.x * .6f), IM_COL32_WHITE);
     // ~End Arrow
