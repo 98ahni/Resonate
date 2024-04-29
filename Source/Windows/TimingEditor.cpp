@@ -147,11 +147,11 @@ void TimingEditor::RecordStartTime()
     // TODO: check if space token or if first on line
     if(myMarkedToken == 0)
     {
-        //auto& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
-        //if(doc.IsPauseToken(prevToken)) // Use GetTimedTokenBefore instead.
-        //{
+        auto& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
+        if(!doc.IsPauseToken(prevToken) || doc.GetToken(myMarkedLine, myMarkedToken).myStartTime == prevToken.myStartTime)
+        {
             RecordEndTime();
-        //}
+        }
         //else if(!doc.IsNull(prevToken))
         //{
             
@@ -173,11 +173,25 @@ void TimingEditor::RecordEndTime()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
     // Space token already exists
-    if(doc.IsPauseToken(prevToken)) prevToken.myStartTime = AudioPlayback::GetPlaybackProgress();
+    if(doc.IsPauseToken(prevToken))
+    {
+        prevToken.myStartTime = AudioPlayback::GetPlaybackProgress();
+        prevToken.myHasStart = true;
+    }
     // Token is on same line
-    else if(prevToken.myHasStart && myMarkedToken != 0) doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken, {"", true, AudioPlayback::GetPlaybackProgress()});
+    else if(prevToken.myHasStart && myMarkedToken != 0)
+    {
+        doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken, {"", true, AudioPlayback::GetPlaybackProgress()});
+    }
     // Token is on previous line
-    else doc.GetValidLineBefore(myMarkedLine).push_back({"", true, AudioPlayback::GetPlaybackProgress()});
+    else
+    {
+        Serialization::KaraokeLine& prevLine = doc.GetValidLineBefore(myMarkedLine);
+        if(!doc.IsNull(prevLine))
+        {
+            prevLine.push_back({"", true, AudioPlayback::GetPlaybackProgress()});
+        }
+    }
 }
 
 void TimingEditor::MoveMarkerUp()
@@ -202,7 +216,7 @@ void TimingEditor::MoveMarkerLeft(bool aIsCharmode)
     myMarkedChar = aIsCharmode ? myMarkedChar - 1 : 0;
     if(myMarkedChar < 0 || !aIsCharmode)
     {
-        myMarkedToken -= doc.IsPauseToken(myMarkedLine, myMarkedToken) ? 2 : 1;
+        myMarkedToken -= doc.IsPauseToken(doc.GetTokenBefore(myMarkedLine, myMarkedToken)) ? 2 : 1;
         if(myMarkedToken < 0)
         {
             if(myMarkedLine <= 0)
@@ -226,7 +240,7 @@ void TimingEditor::MoveMarkerRight(bool aIsCharmode)
     myMarkedChar = aIsCharmode ? myMarkedChar + 1 : 0;
     if(myMarkedChar >= doc.GetToken(myMarkedLine, myMarkedToken).myValue.size() || !aIsCharmode)
     {
-        myMarkedToken += doc.IsPauseToken(myMarkedLine, myMarkedToken) ? 2 : 1;
+        myMarkedToken += doc.IsPauseToken(doc.GetTokenAfter(myMarkedLine, myMarkedToken)) ? 2 : 1;
         if(myMarkedToken >= doc.GetLine(myMarkedLine).size())
         {
             //myMarkedLine = myMarkedLine + 1 < doc.GetData().size() ? myMarkedLine + 1 : (doc.GetData().size() - 1);
