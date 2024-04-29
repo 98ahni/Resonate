@@ -35,6 +35,9 @@ namespace Serialization
         void PopColor();
         void InsertLineBreak(size_t aLineToSplit, size_t aToken, size_t aChar);
         void RevoveLineBreak(size_t aLineToMergeUp);
+        void MoveLineUp(size_t aLineToMove);
+        void DuplicateLine(size_t aLine);
+        void RemoveLine(size_t aLine);
 
         void Clear();
         void Load(std::string aPath);

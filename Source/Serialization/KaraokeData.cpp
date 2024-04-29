@@ -199,6 +199,19 @@ namespace Serialization
         myTokens[aLineToMergeUp - 1].insert(myTokens[aLineToMergeUp - 1].end(), myTokens[aLineToMergeUp].begin(), myTokens[aLineToMergeUp].end());
         myTokens.erase(myTokens.begin() + aLineToMergeUp);
     }
+    void KaraokeDocument::MoveLineUp(size_t aLineToMove)
+    {
+        if(aLineToMove <= 0 || myTokens.size() <= aLineToMove) return;
+        myTokens[aLineToMove].swap(myTokens[aLineToMove - 1]);
+    }
+    void KaraokeDocument::DuplicateLine(size_t aLine)
+    {
+        myTokens.insert(myTokens.begin() + aLine, myTokens[aLine]);
+    }
+    void KaraokeDocument::RemoveLine(size_t aLine)
+    {
+        myTokens.erase(myTokens.begin() + aLine);
+    }
 
     void KaraokeDocument::Clear()
     {

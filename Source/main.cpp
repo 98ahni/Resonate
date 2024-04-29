@@ -80,6 +80,22 @@ void loop(void* window){
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
                 Serialization::KaraokeDocument::Get().RevoveLineBreak(timing->GetMarkedLine() + 1);
             }
+            if(ImGui::MenuItem("Move Line Up"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                Serialization::KaraokeDocument::Get().MoveLineUp(timing->GetMarkedLine());
+            }
+            if(ImGui::MenuItem("Move Line Down"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                Serialization::KaraokeDocument::Get().MoveLineUp(timing->GetMarkedLine() + 1);
+            }
+            if(ImGui::MenuItem("Duplicate Line"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                Serialization::KaraokeDocument::Get().DuplicateLine(timing->GetMarkedLine());
+            }
+            ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("View"))
         {
