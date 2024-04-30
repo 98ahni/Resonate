@@ -8,14 +8,18 @@
             "name": "Launch Node",
             "request": "launch",
             "type": "node",
-            "program": "${workspaceFolder}/bin/server.js"
+            "program": "${workspaceFolder}/bin/server.js",
+            "console": "internalConsole", 
+            "outputCapture": "std"
         },
         {
             "name": "Launch Node Win32",
             "request": "launch",
             "type": "node",
             "program": "${workspaceFolder}/bin/server.js",
-            "runtimeExecutable": "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/node/16.20.0_64bit/bin/node.exe"
+            "runtimeExecutable": "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/node/16.20.0_64bit/bin/node.exe",
+            "console": "internalConsole", 
+            "outputCapture": "std"
         },
         {
             "name": "Launch Chrome",
