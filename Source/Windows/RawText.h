@@ -3,6 +3,7 @@
 class TextEditor : public EditorWindow
 {
 public:
+    TextEditor();
     void OnImGuiDraw();
 
 private:

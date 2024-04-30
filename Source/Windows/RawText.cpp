@@ -5,6 +5,12 @@
 #include "Base/WindowManager.h"
 #include "TimingEditor.h"
 
+TextEditor::TextEditor()
+{
+    myHasTakenFocus = false;
+    myRawText = "";
+}
+
 void TextEditor::OnImGuiDraw()
 {
     if(ImGui::Begin(GetName().c_str()))

@@ -3,10 +3,21 @@
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
 
+TimingEditor::TimingEditor()
+{
+    myMarkedLine = 0;
+    myMarkedToken = 0;
+    myMarkedChar = 0;
+    myMarkHasMoved = false;
+    myInputIsUnsafe = false;
+    myDisableInput = false;
+    SetInputUnsafe(false);
+}
+
 void TimingEditor::OnImGuiDraw()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    if(ImGui::Begin(GetName().c_str()))
+    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNavInputs))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
         if(myFont) ImGui::PushFont(myFont);
@@ -200,6 +211,7 @@ void TimingEditor::RecordEndTime()
 
 void TimingEditor::MoveMarkerUp()
 {
+    myMarkHasMoved = true;
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myMarkedChar = 0;
     myMarkedLine = myMarkedLine > 0 ? myMarkedLine - 1 : 0;
@@ -208,6 +220,7 @@ void TimingEditor::MoveMarkerUp()
 
 void TimingEditor::MoveMarkerDown()
 {
+    myMarkHasMoved = true;
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myMarkedChar = 0;
     myMarkedLine = myMarkedLine + 1 < doc.GetData().size() ? myMarkedLine + 1 : (doc.GetData().size() - 1);
@@ -216,6 +229,7 @@ void TimingEditor::MoveMarkerDown()
 
 void TimingEditor::MoveMarkerLeft(bool aIsCharmode)
 {
+    myMarkHasMoved = true;
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myMarkedChar = aIsCharmode ? myMarkedChar - 1 : 0;
     if(myMarkedChar < 0 || !aIsCharmode)
@@ -240,6 +254,7 @@ void TimingEditor::MoveMarkerLeft(bool aIsCharmode)
 
 void TimingEditor::MoveMarkerRight(bool aIsCharmode)
 {
+    myMarkHasMoved = true;
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myMarkedChar = aIsCharmode ? myMarkedChar + 1 : 0;
     if(myMarkedChar >= doc.GetToken(myMarkedLine, myMarkedToken).myValue.size() || !aIsCharmode)
@@ -288,5 +303,25 @@ void TimingEditor::DrawTextMarker()
         startPos.x += offset;
         endPos.x += offset;
         drawList->AddLine(startPos, endPos, IM_COL32(255, 200, 200, 200), 1);
+    }
+    if(!myMarkHasMoved) return;
+    myMarkHasMoved = false;
+    if(endPos.x < ImGui::GetWindowPos().x)
+    {
+        //ImGui::SetScrollX(ImGui::GetCursorPos().x - 10);
+        //ImGui::SetScrollFromPosX()
+        ImGui::SetScrollHereX(0);
+    }
+    else if(endPos.y < ImGui::GetWindowPos().y)
+    {
+        ImGui::SetScrollHereY(0);
+    }
+    else if((ImGui::GetWindowPos().x + ImGui::GetWindowSize().x) < endPos.x)
+    {
+        ImGui::SetScrollHereX(1);
+    }
+    else if((ImGui::GetWindowPos().y + ImGui::GetWindowSize().y) < endPos.y)
+    {
+        ImGui::SetScrollHereY(1);
     }
 }

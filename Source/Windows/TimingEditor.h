@@ -4,6 +4,7 @@ struct ImFont;
 class TimingEditor : public EditorWindow
 {
 public:
+    TimingEditor();
     void OnImGuiDraw();
     void SetFont(ImFont* aFont);
     int GetMarkedLine();
@@ -25,6 +26,7 @@ private:
     int myMarkedLine = 0;
     int myMarkedToken = 0;
     int myMarkedChar = 0;
+    bool myMarkHasMoved = false;
     bool myInputIsUnsafe = false;
     bool myDisableInput = false;
 };
