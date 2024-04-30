@@ -152,10 +152,6 @@ void TimingEditor::RecordStartTime()
         {
             RecordEndTime();
         }
-        //else if(!doc.IsNull(prevToken))
-        //{
-            
-        //}
     }
     if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
     {
@@ -171,12 +167,20 @@ void TimingEditor::RecordStartTime()
 void TimingEditor::RecordEndTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
     // Space token already exists
     if(doc.IsPauseToken(prevToken))
     {
         prevToken.myStartTime = AudioPlayback::GetPlaybackProgress();
         prevToken.myHasStart = true;
+    }
+    // Space token already exists and marker is on it
+    else if(doc.IsPauseToken(currToken))
+    {
+        currToken.myStartTime = AudioPlayback::GetPlaybackProgress();
+        currToken.myHasStart = true;
+        MoveMarkerRight();
     }
     // Token is on same line
     else if(prevToken.myHasStart && myMarkedToken != 0)

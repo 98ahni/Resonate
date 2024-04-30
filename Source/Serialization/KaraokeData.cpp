@@ -34,7 +34,7 @@ namespace Serialization
     }
     KaraokeLine &KaraokeDocument::GetValidLineBefore(size_t aLine)
     {
-        if(aLine - 1 < 0)
+        if(aLine <= 0)
         {
             return ourNullLine;
         }
@@ -69,20 +69,21 @@ namespace Serialization
     }
     KaraokeToken &KaraokeDocument::GetTokenBefore(size_t aLine, size_t aToken)
     {
-        if(aToken - 1 >= 0)
+        if(aToken > 0)
         {
-            return myTokens[aLine][aToken - 1];
+            return GetLine(aLine)[aToken - 1];
         }
-        else if(aLine - 1 >= 0)
+        else if(aLine > 0)
         {
-            if(myTokens[aLine - 1].size() > 0)
-            {
-                return myTokens[aLine - 1][myTokens[aLine - 1].size() - 1];
-            }
-            else
-            {
-                return GetTokenBefore(aLine - 1, 0);
-            }
+            //if(GetLine(aLine - 1).size() > 0)
+            //{
+            //    return GetLine(aLine - 1).back();
+            //}
+            //else
+            //{
+            //    return GetTokenBefore(aLine - 1, 0);
+            //}
+            return GetValidLineBefore(aLine).back();
         }
         return ourNullToken;
     }
@@ -114,7 +115,7 @@ namespace Serialization
         {
             return token;
         }
-        if(aToken - 1 >= 0)
+        if(aToken > 0)
         {
             return GetTimedTokenBefore(aLine, aToken - 1);
         }
@@ -126,7 +127,7 @@ namespace Serialization
     }
     bool KaraokeDocument::IsPauseToken(KaraokeToken& aToken)
     {
-        return aToken.myValue.empty() || aToken.myValue == " ";
+        return (aToken.myValue.empty() || aToken.myValue == " ") && !IsNull(aToken);
     }
     uint KaraokeDocument::GetStartColor()
     {
