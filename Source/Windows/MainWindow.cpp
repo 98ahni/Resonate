@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include <stdio.h>
 #include <emscripten.h>
+#include <emscripten/val.h>
 #define GLFW_INCLUDE_ES32
 #include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
@@ -13,10 +14,23 @@
 #include <backends/imgui_impl_opengl3.h>
 #include <Extensions/TouchInput.h>
 #include <Extensions/imguiExt.h>
+#include <Defines.h>
 
 /* embedded JS function to handle all the asynchronous WebGPU setup */
-EM_JS(void, init_file_system, (), {
-	FS.mount(MEMFS, { root: '.' }, '.');
+EM_ASYNC_JS(emscripten::EM_VAL, init_file_system, (), {
+	return Emval.toHandle(new Promise((resolve) =>
+	{
+		FS.mount(MEMFS, { root: '.' }, '.');
+		FS.mkdir('/local');
+		FS.mount(IDBFS, {}, '/local');
+    	FS.syncfs(true, function (err) {
+			if(err)
+			{
+        		alert('Unable to sync IndexDB!\n' + err);
+			}
+			resolve();
+    	});
+	}));
 });
 
 EM_JS(bool, get_has_web_gpu, (), { 
@@ -235,7 +249,7 @@ void MainWindow_Init(const char* name, void** outWindow)
 		auto_resize_canvas();
 	}
 
-	init_file_system();
+	VAR_FROM_JS(init_file_system()).await();
 
 	//if(true) // debug touch
 	if(TouchInput_HasTouch())
@@ -367,6 +381,30 @@ void MainWindow_RenderFrame()
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
+}
+
+void MainWindow_SetName(std::string name)
+{
+    if(MainWindow::Name == name) return;
+    MainWindow::Name = name;
+    emscripten_set_window_title(MainWindow::Name.data());
+}
+
+void MainWindow_SetIcon(std::string iconName)
+{
+    if(MainWindow::IconPath == iconName) return;
+    MainWindow::IconPath = iconName;
+	//EM_ASM({action.setIcon({path: {32: Emval.toValue($0)}})}, VAR_TO_JS(MainWindow::IconPath));
+	EM_ASM({
+		if(!document.querySelector("link[rel='icon']"))
+		{
+			let link = document.createElement('link');
+			link.rel = 'icon';
+			link.type = 'image/png';
+			document.head.appendChild(link);
+		}
+		document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0);
+	}, VAR_TO_JS(MainWindow::IconPath));
 }
 
 void MainWindow_StyleVarsShadow(ImGuiStyle* dst)

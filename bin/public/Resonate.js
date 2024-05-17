@@ -662,14 +662,20 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  3528197: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3528320: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3528422: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3528485: () => { return global_audio_element.paused ? 1 : 0; },  
- 3528529: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  3529015: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3529138: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3529240: () => { FS.syncfs(false, function (err) {if(err){alert('Unable to sync IndexDB!\n' + err);}}); },  
+ 3529331: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3529394: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3529438: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3529694: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
-function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
+function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+function set_local_value(key,value_to_store) { localStorage.setItem(Emval.toValue(key), Emval.toValue(value_to_store)); }
+function get_local_value(key) { return Emval.toHandle(localStorage.getItem(Emval.toValue(key))); }
+function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); }
+function clear_local_storage() { localStorage.clear(); }
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(Emval.toValue(id)); if(btn === null){ btn = document.createElement('button'); btn.id = Emval.toValue(id); document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0.3; }
 function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let input = document.getElementById(Emval.toValue(id)); if(input === null){ input = document.createElement('input'); input.id = Emval.toValue(id); document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
@@ -692,7 +698,7 @@ function set_audio_playback_progress(progress) { const audio = global_audio_elem
 function set_audio_playback_speed(play_rate) { const audio = global_audio_element; audio.playbackRate = Emval.toValue(play_rate); }
 function audio_element_play() { global_audio_element.play(); }
 function audio_element_pause() { global_audio_element.pause(); }
-function init_file_system() { FS.mount(MEMFS, { root: '.' }, '.'); }
+function __asyncjs__init_file_system() { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { FS.mount(MEMFS, { root: '.' }, '.'); FS.mkdir('/local'); FS.mount(IDBFS, {}, '/local'); FS.syncfs(true, function (err) { if(err) { alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })); }); }
 function get_has_web_gpu() { return navigator.gpu !== undefined; }
 function __asyncjs__webgpu_create_device() { return Asyncify.handleAsync(async () => { WebGPU.initManagers(); console.log("Create Start!"); const adapter = await navigator.gpu.requestAdapter(); const device = await adapter.requestDevice(); Module.preinitializedWebGPUDevice = device; console.log("Create End!"); }); }
 function auto_resize_canvas() { window.addEventListener('resize', resize_canvas, false); }
@@ -1797,6 +1803,309 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
   
   
+  
+  
+  
+  var IDBFS = {
+  dbs:{
+  },
+  indexedDB:() => {
+        if (typeof indexedDB != 'undefined') return indexedDB;
+        var ret = null;
+        if (typeof window == 'object') ret = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+        assert(ret, 'IDBFS used, but indexedDB not supported');
+        return ret;
+      },
+  DB_VERSION:21,
+  DB_STORE_NAME:"FILE_DATA",
+  mount:function(mount) {
+        // reuse all of the core MEMFS functionality
+        return MEMFS.mount.apply(null, arguments);
+      },
+  syncfs:(mount, populate, callback) => {
+        IDBFS.getLocalSet(mount, (err, local) => {
+          if (err) return callback(err);
+  
+          IDBFS.getRemoteSet(mount, (err, remote) => {
+            if (err) return callback(err);
+  
+            var src = populate ? remote : local;
+            var dst = populate ? local : remote;
+  
+            IDBFS.reconcile(src, dst, callback);
+          });
+        });
+      },
+  quit:() => {
+        Object.values(IDBFS.dbs).forEach((value) => value.close());
+        IDBFS.dbs = {};
+      },
+  getDB:(name, callback) => {
+        // check the cache first
+        var db = IDBFS.dbs[name];
+        if (db) {
+          return callback(null, db);
+        }
+  
+        var req;
+        try {
+          req = IDBFS.indexedDB().open(name, IDBFS.DB_VERSION);
+        } catch (e) {
+          return callback(e);
+        }
+        if (!req) {
+          return callback("Unable to connect to IndexedDB");
+        }
+        req.onupgradeneeded = (e) => {
+          var db = /** @type {IDBDatabase} */ (e.target.result);
+          var transaction = e.target.transaction;
+  
+          var fileStore;
+  
+          if (db.objectStoreNames.contains(IDBFS.DB_STORE_NAME)) {
+            fileStore = transaction.objectStore(IDBFS.DB_STORE_NAME);
+          } else {
+            fileStore = db.createObjectStore(IDBFS.DB_STORE_NAME);
+          }
+  
+          if (!fileStore.indexNames.contains('timestamp')) {
+            fileStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        };
+        req.onsuccess = () => {
+          db = /** @type {IDBDatabase} */ (req.result);
+  
+          // add to the cache
+          IDBFS.dbs[name] = db;
+          callback(null, db);
+        };
+        req.onerror = (e) => {
+          callback(e.target.error);
+          e.preventDefault();
+        };
+      },
+  getLocalSet:(mount, callback) => {
+        var entries = {};
+  
+        function isRealDir(p) {
+          return p !== '.' && p !== '..';
+        };
+        function toAbsolute(root) {
+          return (p) => PATH.join2(root, p);
+        };
+  
+        var check = FS.readdir(mount.mountpoint).filter(isRealDir).map(toAbsolute(mount.mountpoint));
+  
+        while (check.length) {
+          var path = check.pop();
+          var stat;
+  
+          try {
+            stat = FS.stat(path);
+          } catch (e) {
+            return callback(e);
+          }
+  
+          if (FS.isDir(stat.mode)) {
+            check.push.apply(check, FS.readdir(path).filter(isRealDir).map(toAbsolute(path)));
+          }
+  
+          entries[path] = { 'timestamp': stat.mtime };
+        }
+  
+        return callback(null, { type: 'local', entries: entries });
+      },
+  getRemoteSet:(mount, callback) => {
+        var entries = {};
+  
+        IDBFS.getDB(mount.mountpoint, (err, db) => {
+          if (err) return callback(err);
+  
+          try {
+            var transaction = db.transaction([IDBFS.DB_STORE_NAME], 'readonly');
+            transaction.onerror = (e) => {
+              callback(e.target.error);
+              e.preventDefault();
+            };
+  
+            var store = transaction.objectStore(IDBFS.DB_STORE_NAME);
+            var index = store.index('timestamp');
+  
+            index.openKeyCursor().onsuccess = (event) => {
+              var cursor = event.target.result;
+  
+              if (!cursor) {
+                return callback(null, { type: 'remote', db, entries });
+              }
+  
+              entries[cursor.primaryKey] = { 'timestamp': cursor.key };
+  
+              cursor.continue();
+            };
+          } catch (e) {
+            return callback(e);
+          }
+        });
+      },
+  loadLocalEntry:(path, callback) => {
+        var stat, node;
+  
+        try {
+          var lookup = FS.lookupPath(path);
+          node = lookup.node;
+          stat = FS.stat(path);
+        } catch (e) {
+          return callback(e);
+        }
+  
+        if (FS.isDir(stat.mode)) {
+          return callback(null, { 'timestamp': stat.mtime, 'mode': stat.mode });
+        } else if (FS.isFile(stat.mode)) {
+          // Performance consideration: storing a normal JavaScript array to a IndexedDB is much slower than storing a typed array.
+          // Therefore always convert the file contents to a typed array first before writing the data to IndexedDB.
+          node.contents = MEMFS.getFileDataAsTypedArray(node);
+          return callback(null, { 'timestamp': stat.mtime, 'mode': stat.mode, 'contents': node.contents });
+        } else {
+          return callback(new Error('node type not supported'));
+        }
+      },
+  storeLocalEntry:(path, entry, callback) => {
+        try {
+          if (FS.isDir(entry['mode'])) {
+            FS.mkdirTree(path, entry['mode']);
+          } else if (FS.isFile(entry['mode'])) {
+            FS.writeFile(path, entry['contents'], { canOwn: true });
+          } else {
+            return callback(new Error('node type not supported'));
+          }
+  
+          FS.chmod(path, entry['mode']);
+          FS.utime(path, entry['timestamp'], entry['timestamp']);
+        } catch (e) {
+          return callback(e);
+        }
+  
+        callback(null);
+      },
+  removeLocalEntry:(path, callback) => {
+        try {
+          var stat = FS.stat(path);
+  
+          if (FS.isDir(stat.mode)) {
+            FS.rmdir(path);
+          } else if (FS.isFile(stat.mode)) {
+            FS.unlink(path);
+          }
+        } catch (e) {
+          return callback(e);
+        }
+  
+        callback(null);
+      },
+  loadRemoteEntry:(store, path, callback) => {
+        var req = store.get(path);
+        req.onsuccess = (event) => callback(null, event.target.result);
+        req.onerror = (e) => {
+          callback(e.target.error);
+          e.preventDefault();
+        };
+      },
+  storeRemoteEntry:(store, path, entry, callback) => {
+        try {
+          var req = store.put(entry, path);
+        } catch (e) {
+          callback(e);
+          return;
+        }
+        req.onsuccess = (event) => callback();
+        req.onerror = (e) => {
+          callback(e.target.error);
+          e.preventDefault();
+        };
+      },
+  removeRemoteEntry:(store, path, callback) => {
+        var req = store.delete(path);
+        req.onsuccess = (event) => callback();
+        req.onerror = (e) => {
+          callback(e.target.error);
+          e.preventDefault();
+        };
+      },
+  reconcile:(src, dst, callback) => {
+        var total = 0;
+  
+        var create = [];
+        Object.keys(src.entries).forEach(function (key) {
+          var e = src.entries[key];
+          var e2 = dst.entries[key];
+          if (!e2 || e['timestamp'].getTime() != e2['timestamp'].getTime()) {
+            create.push(key);
+            total++;
+          }
+        });
+  
+        var remove = [];
+        Object.keys(dst.entries).forEach(function (key) {
+          if (!src.entries[key]) {
+            remove.push(key);
+            total++;
+          }
+        });
+  
+        if (!total) {
+          return callback(null);
+        }
+  
+        var errored = false;
+        var db = src.type === 'remote' ? src.db : dst.db;
+        var transaction = db.transaction([IDBFS.DB_STORE_NAME], 'readwrite');
+        var store = transaction.objectStore(IDBFS.DB_STORE_NAME);
+  
+        function done(err) {
+          if (err && !errored) {
+            errored = true;
+            return callback(err);
+          }
+        };
+  
+        transaction.onerror = (e) => {
+          done(this.error);
+          e.preventDefault();
+        };
+  
+        transaction.oncomplete = (e) => {
+          if (!errored) {
+            callback(null);
+          }
+        };
+  
+        // sort paths in ascending order so directory entries are created
+        // before the files inside them
+        create.sort().forEach((path) => {
+          if (dst.type === 'local') {
+            IDBFS.loadRemoteEntry(store, path, (err, entry) => {
+              if (err) return done(err);
+              IDBFS.storeLocalEntry(path, entry, done);
+            });
+          } else {
+            IDBFS.loadLocalEntry(path, (err, entry) => {
+              if (err) return done(err);
+              IDBFS.storeRemoteEntry(store, path, entry, done);
+            });
+          }
+        });
+  
+        // sort paths in descending order so files are deleted before their
+        // parent directories
+        remove.sort().reverse().forEach((path) => {
+          if (dst.type === 'local') {
+            IDBFS.removeLocalEntry(path, done);
+          } else {
+            IDBFS.removeRemoteEntry(store, path, done);
+          }
+        });
+      },
+  };
   var FS = {
   root:null,
   mounts:[],
@@ -2991,6 +3300,7 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
   
         FS.filesystems = {
           'MEMFS': MEMFS,
+          'IDBFS': IDBFS,
         };
       },
   init(input, output, error) {
@@ -4798,6 +5108,13 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       return runEmAsmFunction(code, sigPtr, argbuf);
     };
 
+  var _emscripten_get_now;
+      // Modern environment where performance.now() is supported:
+      // N.B. a shorter form "_emscripten_get_now = performance.now;" is
+      // unfortunately not allowed even in current browsers (e.g. FF Nightly 75).
+      _emscripten_get_now = () => performance.now();
+  ;
+
   var _emscripten_memcpy_js = (dest, src, num) => HEAPU8.copyWithin(dest, src, src + num);
 
   var getHeapMax = () =>
@@ -5543,12 +5860,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       return 0;
     };
   
-  var _emscripten_get_now;
-      // Modern environment where performance.now() is supported:
-      // N.B. a shorter form "_emscripten_get_now = performance.now;" is
-      // unfortunately not allowed even in current browsers (e.g. FF Nightly 75).
-      _emscripten_get_now = () => performance.now();
-  ;
   
   
     /**
@@ -5880,6 +6191,9 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
         return -1;
       }
     };
+
+  
+  var _emscripten_set_window_title = (title) => document.title = UTF8ToString(title);
 
   
   
@@ -7270,8 +7584,6 @@ function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscr
       return ret;
     };
   
-  
-  var _emscripten_set_window_title = (title) => document.title = UTF8ToString(title);
   
   
   var GLFW = {
@@ -9670,6 +9982,8 @@ var wasmImports = {
   /** @export */
   __asyncjs__destroy_element_async: __asyncjs__destroy_element_async,
   /** @export */
+  __asyncjs__init_file_system: __asyncjs__init_file_system,
+  /** @export */
   __asyncjs__open_directory: __asyncjs__open_directory,
   /** @export */
   __asyncjs__set_audio_playback_file: __asyncjs__set_audio_playback_file,
@@ -9750,6 +10064,8 @@ var wasmImports = {
   /** @export */
   emscripten_asm_const_int: _emscripten_asm_const_int,
   /** @export */
+  emscripten_get_now: _emscripten_get_now,
+  /** @export */
   emscripten_memcpy_js: _emscripten_memcpy_js,
   /** @export */
   emscripten_resize_heap: _emscripten_resize_heap,
@@ -9757,6 +10073,8 @@ var wasmImports = {
   emscripten_set_main_loop_arg: _emscripten_set_main_loop_arg,
   /** @export */
   emscripten_set_wheel_callback_on_thread: _emscripten_set_wheel_callback_on_thread,
+  /** @export */
+  emscripten_set_window_title: _emscripten_set_window_title,
   /** @export */
   emscripten_webgpu_get_device: _emscripten_webgpu_get_device,
   /** @export */
@@ -9966,8 +10284,6 @@ var wasmImports = {
   /** @export */
   hide_touch_keyboard: hide_touch_keyboard,
   /** @export */
-  init_file_system: init_file_system,
-  /** @export */
   language_code_to_name: language_code_to_name,
   /** @export */
   resize_canvas: resize_canvas,
@@ -10128,9 +10444,9 @@ var _asyncify_start_unwind = (a0) => (_asyncify_start_unwind = wasmExports['asyn
 var _asyncify_stop_unwind = () => (_asyncify_stop_unwind = wasmExports['asyncify_stop_unwind'])();
 var _asyncify_start_rewind = (a0) => (_asyncify_start_rewind = wasmExports['asyncify_start_rewind'])(a0);
 var _asyncify_stop_rewind = () => (_asyncify_stop_rewind = wasmExports['asyncify_stop_rewind'])();
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3483688;
-var ___start_em_js = Module['___start_em_js'] = 3517992;
-var ___stop_em_js = Module['___stop_em_js'] = 3528197;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3483852;
+var ___start_em_js = Module['___start_em_js'] = 3518152;
+var ___stop_em_js = Module['___stop_em_js'] = 3529015;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
