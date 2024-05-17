@@ -17,6 +17,11 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
         }
 
         input.addEventListener(
+            'cancel', () => {
+                resolve("");
+        });
+
+        input.addEventListener(
             'change', () => {
                 let files = Array.from(input.files);
                 let promisedFiles = [];
@@ -79,6 +84,26 @@ EM_JS(void, download_document, (emscripten::EM_VAL path), {
 	document.body.removeChild(link);
 });
 
+EM_JS(void, set_local_value, (emscripten::EM_VAL key, emscripten::EM_VAL value_to_store),
+{
+    localStorage.setItem(Emval.toValue(key), Emval.toValue(value_to_store));
+});
+
+EM_JS(emscripten::EM_VAL, get_local_value, (emscripten::EM_VAL key),
+{
+    return Emval.toHandle(localStorage.getItem(Emval.toValue(key)));
+});
+
+EM_JS(void, remove_local_value, (emscripten::EM_VAL key),
+{
+    localStorage.removeItem(Emval.toValue(key));
+});
+
+EM_JS(void, clear_local_storage, (),
+{
+    localStorage.clear();
+});
+
 std::string FileHandler::OpenFolder(const char* aMode)
 {
     std::string output = VAR_FROM_JS(open_directory(VAR_TO_JS(aMode))).await().as<std::string>();
@@ -89,4 +114,24 @@ std::string FileHandler::OpenFolder(const char* aMode)
 void FileHandler::DownloadDocument(const char *aPath)
 {
     download_document(VAR_TO_JS(aPath));
+}
+
+void FileHandler::SetLocalValue(std::string aName, std::string aValue)
+{
+    set_local_value(VAR_TO_JS(aName), VAR_TO_JS(aValue));
+}
+
+std::string FileHandler::GetLocalValue(std::string aName)
+{
+    return VAR_FROM_JS(get_local_value(VAR_TO_JS(aName))).as<std::string>();
+}
+
+void FileHandler::RemoveLocalValue(std::string aName)
+{
+    remove_local_value(VAR_TO_JS(aName));
+}
+
+void FileHandler::ClearLocalStorage()
+{
+    clear_local_storage();
 }

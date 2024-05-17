@@ -1,4 +1,5 @@
 #include "KaraokeData.h"
+#include <emscripten.h>
 #include <filesystem>
 #include <fstream>
 #include <StringTools.h>
@@ -185,6 +186,7 @@ namespace Serialization
     }
     void KaraokeDocument::InsertLineBreak(size_t aLineToSplit, size_t aToken, size_t aChar)
     {
+        MakeDirty();
         myTokens.insert(myTokens.begin() + aLineToSplit, myTokens[aLineToSplit]);
         myTokens[aLineToSplit].erase(myTokens[aLineToSplit].begin() + aToken, myTokens[aLineToSplit].end());
         myTokens[aLineToSplit + 1].erase(myTokens[aLineToSplit + 1].begin(), myTokens[aLineToSplit + 1].begin() + aToken);
@@ -196,21 +198,25 @@ namespace Serialization
     }
     void KaraokeDocument::RevoveLineBreak(size_t aLineToMergeUp)
     {
+        MakeDirty();
         if(aLineToMergeUp <= 0 || myTokens.size() <= aLineToMergeUp) return;
         myTokens[aLineToMergeUp - 1].insert(myTokens[aLineToMergeUp - 1].end(), myTokens[aLineToMergeUp].begin(), myTokens[aLineToMergeUp].end());
         myTokens.erase(myTokens.begin() + aLineToMergeUp);
     }
     void KaraokeDocument::MoveLineUp(size_t aLineToMove)
     {
+        MakeDirty();
         if(aLineToMove <= 0 || myTokens.size() <= aLineToMove) return;
         myTokens[aLineToMove].swap(myTokens[aLineToMove - 1]);
     }
     void KaraokeDocument::DuplicateLine(size_t aLine)
     {
+        MakeDirty();
         myTokens.insert(myTokens.begin() + aLine, myTokens[aLine]);
     }
     void KaraokeDocument::RemoveLine(size_t aLine)
     {
+        MakeDirty();
         myTokens.erase(myTokens.begin() + aLine);
     }
 
@@ -224,6 +230,11 @@ namespace Serialization
     }
     void KaraokeDocument::Load(std::string aPath)
     {
+        if(aPath == myPath)
+        {
+            printf("%s is already loaded!\n", aPath.c_str());
+            return;
+        }
         printf("Loading %s.\n", aPath.c_str());
         if(!std::filesystem::exists(aPath))
         {
@@ -363,7 +374,48 @@ namespace Serialization
         std::ofstream docFile(myPath);
         docFile.clear();
         docFile << Serialize();
+        docFile.close();
         return myPath;
+    }
+    std::string KaraokeDocument::AutoSave()
+    {
+        auto pathName = std::filesystem::path(myPath);
+        std::ofstream docFile("/local/" + pathName.filename().string());
+        docFile.clear();
+        docFile << Serialize();
+        printf("Auto saved to '/local/%s'.\n", pathName.filename().string().data());
+        docFile.close();
+        EM_ASM({ FS.syncfs(false, function (err) {if(err){alert('Unable to sync IndexDB!\n' + err);}}); });
+        myIsAutoDirty = false;
+        return myPath;
+    }
+    bool KaraokeDocument::GetIsDirty()
+    {
+        return myIsDirty;
+    }
+    void KaraokeDocument::MakeDirty()
+    {
+        myLastEditTime = emscripten_get_now();
+        myIsDirty = true;
+        myIsAutoDirty = true;
+    }
+    void KaraokeDocument::UnsetIsDirty()
+    {
+        myIsDirty = false;
+        myIsAutoDirty = false;
+    }
+    bool KaraokeDocument::GetIsAutoDirty()
+    {
+        return myIsAutoDirty && (emscripten_get_now() - myLastEditTime) > 2000;
+    }
+    // void KaraokeDocument::UnsetIsAutoDirty()
+    //{
+    //     myIsAutoDirty = false;
+    // }
+    std::string KaraokeDocument::GetName()
+    {
+        auto pathName = std::filesystem::path(myPath);
+        return pathName.filename().string();
     }
     uint KaraokeDocument::StringToTime(std::string aTimeStr)
     {

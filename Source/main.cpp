@@ -6,6 +6,7 @@
 #include "Windows/RawText.h"
 #include "Windows/AudioPlayback.h"
 #include "Windows/TouchControl.h"
+#include "Windows/Settings.h"
 #include "Windows/Todo.h"
 #include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
@@ -29,6 +30,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
     //AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
+    if(folderPath == "") return;
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);
     g_closeFileTab = true;
@@ -37,11 +39,19 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
 {
     std::string docPath = Serialization::KaraokeDocument::Get().Save();
     FileHandler::DownloadDocument(docPath.c_str());
+    Serialization::KaraokeDocument::Get().UnsetIsDirty();
     g_closeFileTab = true;
 }
 
 void loop(void* window){
     MainWindow_NewFrame(window);
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    MainWindow_SetName(doc.GetName().empty() ? (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate" : "Resonate");
+    MainWindow_SetIcon(doc.GetIsDirty() ? "ResonateIconUnsaved.png" : "ResonateIcon.png");
+    if(doc.GetIsAutoDirty())
+    {
+        doc.AutoSave();
+    }
 
     if(ImGui::BeginMainMenuBar())
     {
@@ -68,32 +78,32 @@ void loop(void* window){
             if(ImGui::MenuItem("Insert Line Break"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                Serialization::KaraokeDocument::Get().InsertLineBreak(timing->GetMarkedLine(), timing->GetMarkedToken(), timing->GetMarkedChar());
+                doc.InsertLineBreak(timing->GetMarkedLine(), timing->GetMarkedToken(), timing->GetMarkedChar());
             }
             if(ImGui::MenuItem("Merge Line Up"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                Serialization::KaraokeDocument::Get().RevoveLineBreak(timing->GetMarkedLine());
+                doc.RevoveLineBreak(timing->GetMarkedLine());
             }
             if(ImGui::MenuItem("Merge Line Down"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                Serialization::KaraokeDocument::Get().RevoveLineBreak(timing->GetMarkedLine() + 1);
+                doc.RevoveLineBreak(timing->GetMarkedLine() + 1);
             }
             if(ImGui::MenuItem("Move Line Up"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                Serialization::KaraokeDocument::Get().MoveLineUp(timing->GetMarkedLine());
+                doc.MoveLineUp(timing->GetMarkedLine());
             }
             if(ImGui::MenuItem("Move Line Down"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                Serialization::KaraokeDocument::Get().MoveLineUp(timing->GetMarkedLine() + 1);
+                doc.MoveLineUp(timing->GetMarkedLine() + 1);
             }
             if(ImGui::MenuItem("Duplicate Line"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                Serialization::KaraokeDocument::Get().DuplicateLine(timing->GetMarkedLine());
+                doc.DuplicateLine(timing->GetMarkedLine());
             }
             ImGui::EndMenu();
         }
@@ -136,13 +146,14 @@ void loop(void* window){
                     if(ImGui::MenuItem(name.c_str()))
                     {
                         Serialization::BuildPatterns(code);
-                        std::string text = Serialization::KaraokeDocument::Get().SerializeAsText();
+                        std::string text = doc.SerializeAsText();
                         printf("Done serializing.\n");
                         std::vector<std::string> tokenList = Serialization::Syllabify(text, code);
                         text = StringTools::Join(tokenList, "[00:00:00]");
                         printf("Done syllabifying.\n");
                         printf("%s\n", text.data());
-                        Serialization::KaraokeDocument::Get().Parse("[00:00:00]" + text + "[00:00:00]");
+                        doc.Parse("[00:00:00]" + text + "[00:00:00]");
+                        doc.MakeDirty();
                     }
                 }
                 ImGui::EndMenu();
@@ -154,8 +165,9 @@ void loop(void* window){
                     if(ImGui::MenuItem(name.c_str()))
                     {
                         Serialization::BuildPatterns(code);
-                        std::vector<std::string> tokenList = Serialization::Syllabify(Serialization::KaraokeDocument::Get().SerializeLineAsText(Serialization::KaraokeDocument::Get().GetLine(((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine())), code);
-                        Serialization::KaraokeDocument::Get().ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), ((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine());
+                        std::vector<std::string> tokenList = Serialization::Syllabify(doc.SerializeLineAsText(doc.GetLine(((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine())), code);
+                        doc.ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), ((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine());
+                        doc.MakeDirty();
                     }
                 }
                 ImGui::EndMenu();
@@ -191,6 +203,7 @@ int main(){
     MainWindow_StyleColorsShadow();
 
     Serialization::Syllabify_Init();
+    Serialization::KaraokeDocument::Get().Load("/local");
 
     WindowManager::Init();
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");

@@ -47,6 +47,13 @@ namespace Serialization
         std::string SerializeAsText();
         std::string SerializeLineAsText(KaraokeLine& aLine);
         std::string Save();
+        std::string AutoSave();
+        bool GetIsDirty();          // Has the user saved since last edit
+        void MakeDirty();           // Has an edit occured 
+        void UnsetIsDirty();        // Has a save occured 
+        bool GetIsAutoDirty();      // Has the document been auto saved since last edit and passed a cooldown
+        //void UnsetIsAutoDirty();  // Has an auto save occured (Set in AutoSave())
+        std::string GetName();
 
         static uint StringToTime(std::string aTimeStr);
         static std::string TimeToString(uint aTime);
@@ -63,6 +70,9 @@ namespace Serialization
         static inline KaraokeLine ourNullLine = KaraokeLine();
         KaraokeData myTokens;
         std::string myPath;
+        bool myIsDirty = false;
+        bool myIsAutoDirty = false; // Set immediatly
+        double myLastEditTime = 0;
         bool myHasBaseStartColor = false;
         uint myBaseStartColor = 0xFF00E600;
         bool myHasBaseEndColor = false;

@@ -13,11 +13,12 @@ TextEditor::TextEditor()
 
 void TextEditor::OnImGuiDraw()
 {
-    if(ImGui::Begin(GetName().c_str()))
+    if(ImGui::Begin(GetName().c_str(), 0, Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0))
     {
         if(ImGui::InputTextMultiline("##RawText", &myRawText, ImGui::GetContentRegionAvail()) && myHasTakenFocus)
         {
             Serialization::KaraokeDocument::Get().Parse(myRawText);
+            Serialization::KaraokeDocument::Get().MakeDirty();
         }
         TouchInput_ReadyKeyboard();
 

@@ -17,7 +17,7 @@ TimingEditor::TimingEditor()
 void TimingEditor::OnImGuiDraw()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNavInputs))
+    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNavInputs | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
         if(myFont) ImGui::PushFont(myFont);
@@ -123,6 +123,7 @@ int TimingEditor::GetMarkedChar()
 void TimingEditor::ToggleTokenHasTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    doc.MakeDirty();
     if(myMarkedChar != 0 || (myMarkedToken == 0 && !doc.GetToken(myMarkedLine, myMarkedToken).myHasStart))
     {
         doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken + 1, 
@@ -155,6 +156,7 @@ void TimingEditor::ToggleTokenHasTime()
 void TimingEditor::RecordStartTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    doc.MakeDirty();
     // TODO: check if space token or if first on line
     if(myMarkedToken == 0)
     {
@@ -178,6 +180,7 @@ void TimingEditor::RecordStartTime()
 void TimingEditor::RecordEndTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    doc.MakeDirty();
     Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
     // Space token already exists
