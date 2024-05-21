@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <StringTools.h>
+#include <Extensions/FileHandler.h>
 #include <sstream>
 #include <iomanip>
 
@@ -230,11 +231,11 @@ namespace Serialization
     }
     void KaraokeDocument::Load(std::string aPath)
     {
-        if(aPath == myPath)
-        {
-            printf("%s is already loaded!\n", aPath.c_str());
-            return;
-        }
+        //if(aPath == myPath)
+        //{
+        //    printf("%s is already loaded!\n", aPath.c_str());
+        //    return;
+        //}
         printf("Loading %s.\n", aPath.c_str());
         if(!std::filesystem::exists(aPath))
         {
@@ -263,6 +264,11 @@ namespace Serialization
             ParseLine(line);
         }
         docFile.close();
+        if(!aPath.contains("local"))
+        {
+            std::filesystem::copy(aPath, "/local", std::filesystem::copy_options::overwrite_existing);
+            FileHandler::SyncLocalFS();
+        }
     }
     void KaraokeDocument::Parse(std::string aDocument)
     {
@@ -385,7 +391,7 @@ namespace Serialization
         docFile << Serialize();
         printf("Auto saved to '/local/%s'.\n", pathName.filename().string().data());
         docFile.close();
-        EM_ASM({ FS.syncfs(false, function (err) {if(err){alert('Unable to sync IndexDB!\n' + err);}}); });
+        FileHandler::SyncLocalFS();
         myIsAutoDirty = false;
         return myPath;
     }

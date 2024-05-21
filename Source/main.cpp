@@ -31,6 +31,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
     //AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
     if(folderPath == "") return;
+    FileHandler::ClearLocalStorage();
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);
     g_closeFileTab = true;

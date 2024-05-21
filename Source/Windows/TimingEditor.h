@@ -17,6 +17,7 @@ public:
     void MoveMarkerDown();
     void MoveMarkerLeft(bool aIsCharmode = false);
     void MoveMarkerRight(bool aIsCharmode = false);
+    void CheckMarkerIsSafe(bool aIsMovingRight);
     void SetInputUnsafe(bool anUnsafe);
 
 private:

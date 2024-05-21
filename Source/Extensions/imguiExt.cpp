@@ -95,11 +95,13 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     ImVec2 timeEndPos = {remap(clamp(aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.2f)};
     if(aCurrentTime < start)
     {
-        ImGui::PushStyleColor(ImGuiCol_Text, Serialization::KaraokeDocument::Get().GetStartColor() | 0xFF000000);
+        uint startCol = Serialization::KaraokeDocument::Get().GetStartColor() | 0xFF000000;
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol));
     }
     else
     {
-        ImGui::PushStyleColor(ImGuiCol_Text, Serialization::KaraokeDocument::Get().GetEndColor() | 0xFF000000);
+        uint endCol = Serialization::KaraokeDocument::Get().GetEndColor() | 0xFF000000;
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol));
     }
     Text(aValue.data());
     ImGui::PopStyleColor();
