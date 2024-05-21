@@ -7,7 +7,7 @@ var os = require('os');
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
-const REBUILD_Source = false;
+const REBUILD_Source = true;
 const SKIP_ImguiCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
@@ -103,7 +103,7 @@ sourceFiles.forEach(file => {
     {
         if(REBUILD_Source || (!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs))
         {
-            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O2 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
+            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O0 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');
@@ -111,7 +111,7 @@ sourceFiles.forEach(file => {
 });
 if(!SKIP_Linking && hasUnlinkedFiles)
 {
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind -O2 --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" -g3 -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind -O0 --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" -g3 -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
 }
 
 // run the `ls` command using exec

@@ -7,6 +7,7 @@
 #include <Defines.h>
 #include <Serialization/KaraokeData.h>
 #include <Extensions/imguiExt.h>
+#include <Extensions/FileHandler.h>
 
 EM_JS(void, create_audio_element, (), {
     //global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
@@ -212,6 +213,10 @@ void AudioPlayback::PrepPlayback()
     EM_ASM(if(global_audio_context !== null)global_audio_context.close(););
     create_audio_playback();
     //set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
+    if(ourInstance->myPath.empty()) 
+    {
+        SetPlaybackFile("/local");
+    }
     ourInstance->myHasAudio = true;
 }
 
@@ -242,9 +247,15 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
         return;
     }
     //EM_ASM(if(global_audio_context != 'undefined')global_audio_context.close(););
-    ourInstance->myHasAudio = false;
+    //ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
     set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
+    if(!aPath.contains("local"))
+    {
+        std::filesystem::copy(aPath, "/local", std::filesystem::copy_options::overwrite_existing);
+        FileHandler::SyncLocalFS();
+    }
+    
     //ourInstance->myDuration = 100 * VAR_FROM_JS(set_audio_playback_file(VAR_TO_JS(aPath.c_str()))).await().as<double>();
     //printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
 }

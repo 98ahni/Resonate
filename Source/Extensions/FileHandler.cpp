@@ -116,6 +116,20 @@ void FileHandler::DownloadDocument(const char *aPath)
     download_document(VAR_TO_JS(aPath));
 }
 
+void FileHandler::SyncLocalFS()
+{
+    VAR_FROM_JS((emscripten::EM_VAL)EM_ASM_INT({
+        return Emval.toHandle(new Promise((resolve)=>{
+            FS.syncfs(false, function (err) {
+                if(err){
+                    alert('Unable to sync IndexDB!\n' + err);
+                }
+                resolve();
+            }); 
+        }))
+    })).await();
+}
+
 void FileHandler::SetLocalValue(std::string aName, std::string aValue)
 {
     set_local_value(VAR_TO_JS(aName), VAR_TO_JS(aValue));

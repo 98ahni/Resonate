@@ -44,6 +44,7 @@ void TimingEditor::OnImGuiDraw()
                         myMarkedToken = token;
                         myMarkedChar = 0;
                     }
+                    CheckMarkerIsSafe(true);
                 }
                 ImGui::SameLine();
             }
@@ -146,9 +147,11 @@ void TimingEditor::ToggleTokenHasTime()
         }
         else
         {
+            int lastTokenLength = lastToken.myValue.size();
             lastToken.myValue += doc.GetToken(myMarkedLine, myMarkedToken).myValue;
             doc.GetLine(myMarkedLine).erase(doc.GetLine(myMarkedLine).begin() + myMarkedToken);
             MoveMarkerLeft();
+            myMarkedChar = lastTokenLength;
         }
     }
 }
@@ -200,6 +203,7 @@ void TimingEditor::RecordEndTime()
     else if(prevToken.myHasStart && myMarkedToken != 0)
     {
         doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken, {"", true, AudioPlayback::GetPlaybackProgress()});
+        MoveMarkerRight();
     }
     // Token is on previous line
     else
@@ -219,6 +223,7 @@ void TimingEditor::MoveMarkerUp()
     myMarkedChar = 0;
     myMarkedLine = myMarkedLine > 0 ? myMarkedLine - 1 : 0;
     myMarkedToken = myMarkedToken < doc.GetLine(myMarkedLine).size() ? myMarkedToken : (doc.GetLine(myMarkedLine).size() - 1);
+    CheckMarkerIsSafe(false);
 }
 
 void TimingEditor::MoveMarkerDown()
@@ -228,6 +233,7 @@ void TimingEditor::MoveMarkerDown()
     myMarkedChar = 0;
     myMarkedLine = myMarkedLine + 1 < doc.GetData().size() ? myMarkedLine + 1 : (doc.GetData().size() - 1);
     myMarkedToken = myMarkedToken < doc.GetLine(myMarkedLine).size() ? myMarkedToken : (doc.GetLine(myMarkedLine).size() - 1);
+    CheckMarkerIsSafe(true);
 }
 
 void TimingEditor::MoveMarkerLeft(bool aIsCharmode)
@@ -253,6 +259,7 @@ void TimingEditor::MoveMarkerLeft(bool aIsCharmode)
         }
         myMarkedChar = aIsCharmode ? doc.GetToken(myMarkedLine, myMarkedToken).myValue.size() - 1 : 0;
     }
+    CheckMarkerIsSafe(false);
 }
 
 void TimingEditor::MoveMarkerRight(bool aIsCharmode)
@@ -283,6 +290,23 @@ void TimingEditor::MoveMarkerRight(bool aIsCharmode)
             }
         }
         myMarkedChar = 0;
+    }
+    CheckMarkerIsSafe(true);
+}
+
+void TimingEditor::CheckMarkerIsSafe(bool aIsMovingRight)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    if(myMarkedLine < 0) myMarkedLine = 0;
+    if(myMarkedToken < 0) myMarkedToken = 0;
+    if(myMarkedLine >= doc.GetData().size() < 0) myMarkedLine = doc.GetData().size() - 1;
+    if(myMarkedToken >= doc.GetLine(myMarkedLine).size() < 0) myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
+    if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
+    {
+        if(!(myMarkedLine == doc.GetData().size() - 1 && myMarkedToken == doc.GetLine(myMarkedLine).size() - 1))
+        {
+            aIsMovingRight ? MoveMarkerRight() : MoveMarkerLeft();
+        }
     }
 }
 
