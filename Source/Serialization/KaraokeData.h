@@ -70,6 +70,7 @@ namespace Serialization
         static inline KaraokeLine ourNullLine = KaraokeLine();
         KaraokeData myTokens;
         std::string myPath;
+        std::string myName;
         bool myIsDirty = false;
         bool myIsAutoDirty = false; // Set immediatly
         double myLastEditTime = 0;

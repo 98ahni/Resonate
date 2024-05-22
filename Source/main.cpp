@@ -47,7 +47,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
 void loop(void* window){
     MainWindow_NewFrame(window);
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    MainWindow_SetName(doc.GetName().empty() ? (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate" : "Resonate");
+    MainWindow_SetName(doc.GetName().empty() ? "Resonate" : (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate");
     MainWindow_SetIcon(doc.GetIsDirty() ? "ResonateIconUnsaved.png" : "ResonateIcon.png");
     if(doc.GetIsAutoDirty())
     {

@@ -11,7 +11,6 @@ TimingEditor::TimingEditor()
     myMarkHasMoved = false;
     myInputIsUnsafe = false;
     myDisableInput = false;
-    SetInputUnsafe(false);
 }
 
 void TimingEditor::OnImGuiDraw()

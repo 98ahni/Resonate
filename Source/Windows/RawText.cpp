@@ -13,7 +13,7 @@ TextEditor::TextEditor()
 
 void TextEditor::OnImGuiDraw()
 {
-    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_HorizontalScrollbar | Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0))
+    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         if(ImGui::InputTextMultiline("##RawText", &myRawText, ImGui::GetContentRegionAvail()) && myHasTakenFocus)
         {
@@ -22,23 +22,20 @@ void TextEditor::OnImGuiDraw()
         }
         TouchInput_ReadyKeyboard();
 
-        if(ImGui::IsItemHovered() || ImGui::IsWindowFocused())
+        if(!myHasTakenFocus)
         {
-            if(!myHasTakenFocus)
-            {
-                myRawText = Serialization::KaraokeDocument::Get().Serialize();
-                ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(true);
-            }
-            myHasTakenFocus = true;
+            myRawText = Serialization::KaraokeDocument::Get().Serialize();
+            ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(true);
         }
-        else
+        myHasTakenFocus = true;
+    }
+    else
+    {
+        if(myHasTakenFocus)
         {
-            if(myHasTakenFocus)
-            {
-                ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
-            }
-            myHasTakenFocus = false;
+            ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
         }
+        myHasTakenFocus = false;
     }
     Gui_End();
 }
