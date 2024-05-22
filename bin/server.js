@@ -7,7 +7,7 @@ var os = require('os');
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
-const REBUILD_Source = true;
+const REBUILD_Source = false;
 const SKIP_ImguiCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;

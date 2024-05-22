@@ -257,6 +257,7 @@ namespace Serialization
         }
         Clear();
         myPath = aPath;
+        myName = std::filesystem::path(myPath).filename().string();
         std::ifstream docFile(aPath);
         std::string line;
         while(std::getline(docFile, line))
@@ -420,8 +421,7 @@ namespace Serialization
     // }
     std::string KaraokeDocument::GetName()
     {
-        auto pathName = std::filesystem::path(myPath);
-        return pathName.filename().string();
+        return myName;
     }
     uint KaraokeDocument::StringToTime(std::string aTimeStr)
     {
