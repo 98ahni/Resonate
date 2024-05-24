@@ -26,6 +26,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger =
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
 bool g_closeFileTab = false;
+bool g_hasGoogleAcc = false;
+
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
     //AudioPlayback::PrepPlayback();
@@ -66,6 +68,22 @@ void loop(void* window){
             {
             }
             ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
+            ImGui::Separator();
+            if(ImGui::BeginMenu("Google Drive"))
+            {
+                if(ImGui::IsItemActivated())
+                {
+                    // Check if logged in.
+                }
+                if(!g_hasGoogleAcc)
+                {
+                    if(ImGui::MenuItem("Log In With Google"))
+                    {
+                        // Log in
+                    }
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMenu();
         }
         else
