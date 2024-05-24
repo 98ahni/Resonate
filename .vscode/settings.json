@@ -96,6 +96,7 @@
         "__threading_support": "cpp",
         "__tree": "cpp",
         "__verbose_abort": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "__memory": "cpp"
     }
 }

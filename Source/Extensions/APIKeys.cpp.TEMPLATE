@@ -1,0 +1,9 @@
+#include <emscripten.h>
+#include <emscripten/val.h>
+#include <Defines.h>
+
+// This is the function getting called by the Google API once it's loaded.
+extern"C" EMSCRIPTEN_KEEPALIVE void GAPI_Init_Client()
+{
+    EM_ASM({init_gapi_with_key(Emval.toValue($0));}, VAR_TO_JS("API KEY GOES HERE"));
+}
