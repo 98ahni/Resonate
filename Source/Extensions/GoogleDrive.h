@@ -7,6 +7,9 @@ namespace GoogleDrive
     void RequestToken();
     void LogOut();
 
-    std::string LoadProject();
+    /// @brief Shows a Google Drive file picker.
+    /// @param someMimeTypes Sets the types of files the user can choose from.
+    /// @param aCallbackName The name of a javascript accessible function which takes a string containing the fs path that was loaded.
+    void LoadProject(std::string someMimeTypes, std::string aCallbackName);
     std::string SaveProject();
 }
