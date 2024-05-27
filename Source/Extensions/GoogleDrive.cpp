@@ -61,10 +61,40 @@ EM_JS(void, revoke_client_token, (), {
     }
 });
 
-EM_JS(void, create_picker, (emscripten::EM_VAL APIKey), 
+EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_types, emscripten::EM_VAL callback_name), 
 {
-    
-})
+    const view = new google.picker.View(google.picker.ViewId.FOLDERS);
+    view.setMimeTypes(Emval.toValue(mime_types));
+    const callback_func = Module[Emval.toValue(callback_name)];
+    const picker = new google.picker.PickerBuilder()
+        .enableFeature(google.picker.Feature.NAV_HIDDEN)
+        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+        .setDeveloperKey(Emval.toValue(APIKey))
+        .setAppId(APP_ID)
+        .setOAuthToken(gapi.client.getToken().access_token)
+        .addView(view)
+        .addView(new google.picker.DocsUploadView())
+        .setCallback(async(data) => {if (data.action === google.picker.Action.PICKED){
+            const documents = data[google.picker.Response.DOCUMENTS];
+            if(!FS.analyzePath("/GoogleDrive").exists){
+                FS.mkdir("/GoogleDrive");
+            }
+            for(const document of documents){
+                const fileId = document[google.picker.Document.ID];
+                console.log(fileId);
+                const res = await gapi.client.drive.files.get({
+                    'fileId': fileId,
+                    'fields': 'webContentLink, name',
+                });
+                const content = await fetch(res['webContentLink']);
+                const uint8_view = new Uint8Array(content);
+                FS.writeFile("/GoogleDrive/" + res['name'], uint8_view);
+            }
+            callback_func("/GoogleDrive"); // User callback
+        }})
+        .build();
+    picker.setVisible(true);
+});
 
 bool GoogleDrive::Ready()
 {
@@ -78,15 +108,17 @@ bool GoogleDrive::HasToken()
 
 void GoogleDrive::RequestToken()
 {
+    request_client_token();
 }
 
 void GoogleDrive::LogOut()
 {
+    revoke_client_token();
 }
 
-std::string GoogleDrive::LoadProject()
+void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aCallbackName)
 {
-    return std::string();
+    create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aCallbackName));
 }
 
 std::string GoogleDrive::SaveProject()

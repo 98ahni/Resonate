@@ -97,6 +97,7 @@
         "__tree": "cpp",
         "__verbose_abort": "cpp",
         "regex": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "strstream": "cpp"
     }
 }
