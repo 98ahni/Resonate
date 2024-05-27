@@ -96,6 +96,25 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
     picker.setVisible(true);
 });
 
+EM_ASYNC_JS(void, save_to_drive, (emscripten::EM_VAL file_id, emscripten::EM_VAL fs_path), {
+    for(const file of FS.readDir(Emval.toValue(fs_path))){
+        if(FS.isDir(file)){
+            continue;
+        }
+        const fileData = FS.readFile(file);
+	    //const fileBlob = new Blob([fileData.buffer], {type: 'application/octet-binary'});
+        await gapi.client.request({
+            path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id),
+            method: 'PATCH',
+            body: fileData.buffer,
+            params: {
+                uploadType: 'media',
+                fields: 'id,version,name',
+            },
+        });
+    }
+});
+
 bool GoogleDrive::Ready()
 {
     return gapi_ready();
