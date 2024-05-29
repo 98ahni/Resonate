@@ -23,7 +23,7 @@
 #include "Defines.h"
 #include <filesystem>
 
-bool g_showInputDebugger = false;
+bool g_showInputDebugger = true;
 char* g_testStr = new char[50];
 extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });

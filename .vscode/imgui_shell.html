@@ -31,53 +31,81 @@
         }
     </style>
 </head>
-  <body>
-      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" onclick="_jsPrepPlayback()"></canvas>
-      <script type='text/javascript'>
-          var Module;
-          (async () => {
-              Module = {
-                  preRun: [],
-                  postRun: [],
-                  print: (function () {
-                      return function (text) {
-                          text = Array.prototype.slice.call(arguments).join(' ');
-                          console.log(text);
-                      };
-                  })(),
-                  printErr: function (text) {
-                      text = Array.prototype.slice.call(arguments).join(' ');
-                      console.error(text);
-                  },
-                  canvas: (function () {
-                      var canvas = document.getElementById('canvas');
-                      //canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
-                      return canvas;
-                  })(),
-                  setStatus: function (text) {
-                      console.log("status: " + text);
-                  },
-                  monitorRunDependencies: function (left) {
-                      // no run dependencies to log
-                  }
-              };
-              window.onerror = function () {
-                  console.log("onerror: " + event);
-				  //if(window.matchMedia('(any-pointer: coarse)').matches) // Enable if alert should be for touch only.
-                  alert("OnError: \n" + event.name + ": " + event.message);
-              };
+    <body>
+        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" onclick="_jsPrepPlayback()"></canvas>
+        <script type='text/javascript'>
+            var Module;
+            (async () => {
+                Module = {
+                    preRun: [],
+                    postRun: [],
+                    print: (function () {
+                        return function (text) {
+                            text = Array.prototype.slice.call(arguments).join(' ');
+                            console.log(text);
+                        };
+                    })(),
+                    printErr: function (text) {
+                        text = Array.prototype.slice.call(arguments).join(' ');
+                        console.error(text);
+                    },
+                    canvas: (function () {
+                        var canvas = document.getElementById('canvas');
+                        //canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
+                        return canvas;
+                    })(),
+                    setStatus: function (text) {
+                        console.log("status: " + text);
+                    },
+                    monitorRunDependencies: function (left) {
+                        // no run dependencies to log
+                    }
+                };
+                window.onerror = function () {
+                    console.log("onerror: " + event);
+    				  //if(window.matchMedia('(any-pointer: coarse)').matches) // Enable if alert should be for touch only.
+                    alert("OnError: \n" + event.name + ": " + event.message);
+                };
 
-              // Initialize the graphics adapter
-              {
-                  const adapter = await navigator.gpu.requestAdapter();
-                  const device = await adapter.requestDevice();
-                  Module.preinitializedWebGPUDevice = device;
-              }
-          })();
-      </script>
-      <script type="text/javascript" src="plugins/timestretch.js"></script>
-      <script async defer src="https://apis.google.com/js/api.js" onload=""></script>
-      <script async defer src="https://accounts.google.com/gsi/client" onload=""></script>
-      {{{ SCRIPT }}}
-  </body>
+                const default_console_log = console.log;
+                const default_console_warn = console.warn;
+                const default_console_error = console.error;
+                console.log = (...data) => {
+                    fetch("/console", {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({type: 'log', data})
+                    });
+                    default_console_log.apply(console, data);
+                };
+                console.warn = (...data) => {
+                    fetch("/console", {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({type: 'warn', data})
+                    });
+                    default_console_warn.apply(console, data);
+                };
+                console.error = (...data) => {
+                    fetch("/console", {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({type: 'error', data})
+                    });
+                    default_console_error.apply(console, data);
+                };
+
+                // Initialize the graphics adapter
+                {
+                    const adapter = await navigator.gpu.requestAdapter();
+                    const device = await adapter.requestDevice();
+                    Module.preinitializedWebGPUDevice = device;
+                }
+            })();
+        </script>
+        <script type="text/javascript" src="plugins/timestretch.js"></script>
+        <script async defer src="https://apis.google.com/js/api.js" onload=""></script>
+        <script async defer src="https://accounts.google.com/gsi/client" onload=""></script>
+        {{{ SCRIPT }}}
+    </body>
 </html>
