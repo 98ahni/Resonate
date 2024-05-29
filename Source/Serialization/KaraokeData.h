@@ -53,6 +53,7 @@ namespace Serialization
         void UnsetIsDirty();        // Has a save occured 
         bool GetIsAutoDirty();      // Has the document been auto saved since last edit and passed a cooldown
         //void UnsetIsAutoDirty();  // Has an auto save occured (Set in AutoSave())
+        std::string GetPath();
         std::string GetName();
 
         static uint StringToTime(std::string aTimeStr);

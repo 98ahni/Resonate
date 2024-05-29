@@ -1,9 +1,8 @@
-#include <emscripten.h>
-#include <emscripten/val.h>
-#include <Defines.h>
+#include "APIKeys.h"
 
-// This is the function getting called by the Google API once it's loaded.
-extern"C" EMSCRIPTEN_KEEPALIVE void GAPI_Init_Client()
+// !! It's important to NOT save or return keys to javascript and to NEVER use this with function pointers for security reasons!
+
+std::string APIKeys::Google()
 {
-    EM_ASM({init_gapi_with_key(Emval.toValue($0));}, VAR_TO_JS("API KEY GOES HERE"));
+    return "API KEY GOES HERE";
 }
