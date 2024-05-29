@@ -11,6 +11,7 @@ const REBUILD_Source = false;
 const SKIP_ImguiCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
+const FORCE_Linking = false;
 
 const WIN32 = os.platform() === "win32";
 let compileErr = false;
@@ -109,7 +110,7 @@ sourceFiles.forEach(file => {
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');
     }
 });
-if(!SKIP_Linking && hasUnlinkedFiles)
+if((!SKIP_Linking && hasUnlinkedFiles) || FORCE_Linking)
 {
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind -O0 --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" -g3 -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
 }
@@ -127,6 +128,15 @@ var app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', async(req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Resonate.html'));
+});
+app.use(express.json());
+app.post("/console", (req, res)=>{
+    if(req.body.type == 'log')
+        console.log.apply(console, req.body.data);
+    if(req.body.type == 'warn')
+        console.warn.apply(console, req.body.data);
+    if(req.body.type == 'error')
+        console.error.apply(console, req.body.data);
 });
 app.listen(PORT);
 

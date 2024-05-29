@@ -258,6 +258,7 @@ void MainWindow_Init(const char* name, void** outWindow)
 		glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
 		glfwSetKeyCallback(window, ImGui_ImplGlfw_KeyCallback);
 		glfwSetCharCallback(window, ImGui_ImplGlfw_CharCallback);
+		glfwSetMouseButtonCallback(window, ImGui_ImplGlfw_MouseButtonCallback);
 		glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
 	}
 	else
