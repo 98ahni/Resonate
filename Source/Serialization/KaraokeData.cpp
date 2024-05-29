@@ -419,6 +419,10 @@ namespace Serialization
     //{
     //     myIsAutoDirty = false;
     // }
+    std::string KaraokeDocument::GetPath()
+    {
+        return myPath;
+    }
     std::string KaraokeDocument::GetName()
     {
         return myName;

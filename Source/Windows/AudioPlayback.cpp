@@ -250,12 +250,9 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     //ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
     set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
-    if(!aPath.contains("local"))
-    {
-        std::filesystem::copy(aPath, "/local", std::filesystem::copy_options::overwrite_existing);
-        FileHandler::SyncLocalFS();
-    }
     
+    SaveLocalBackup();
+
     //ourInstance->myDuration = 100 * VAR_FROM_JS(set_audio_playback_file(VAR_TO_JS(aPath.c_str()))).await().as<double>();
     //printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
 }
@@ -268,6 +265,15 @@ uint AudioPlayback::GetPlaybackProgress()
 void AudioPlayback::SetPlaybackProgress(uint someProgress)
 {
     set_audio_playback_progress(VAR_TO_JS(((float)someProgress) * .01f / ourInstance->myTimeScale));
+}
+
+void AudioPlayback::SaveLocalBackup()
+{
+    if(!ourInstance->myPath.contains("local"))
+    {
+        std::filesystem::copy(ourInstance->myPath, "/local", std::filesystem::copy_options::overwrite_existing);
+        FileHandler::SyncLocalFS();
+    }
 }
 
 void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)

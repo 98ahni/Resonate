@@ -8,23 +8,27 @@
 #include "Windows/TouchControl.h"
 #include "Windows/Settings.h"
 #include "Windows/Todo.h"
-#include <GLFW/glfw3.h>
 #include <webgl/webgl2.h>
+#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "Extensions/TouchInput.h"
 #include "Extensions/imguiExt.h"
 #include "Extensions/FileHandler.h"
+#include "Extensions/GoogleDrive.h"
 #include "Serialization/KaraokeData.h"
 #include "Serialization/Syllabify.h"
 #include "StringTools.h"
+#include "Defines.h"
+#include <filesystem>
 
 bool g_showInputDebugger = false;
 char* g_testStr = new char[50];
 extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
+bool g_fileTabOpenedThisFrame = true; // Only use in File tab!
 bool g_closeFileTab = false;
 bool g_hasGoogleAcc = false;
 
@@ -46,6 +50,25 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
     g_closeFileTab = true;
 }
 
+extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL aFSPath, emscripten::EM_VAL aFileID)
+{
+    std::filesystem::path path = VAR_FROM_JS(aFSPath).as<std::string>();
+    printf("Loaded project '%s' with file id: %s\n", path.string().data(), VAR_FROM_JS(aFileID).as<std::string>().data());
+    if(path.extension() == ".txt")
+    {
+        Serialization::KaraokeDocument::Get().Load(path.string());
+    }
+    else if(path.extension() == ".mp3")
+    {
+        AudioPlayback::SetPlaybackFile(path.string());
+    }
+}
+extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
+{
+    Serialization::KaraokeDocument::Get().AutoSave();
+    AudioPlayback::SaveLocalBackup();
+}
+
 void loop(void* window){
     MainWindow_NewFrame(window);
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
@@ -60,6 +83,10 @@ void loop(void* window){
     {
         if(!g_closeFileTab && ImGui::BeginMenu("File"))
         {
+            if(g_fileTabOpenedThisFrame)
+            {
+                g_hasGoogleAcc = GoogleDrive::HasToken();
+            }
             if(ImGui::MenuItem("Open Project"))
             {
             }
@@ -71,23 +98,31 @@ void loop(void* window){
             ImGui::Separator();
             if(ImGui::BeginMenu("Google Drive"))
             {
-                if(ImGui::IsItemActivated())
-                {
-                    // Check if logged in.
-                }
                 if(!g_hasGoogleAcc)
                 {
                     if(ImGui::MenuItem("Log In With Google"))
                     {
-                        // Log in
+                        GoogleDrive::RequestToken();
                     }
+                }
+                else
+                {
+                    // Profile info + logout
+                }
+                ImGui::Separator();
+                if(ImGui::MenuItem("Open Project", 0, false, g_hasGoogleAcc))
+                {
+                    FileHandler::ClearLocalStorage();
+                    GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
                 }
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
+            g_fileTabOpenedThisFrame = false;
         }
         else
         {
+            g_fileTabOpenedThisFrame = true;
             g_closeFileTab = false;
             ImGui::Ext::DestroyHTMLElement("OpenProject");
             ImGui::Ext::DestroyHTMLElement("SaveProject");

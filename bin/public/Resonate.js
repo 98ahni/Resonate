@@ -999,13 +999,14 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3593895: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
- 3594052: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3594175: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3594277: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3594340: () => { return global_audio_element.paused ? 1 : 0; },  
- 3594384: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3594640: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  3597630: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
+ 3597787: ($0) => { init_gapi_with_key($0); },  
+ 3597813: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3597936: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3598038: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3598101: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3598145: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3598401: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -1013,6 +1014,15 @@ function set_local_value(key,value_to_store) { localStorage.setItem(Emval.toValu
 function get_local_value(key) { return Emval.toHandle(localStorage.getItem(Emval.toValue(key))); }
 function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); }
 function clear_local_storage() { localStorage.clear(); }
+function gapi_loaded() { gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
+function gapi_ready() { return global_gapi_inited && global_gis_inited; } var global_gapi_inited = false; var global_gis_inited = false;
+function gis_loaded() { global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive.file', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
+function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(APIKey), discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] }).then(()=>{global_gapi_inited = true;}); }
+function has_gapi_token() { if(gapi.client.getToken() !== null){ console.log('Already logged in'); }else{ console.log('Not logged in'); } return gapi.client.getToken() !== null; }
+function request_client_token() { if (gapi.client.getToken() === null) { global_client_token.requestAccessToken({prompt: 'consent'}); } else { global_client_token.requestAccessToken({prompt: ''}); } }
+function revoke_client_token() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } }
+function create_picker(APIKey,mime_types,callback_name,cancel_callback_name) { const view = new google.picker.DocsView() .setIncludeFolders(true) .setMimeTypes(Emval.toValue(mime_types)) .setSelectFolderEnabled(true); const callback_func = Module[Emval.toValue(callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const picker = new google.picker.PickerBuilder() .setDeveloperKey(Emval.toValue(APIKey)) .setAppId(824603127976) .setOAuthToken(gapi.client.getToken().access_token) .setTitle('Choose a folder') .addView(view) .addView(new google.picker.DocsUploadView()) .setCallback(async(data) => {if (data.action === google.picker.Action.CANCEL){cancel_callback_func();} if (data.action === google.picker.Action.PICKED){ const documents = data[google.picker.Response.DOCUMENTS]; if(!FS.analyzePath("/GoogleDrive").exists){ FS.mkdir("/GoogleDrive"); } for(const document of documents){ const fileId = document[google.picker.Document.ID]; console.log(fileId); const files = []; const res = await gapi.client.drive.files.list({ q: "'" + fileId + "' in parents", fields: 'nextPageToken, files(id, name)', spaces: 'drive' }); console.log(JSON.stringify(res.result.files)); Array.prototype.push.apply(files, res.result.files); console.log(files); files.forEach(async function(file) { console.log('Found file:', file.name, file.id); const fres = await gapi.client.drive.files.get({ 'fileId': file.id, 'fields': 'webContentLink', 'alt': 'media' }); FS.writeFile("/GoogleDrive/" + file.name, fres.body); callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); }); } }}) .build(); picker.setVisible(true); }
+function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync(async () => { for(const file of FS.readDir(Emval.toValue(fs_path))){ if(FS.isDir(file)){ continue; } const fileData = FS.readFile(file); await gapi.client.request({ path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id), method: 'PATCH', body: fileData.buffer, params: { uploadType: 'media', fields: 'id,version,name', }, }); } }); }
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(Emval.toValue(id)); if(btn === null){ btn = document.createElement('button'); btn.id = Emval.toValue(id); document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0.3; }
 function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let input = document.getElementById(Emval.toValue(id)); if(input === null){ input = document.createElement('input'); input.id = Emval.toValue(id); document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
@@ -10994,6 +11004,8 @@ var wasmImports = {
   /** @export */
   create_button: create_button,
   /** @export */
+  create_picker: create_picker,
+  /** @export */
   destroy_element: destroy_element,
   /** @export */
   download_document: download_document,
@@ -11028,11 +11040,15 @@ var wasmImports = {
   /** @export */
   fd_write: _fd_write,
   /** @export */
+  gapi_loaded: gapi_loaded,
+  /** @export */
   get_audio_duration: get_audio_duration,
   /** @export */
   get_audio_playback_progress: get_audio_playback_progress,
   /** @export */
   get_has_web_gpu: get_has_web_gpu,
+  /** @export */
+  gis_loaded: gis_loaded,
   /** @export */
   glActiveTexture: _glActiveTexture,
   /** @export */
@@ -11218,11 +11234,15 @@ var wasmImports = {
   /** @export */
   glfwWindowHint: _glfwWindowHint,
   /** @export */
+  has_gapi_token: has_gapi_token,
+  /** @export */
   has_physical_touch: has_physical_touch,
   /** @export */
   hide_touch_keyboard: hide_touch_keyboard,
   /** @export */
   language_code_to_name: language_code_to_name,
+  /** @export */
+  request_client_token: request_client_token,
   /** @export */
   resize_canvas: resize_canvas,
   /** @export */
@@ -11335,6 +11355,7 @@ var _fflush = Module['_fflush'] = createExportWrapper('fflush');
 var _malloc = Module['_malloc'] = createExportWrapper('malloc');
 var _free = Module['_free'] = createExportWrapper('free');
 var _main = Module['_main'] = createExportWrapper('__main_argc_argv');
+var _GAPI_Init_Client = Module['_GAPI_Init_Client'] = createExportWrapper('GAPI_Init_Client');
 var _TouchStart = Module['_TouchStart'] = createExportWrapper('TouchStart');
 var _TouchEnd = Module['_TouchEnd'] = createExportWrapper('TouchEnd');
 var _TouchCancel = Module['_TouchCancel'] = createExportWrapper('TouchCancel');
@@ -11343,6 +11364,8 @@ var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = createExportWrapper(
 var _ShowInputDebugger = Module['_ShowInputDebugger'] = createExportWrapper('ShowInputDebugger');
 var _LoadProject = Module['_LoadProject'] = createExportWrapper('LoadProject');
 var _SaveProject = Module['_SaveProject'] = createExportWrapper('SaveProject');
+var _LoadFileFromGoogleDrive = Module['_LoadFileFromGoogleDrive'] = createExportWrapper('LoadFileFromGoogleDrive');
+var _LoadCanceledFromGoogleDrive = Module['_LoadCanceledFromGoogleDrive'] = createExportWrapper('LoadCanceledFromGoogleDrive');
 var _main = Module['_main'] = createExportWrapper('main');
 var _AudioOnEnded = Module['_AudioOnEnded'] = createExportWrapper('AudioOnEnded');
 var _AudioOnPause = Module['_AudioOnPause'] = createExportWrapper('AudioOnPause');
@@ -11389,9 +11412,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3548708;
-var ___start_em_js = Module['___start_em_js'] = 3583032;
-var ___stop_em_js = Module['___stop_em_js'] = 3593895;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3549060;
+var ___start_em_js = Module['___start_em_js'] = 3583384;
+var ___stop_em_js = Module['___stop_em_js'] = 3597630;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
