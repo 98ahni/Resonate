@@ -30,6 +30,35 @@
             -ms-interpolation-mode: nearest-neighbor;
         }
     </style>
+    <script>
+        const default_console_log = console.log;
+        const default_console_warn = console.warn;
+        const default_console_error = console.error;
+        console.log = (...data) => {
+            fetch("/console", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'log', data})
+            });
+            default_console_log.apply(console, data);
+        };
+        console.warn = (...data) => {
+            fetch("/console", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'warn', data})
+            });
+            default_console_warn.apply(console, data);
+        };
+        console.error = (...data) => {
+            fetch("/console", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'error', data})
+            });
+            default_console_error.apply(console, data);
+        };
+    </script>
 </head>
     <body>
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" onclick="_jsPrepPlayback()"></canvas>
@@ -67,33 +96,7 @@
                     alert("OnError: \n" + event.name + ": " + event.message);
                 };
 
-                const default_console_log = console.log;
-                const default_console_warn = console.warn;
-                const default_console_error = console.error;
-                console.log = (...data) => {
-                    fetch("/console", {
-                        method: "POST",
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({type: 'log', data})
-                    });
-                    default_console_log.apply(console, data);
-                };
-                console.warn = (...data) => {
-                    fetch("/console", {
-                        method: "POST",
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({type: 'warn', data})
-                    });
-                    default_console_warn.apply(console, data);
-                };
-                console.error = (...data) => {
-                    fetch("/console", {
-                        method: "POST",
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({type: 'error', data})
-                    });
-                    default_console_error.apply(console, data);
-                };
+                
 
                 // Initialize the graphics adapter
                 {

@@ -11,7 +11,7 @@ const REBUILD_Source = false;
 const SKIP_ImguiCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
-const FORCE_Linking = false;
+const FORCE_Linking = true;
 
 const WIN32 = os.platform() === "win32";
 let compileErr = false;
@@ -137,6 +137,7 @@ app.post("/console", (req, res)=>{
         console.warn.apply(console, req.body.data);
     if(req.body.type == 'error')
         console.error.apply(console, req.body.data);
+    res.send(' ');
 });
 app.listen(PORT);
 

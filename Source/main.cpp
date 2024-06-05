@@ -44,7 +44,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
 {
-    std::string docPath = Serialization::KaraokeDocument::Get().Save();
+    //std::string docPath = Serialization::KaraokeDocument::Get().Save();
+    std::string docPath = AudioPlayback::GetPath();
     FileHandler::DownloadDocument(docPath.c_str());
     Serialization::KaraokeDocument::Get().UnsetIsDirty();
     g_closeFileTab = true;
@@ -102,7 +103,7 @@ void loop(void* window){
                 {
                     if(ImGui::MenuItem("Log In With Google"))
                     {
-                        GoogleDrive::RequestToken();
+                        GoogleDrive::RequestToken(false);         // TODO: Save to local if user has logged in previously and set to not that.
                     }
                 }
                 else

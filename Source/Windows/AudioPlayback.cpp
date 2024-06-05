@@ -276,6 +276,11 @@ void AudioPlayback::SaveLocalBackup()
     }
 }
 
+std::string AudioPlayback::GetPath()
+{
+    return ourInstance->myPath;
+}
+
 void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
 {
     ImGui::Text(Serialization::KaraokeDocument::TimeToString(myProgress).c_str());

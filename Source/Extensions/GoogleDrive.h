@@ -4,7 +4,7 @@ namespace GoogleDrive
 {
     bool Ready();
     bool HasToken();
-    void RequestToken();
+    void RequestToken(bool aShowPopup);
     void LogOut();
 
     /// @brief Shows a Google Drive file picker.
