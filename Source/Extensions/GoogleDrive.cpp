@@ -28,6 +28,12 @@ EM_JS(bool, gis_loaded, (), {
         scope: 'https://www.googleapis.com/auth/drive.file',
         callback: '', // defined later
     });
+    //google.accounts.id.initialize({
+    //  client_id: 'YOUR_GOOGLE_CLIENT_ID',
+    //  auto_select: true,
+    //  callback: (creds) => {}
+    //});
+    //google.accounts.id.prompt();
     global_gis_inited = true;
     return true;
 }
@@ -58,15 +64,10 @@ EM_JS(bool, has_gapi_token, (), {
     //return gapi.auth2.getAuthInstance().isSignedIn.get();
 });
 
-EM_JS(void, request_client_token, (), {
-    if (gapi.client.getToken() === null) {
-        // Prompt the user to select a Google Account and ask for consent to share their data
-        // when establishing a new session.
-        global_client_token.requestAccessToken({prompt: 'consent'});
-    } else {
-        // Skip display of account chooser and consent dialog for an existing session.
-        global_client_token.requestAccessToken({prompt: ''});
-    }
+EM_JS(void, request_client_token, (emscripten::EM_VAL prompt), {
+    // Prompt the user to select a Google Account and ask for consent to share their data
+    // when establishing a new session.
+    global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)});
 });
 
 EM_JS(void, revoke_client_token, (), {
@@ -115,15 +116,20 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                 console.log(files);
                 files.forEach(async function(file) {
                     console.log('Found file:', file.name, file.id);
+                    const fires = await gapi.client.drive.files.get({
+                        'fileId': file.id,
+                        'fields': 'size, mimeType'
+                    });
+                    console.log(JSON.stringify(fires));
                     const fres = await gapi.client.drive.files.get({
                         'fileId': file.id,
-                        'fields': 'webContentLink',
                         'alt': 'media'
                     });
-                    //console.log(JSON.stringify(fres));
-                    //const content = await fetch(fres.result['webContentLink'], {mode: 'no-cors', credentials: "same-origin"});
-                    //const uint8_view = new Uint8Array(content);
-                    FS.writeFile("/GoogleDrive/" + file.name, fres.body);
+                    var bytes = [];
+                    for (var i = 0; i < fres.body.length; ++i) {
+                      bytes.push(fres.body.charCodeAt(i));
+                    }
+                    FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes));
                     callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); // User callback
                 });
             }
@@ -161,9 +167,9 @@ bool GoogleDrive::HasToken()
     return has_gapi_token();
 }
 
-void GoogleDrive::RequestToken()
+void GoogleDrive::RequestToken(bool aShowPopup)
 {
-    request_client_token();
+    request_client_token(VAR_TO_JS(aShowPopup ? "consent" : "none"));
 }
 
 void GoogleDrive::LogOut()

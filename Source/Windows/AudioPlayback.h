@@ -14,6 +14,7 @@ public:
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
     static void SaveLocalBackup();
+    static std::string GetPath();
 
 private:
     static inline AudioPlayback* ourInstance;
