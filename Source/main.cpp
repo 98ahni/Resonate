@@ -116,6 +116,10 @@ void loop(void* window){
                     FileHandler::ClearLocalStorage();
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
                 }
+                if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
+                {
+                    GoogleDrive::SaveProject(doc.GetFileID(), doc.GetPath());
+                }
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();

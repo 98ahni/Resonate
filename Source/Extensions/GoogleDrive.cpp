@@ -116,11 +116,6 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                 console.log(files);
                 files.forEach(async function(file) {
                     console.log('Found file:', file.name, file.id);
-                    const fires = await gapi.client.drive.files.get({
-                        'fileId': file.id,
-                        'fields': 'size, mimeType'
-                    });
-                    console.log(JSON.stringify(fires));
                     const fres = await gapi.client.drive.files.get({
                         'fileId': file.id,
                         'alt': 'media'
@@ -182,7 +177,7 @@ void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aFileCallba
     create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aCancelCallbackName));
 }
 
-std::string GoogleDrive::SaveProject()
+void GoogleDrive::SaveProject(std::string aFileID, std::string aFilePath)
 {
-    return std::string();
+    save_to_drive(VAR_TO_JS(aFileID), VAR_TO_JS(aFilePath));
 }

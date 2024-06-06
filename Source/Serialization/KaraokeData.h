@@ -40,7 +40,7 @@ namespace Serialization
         void RemoveLine(size_t aLine);
 
         void Clear();
-        void Load(std::string aPath);
+        void Load(std::string aPath, std::string aFileID = "");
         void Parse(std::string aDocument);
         void ParseLineAndReplace(std::string aLine, size_t anIndex);
         std::string Serialize();
@@ -54,6 +54,7 @@ namespace Serialization
         bool GetIsAutoDirty();      // Has the document been auto saved since last edit and passed a cooldown
         //void UnsetIsAutoDirty();  // Has an auto save occured (Set in AutoSave())
         std::string GetPath();
+        std::string GetFileID();
         std::string GetName();
 
         static uint StringToTime(std::string aTimeStr);
@@ -69,12 +70,15 @@ namespace Serialization
         static KaraokeDocument* ourInstance;
         inline static KaraokeToken ourNullToken = {"", false, 0};
         static inline KaraokeLine ourNullLine = KaraokeLine();
-        KaraokeData myTokens;
+        
         std::string myPath;
+        std::string myFileID;
         std::string myName;
         bool myIsDirty = false;
         bool myIsAutoDirty = false; // Set immediatly
         double myLastEditTime = 0;
+
+        KaraokeData myTokens;
         bool myHasBaseStartColor = false;
         uint myBaseStartColor = 0xFF00E600;
         bool myHasBaseEndColor = false;
