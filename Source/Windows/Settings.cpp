@@ -13,6 +13,11 @@ Settings &Settings::Get()
 void Settings::OnImGuiDraw()
 {
     Gui_Begin();
+    // Latency compensation
+    // Toggle fullscreen
+    // Download/Upload preferences
+    // Download/Upload ImGui layout
+    // Clear data
     Gui_End();
 }
 

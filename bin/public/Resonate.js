@@ -999,14 +999,14 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3598155: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
- 3598312: ($0) => { init_gapi_with_key($0); },  
- 3598338: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3598461: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3598563: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3598626: () => { return global_audio_element.paused ? 1 : 0; },  
- 3598670: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3598926: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  3598431: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
+ 3598588: ($0) => { init_gapi_with_key($0); },  
+ 3598614: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3598737: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3598839: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3598902: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3598946: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3599202: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -1021,8 +1021,8 @@ function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(A
 function has_gapi_token() { if(gapi.client.getToken() !== null){ console.log('Already logged in'); }else{ console.log('Not logged in'); } return gapi.client.getToken() !== null; }
 function request_client_token(prompt) { global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)}); }
 function revoke_client_token() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } }
-function create_picker(APIKey,mime_types,callback_name,cancel_callback_name) { const view = new google.picker.DocsView() .setIncludeFolders(true) .setMimeTypes(Emval.toValue(mime_types)) .setSelectFolderEnabled(true); const callback_func = Module[Emval.toValue(callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const picker = new google.picker.PickerBuilder() .setDeveloperKey(Emval.toValue(APIKey)) .setAppId(824603127976) .setOAuthToken(gapi.client.getToken().access_token) .setTitle('Choose a folder') .addView(view) .addView(new google.picker.DocsUploadView()) .setCallback(async(data) => {if (data.action === google.picker.Action.CANCEL){cancel_callback_func();} if (data.action === google.picker.Action.PICKED){ const documents = data[google.picker.Response.DOCUMENTS]; if(!FS.analyzePath("/GoogleDrive").exists){ FS.mkdir("/GoogleDrive"); } for(const document of documents){ const fileId = document[google.picker.Document.ID]; console.log(fileId); const files = []; const res = await gapi.client.drive.files.list({ q: "'" + fileId + "' in parents", fields: 'nextPageToken, files(id, name)', spaces: 'drive' }); console.log(JSON.stringify(res.result.files)); Array.prototype.push.apply(files, res.result.files); console.log(files); files.forEach(async function(file) { console.log('Found file:', file.name, file.id); const fires = await gapi.client.drive.files.get({ 'fileId': file.id, 'fields': 'size, mimeType' }); console.log(JSON.stringify(fires)); const fres = await gapi.client.drive.files.get({ 'fileId': file.id, 'alt': 'media' }); FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(fres.body.match(/[sS]{1,3}/g) || [])); callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); }); } }}) .build(); picker.setVisible(true); }
-function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync(async () => { for(const file of FS.readDir(Emval.toValue(fs_path))){ if(FS.isDir(file)){ continue; } const fileData = FS.readFile(file); await gapi.client.request({ path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id), method: 'PATCH', body: fileData.buffer, params: { uploadType: 'media', fields: 'id,version,name', }, }); } }); }
+function create_picker(APIKey,mime_types,callback_name,cancel_callback_name) { const view = new google.picker.DocsView() .setIncludeFolders(true) .setMimeTypes(Emval.toValue(mime_types)) .setSelectFolderEnabled(true); const callback_func = Module[Emval.toValue(callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const picker = new google.picker.PickerBuilder() .setDeveloperKey(Emval.toValue(APIKey)) .setAppId(824603127976) .setOAuthToken(gapi.client.getToken().access_token) .setTitle('Choose a folder') .addView(view) .addView(new google.picker.DocsUploadView()) .setCallback(async(data) => {if (data.action === google.picker.Action.CANCEL){cancel_callback_func();} if (data.action === google.picker.Action.PICKED){ const documents = data[google.picker.Response.DOCUMENTS]; if(!FS.analyzePath("/GoogleDrive").exists){ FS.mkdir("/GoogleDrive"); } for(const document of documents){ const fileId = document[google.picker.Document.ID]; console.log(fileId); const files = []; const res = await gapi.client.drive.files.list({ q: "'" + fileId + "' in parents", fields: 'nextPageToken, files(id, name)', spaces: 'drive' }); console.log(JSON.stringify(res.result.files)); Array.prototype.push.apply(files, res.result.files); console.log(files); files.forEach(async function(file) { console.log('Found file:', file.name, file.id); const fres = await gapi.client.drive.files.get({ 'fileId': file.id, 'alt': 'media' }); var bytes = []; for (var i = 0; i < fres.body.length; ++i) { bytes.push(fres.body.charCodeAt(i)); } FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes)); callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); }); } }}) .build(); picker.setVisible(true); }
+function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync(async () => { const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'}); await gapi.client.request({ path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id), method: 'PATCH', body: fileData, params: { uploadType: 'media', fields: 'id,version,name', }, }); }); }
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let btn = document.getElementById(Emval.toValue(id)); if(btn === null){ btn = document.createElement('button'); btn.id = Emval.toValue(id); document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0.3; }
 function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let input = document.getElementById(Emval.toValue(id)); if(input === null){ input = document.createElement('input'); input.id = Emval.toValue(id); document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
@@ -1034,9 +1034,10 @@ function always_show_touch_keyboard() { let input = document.createElement('inpu
 function hide_touch_keyboard() { let input = document.getElementById('temp-text-input'); input.remove(); }
 function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { _jsPrepPlayback(); for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
 function show_input_debugger() {_ShowInputDebugger(); }
-function load_preferences_json() { global_preferences = JSON.parse(FS.readFile('/local/.Resonate', { encoding: 'utf8' })); } var global_preferences = {};
-function set_preference_value(key,value) { global_preferences[Emval.toValue(key)] = Emval.toValue(value); FS.writeFile('/local/.Resonate', JSON.stringify(global_preferences)); FS.syncFS(); }
+function load_preferences_json() { if(!FS.analyzePath('/local/.Resonate').exists) { FS.writeFile('/local/.Resonate', '{}'); } global_preferences = JSON.parse(FS.readFile('/local/.Resonate', { encoding: 'utf8' })); } var global_preferences = {};
+function __asyncjs__set_preference_value(key,value) { return Asyncify.handleAsync(async () => { global_preferences[Emval.toValue(key)] = Emval.toValue(value); FS.writeFile('/local/.Resonate', JSON.stringify(global_preferences)); await new Promise((resolve)=>{FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); })}); }); }
 function get_preference_value(key) { return Emval.toHandle(global_preferences[Emval.toValue(key)]); }
+function has_preference_key(key) { return Emval.toHandle(global_preferences.hasOwnProperty(Emval.toValue(key))); }
 function language_code_to_name(language_code) { let names = new Intl.DisplayNames(['en-GB' ], {type:"language"}); return Emval.toHandle(names.of(Emval.toValue(language_code).replace('_', '-'))); }
 function create_audio_element() { } var global_audio_element = null; var global_audio_context = null; var global_audio_blobs = []; if(false){ }
 function __asyncjs__set_audio_playback_file(fs_path) { return Asyncify.handleAsync(async () => { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3'}); global_audio_blobs.length = 10; global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer) => { const isSafari = !!window['safari'] && safari !== 'undefined'; global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate); set_audio_playback_buffer(Emval.toHandle(10)); var audioDatas = []; audioDatas.length = buffer.numberOfChannels; for(var i = 0; i < buffer.numberOfChannels; i++){ audioDatas[i] = buffer.getChannelData(i); } const worker = new Worker('plugins/audiostretchworker.js'); worker.postMessage([audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]); worker.onmessage = (result) => { global_audio_blobs[result.data[1] - 1] = result.data[0]; }; }); }); }
@@ -10921,7 +10922,11 @@ var wasmImports = {
   /** @export */
   __asyncjs__open_directory: __asyncjs__open_directory,
   /** @export */
+  __asyncjs__save_to_drive: __asyncjs__save_to_drive,
+  /** @export */
   __asyncjs__set_audio_playback_file: __asyncjs__set_audio_playback_file,
+  /** @export */
+  __asyncjs__set_preference_value: __asyncjs__set_preference_value,
   /** @export */
   __asyncjs__show_touch_keyboard: __asyncjs__show_touch_keyboard,
   /** @export */
@@ -11050,6 +11055,8 @@ var wasmImports = {
   get_audio_playback_progress: get_audio_playback_progress,
   /** @export */
   get_has_web_gpu: get_has_web_gpu,
+  /** @export */
+  get_preference_value: get_preference_value,
   /** @export */
   gis_loaded: gis_loaded,
   /** @export */
@@ -11241,9 +11248,13 @@ var wasmImports = {
   /** @export */
   has_physical_touch: has_physical_touch,
   /** @export */
+  has_preference_key: has_preference_key,
+  /** @export */
   hide_touch_keyboard: hide_touch_keyboard,
   /** @export */
   language_code_to_name: language_code_to_name,
+  /** @export */
+  load_preferences_json: load_preferences_json,
   /** @export */
   request_client_token: request_client_token,
   /** @export */
@@ -11415,9 +11426,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3549076;
-var ___start_em_js = Module['___start_em_js'] = 3583400;
-var ___stop_em_js = Module['___stop_em_js'] = 3598155;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3549112;
+var ___start_em_js = Module['___start_em_js'] = 3583432;
+var ___stop_em_js = Module['___stop_em_js'] = 3598431;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
