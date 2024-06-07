@@ -13,6 +13,8 @@ namespace Serialization
         void SetDouble(std::string aKey, double someValue);
         void SetString(std::string aKey, std::string someValue);
         
+        bool HasKey(std::string aKey);
+
         bool GetBool(std::string aKey);
         int GetInt(std::string aKey);
         uint32_t GetUint(std::string aKey);

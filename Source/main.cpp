@@ -19,6 +19,7 @@
 #include "Extensions/GoogleDrive.h"
 #include "Serialization/KaraokeData.h"
 #include "Serialization/Syllabify.h"
+#include "Serialization/Preferences.h"
 #include "StringTools.h"
 #include "Defines.h"
 #include <filesystem>
@@ -44,8 +45,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
 {
-    //std::string docPath = Serialization::KaraokeDocument::Get().Save();
-    std::string docPath = AudioPlayback::GetPath();
+    std::string docPath = Serialization::KaraokeDocument::Get().Save();
+    //std::string docPath = AudioPlayback::GetPath();       // Test audio file
     FileHandler::DownloadDocument(docPath.c_str());
     Serialization::KaraokeDocument::Get().UnsetIsDirty();
     g_closeFileTab = true;
@@ -54,10 +55,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL aFSPath, emscripten::EM_VAL aFileID)
 {
     std::filesystem::path path = VAR_FROM_JS(aFSPath).as<std::string>();
-    printf("Loaded project '%s' with file id: %s\n", path.string().data(), VAR_FROM_JS(aFileID).as<std::string>().data());
+    std::string id = VAR_FROM_JS(aFileID).as<std::string>();
+    printf("Loaded project '%s' with file id: %s\n", path.string().data(), id.data());
     if(path.extension() == ".txt")
     {
-        Serialization::KaraokeDocument::Get().Load(path.string());
+        Serialization::Preferences::SetString("Document/FileID", id);
+        Serialization::KaraokeDocument::Get().Load(path.string(), id);
     }
     else if(path.extension() == ".mp3")
     {
@@ -103,7 +106,8 @@ void loop(void* window){
                 {
                     if(ImGui::MenuItem("Log In With Google"))
                     {
-                        GoogleDrive::RequestToken(false);         // TODO: Save to local if user has logged in previously and set to not that.
+                        GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
+                        Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
                     }
                 }
                 else
@@ -118,7 +122,7 @@ void loop(void* window){
                 }
                 if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
                 {
-                    GoogleDrive::SaveProject(doc.GetFileID(), doc.GetPath());
+                    GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
                 }
                 ImGui::EndMenu();
             }
@@ -262,7 +266,10 @@ int main(){
     MainWindow_StyleColorsShadow();
 
     Serialization::Syllabify_Init();
-    Serialization::KaraokeDocument::Get().Load("/local");
+    Serialization::LoadPrefs();
+    Serialization::KaraokeDocument::Get().Load("/local", (
+        Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
+    ));
 
     WindowManager::Init();
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");

@@ -4,19 +4,32 @@
 #include <Defines.h>
 
 EM_JS(void, load_preferences_json, (), {
+    if(!FS.analyzePath('/local/.Resonate').exists)
+    {
+        FS.writeFile('/local/.Resonate', '{}');
+    }
     global_preferences = JSON.parse(FS.readFile('/local/.Resonate', { encoding: 'utf8' }));
 }
 var global_preferences = {};
 );
 
-EM_JS(void, set_preference_value, (emscripten::EM_VAL key, emscripten::EM_VAL value), {
+EM_ASYNC_JS(void, set_preference_value, (emscripten::EM_VAL key, emscripten::EM_VAL value), {
     global_preferences[Emval.toValue(key)] = Emval.toValue(value);
     FS.writeFile('/local/.Resonate', JSON.stringify(global_preferences));
-    FS.syncFS();
+    await new Promise((resolve)=>{FS.syncfs(false, function (err) {
+        if(err){
+            alert('Unable to sync IndexDB!\n' + err);
+        }
+        resolve();
+    })});
 });
 
 EM_JS(emscripten::EM_VAL, get_preference_value, (emscripten::EM_VAL key), {
     return Emval.toHandle(global_preferences[Emval.toValue(key)]);
+});
+
+EM_JS(emscripten::EM_VAL, has_preference_key, (emscripten::EM_VAL key), {
+    return Emval.toHandle(global_preferences.hasOwnProperty(Emval.toValue(key)));
 });
 
 void Serialization::LoadPrefs()
@@ -47,6 +60,11 @@ void Serialization::Preferences::SetDouble(std::string aKey, double someValue)
 void Serialization::Preferences::SetString(std::string aKey, std::string someValue)
 {
     set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+}
+
+bool Serialization::Preferences::HasKey(std::string aKey)
+{
+    return VAR_FROM_JS(has_preference_key(VAR_TO_JS(aKey))).as<bool>();
 }
 
 bool Serialization::Preferences::GetBool(std::string aKey)
