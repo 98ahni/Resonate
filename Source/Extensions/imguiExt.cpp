@@ -196,3 +196,26 @@ bool ImGui::Ext::ToggleSwitch(const char *aLabel, bool *aValue)
     IMGUI_TEST_ENGINE_ITEM_INFO(id, aLabel, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (*aValue ? ImGuiItemStatusFlags_Checked : 0));
     return pressed;
 }
+
+bool ImGui::Ext::TabMenu(ImVector<std::string> someLabels, int *aValue)
+{
+    bool output = false;
+    for(int i = 0; i < someLabels.size(); i++)
+    {
+        bool isSelected = *aValue == i;
+        if(isSelected)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Button, GetColorU32(ImGuiCol_ButtonActive));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, GetColorU32(ImGuiCol_ButtonActive));
+        }
+        if(ImGui::Button(someLabels[i].data()))
+        {
+            output = true;
+            *aValue = i;
+        }
+        if(isSelected)
+        {
+            ImGui::PopStyleColor(2);
+        }
+    }
+}

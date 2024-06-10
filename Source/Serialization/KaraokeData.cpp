@@ -161,7 +161,7 @@ namespace Serialization
             }
             else if(lowTag.starts_with("<no effect>"))
             {
-                SetColor(0xFFFFFFFF, 0x7F7F7F7F);
+                SetColor(myOverrideStartColor, myOverrideStartColor);
                 output = true;
             }
         }

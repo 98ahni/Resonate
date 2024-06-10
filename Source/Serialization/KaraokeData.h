@@ -1,9 +1,32 @@
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 typedef unsigned int uint;
 namespace Serialization 
 {
+    struct KaraokeEffect
+    {
+        enum EffectType
+        {
+            None,
+            Color,
+            Image,
+            Raw
+        };
+        std::string mySerializedValue;
+        EffectType myType;
+    };
+    struct KaraokeColorEffect : public KaraokeEffect
+    {
+        uint myStartColor = 0x0038F97C;
+        bool myHasEndColor = false;
+        uint myEndColor = 0x30FFCCE9;
+    };
+    struct KaraokeImageEffect : public KaraokeEffect
+    {
+        std::string myImageName;
+    };
     struct KaraokeToken
     {
         std::string myValue;
@@ -79,12 +102,15 @@ namespace Serialization
         double myLastEditTime = 0;
 
         KaraokeData myTokens;
+        uint myFontSize = 50;
         bool myHasBaseStartColor = false;
-        uint myBaseStartColor = 0xFF00E600;
+        uint myBaseStartColor = 0x0038F97C;
         bool myHasBaseEndColor = false;
-        uint myBaseEndColor = 0x9FFF80BF;
+        uint myBaseEndColor = 0x30FFCCE9;
         bool myHasOverrideColor = false;
-        uint myOverrideStartColor = 0xFF00E600;
-        uint myOverrideEndColor = 0x9FFF80BF;
+        uint myOverrideStartColor = 0x0038F97C;
+        uint myOverrideEndColor = 0x30FFCCE9;
+        std::unordered_map<std::string, KaraokeEffect*> myEffectAliases;
+        friend class PropertiesWindow;
     };
 }
