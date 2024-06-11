@@ -290,6 +290,10 @@ namespace Serialization
     }
     void KaraokeDocument::ParseLine(std::string aLine)
     {
+        if(aLine.starts_with("font"))
+        {
+            myFontSize = std::stoi(aLine.substr(5));
+        }
         if(aLine.starts_with("start color"))
         {
             myHasBaseStartColor = true;
@@ -302,32 +306,61 @@ namespace Serialization
             myBaseEndColor = FromHex(aLine.substr(12));
             return;
         }
-            myTokens.push_back(std::vector<KaraokeToken>());
-            std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])?(.(?!(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])))*.?"), true);
-            for(int i = 0; i < rawTokens.size(); i++)
+        if(aLine.starts_with(".Resonate"))
+        {
+            // Use version to check if outdated.
+            return;
+        }
+        if(aLine.starts_with(".Style"))
+        {
+            std::vector<std::string> data = StringTools::Split(aLine, "=");
+            std::string alias = data[0].substr(6);
+            KaraokeEffect* effect = myEffectAliases[alias] = ParseEffectProperty(data[1]);
+            myECHOtoResonateAliases[effect->myECHOValue] = "<" + alias + ">";
+            return;
+        }
+        myTokens.push_back(std::vector<KaraokeToken>());
+        ReplaceEffectsInLine(aLine);
+        std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])?(.(?!(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])))*.?"), true);
+        for(int i = 0; i < rawTokens.size(); i++)
+        {
+            std::vector<std::string> timeStamp = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), true);
+            std::vector<std::string> token = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), false);
+            if(timeStamp.size())
             {
-                std::vector<std::string> timeStamp = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), true);
-                std::vector<std::string> token = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), false);
-                if(timeStamp.size())
+                for(int t = 0; t < timeStamp.size(); t++)
                 {
-                    for(int t = 0; t < timeStamp.size(); t++)
-                    {
-                        myTokens.back().push_back({!(token[t + 1].empty() || token[t + 1].contains('\0')) ? token[t + 1] : "", true, StringToTime(timeStamp[t])});
-                    }
+                    myTokens.back().push_back({!(token[t + 1].empty() || token[t + 1].contains('\0')) ? token[t + 1] : "", true, StringToTime(timeStamp[t])});
                 }
-                else if(token.size() && token[0] != "")
-                {
-                    myTokens.back().push_back({token[0], false, 0});
-                }
-                //if(token.size()) printf("%i:%s", token[0].size(), token[0].c_str());
-                //for(int j = 1; j < token.size(); j++)
-                //    printf(", %i:%s", token[j].size(), token[j].c_str());
-                //printf("\n");
             }
+            else if(token.size() && token[0] != "")
+            {
+                myTokens.back().push_back({token[0], false, 0});
+            }
+            //if(token.size()) printf("%i:%s", token[0].size(), token[0].c_str());
+            //for(int j = 1; j < token.size(); j++)
+            //    printf(", %i:%s", token[j].size(), token[j].c_str());
+            //printf("\n");
+        }
+    }
+    void KaraokeDocument::ReplaceEffectsInLine(std::string& aLine)
+    {
+        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        for(std::string tag : tags)
+        {
+            if(myECHOtoResonateAliases.contains(tag))
+            {
+                StringTools::Replace(aLine, tag, myECHOtoResonateAliases[tag]);
+            }
+        }
     }
     std::string KaraokeDocument::Serialize()
     {
         std::string output;
+        if(myFontSize != 50)
+        {
+            output += (std::stringstream() << "font " << myFontSize << "\n").str();
+        }
         if(myHasBaseStartColor)
         {
             output += "start color 0x" + ToHex(myBaseStartColor) + "\n";
@@ -335,6 +368,11 @@ namespace Serialization
         if(myHasBaseEndColor)
         {
             output += "end color 0x" + ToHex(myBaseEndColor) + "\n";
+        }
+        output += ".Resonate=1.1\n";
+        for(auto&[alias, effect] : myEffectAliases)
+        {
+            output += ".Style" + alias + "=" + SerializeEffectProperty(effect) + "\n";
         }
         for(int line = 0; line < myTokens.size(); line++)
         {
@@ -431,6 +469,48 @@ namespace Serialization
     std::string KaraokeDocument::GetName()
     {
         return myName;
+    }
+    KaraokeEffect *KaraokeDocument::ParseEffectProperty(std::string aRawProperty)
+    {
+        std::vector<std::string> data = StringTools::Split(aRawProperty, ",");
+        switch (std::stoi(data[0]))
+        {
+        case KaraokeEffect::Color:
+            KaraokeColorEffect* effect = new KaraokeColorEffect();
+            effect->myType = KaraokeEffect::Color;
+            effect->myStartColor = FromHex(data[1]);
+            effect->myHasEndColor = data.size() > 2;
+            effect->myECHOValue = "<font color#" + data[1];
+            if(effect->myHasEndColor)
+            {
+                effect->myEndColor = FromHex(data[2]);
+                effect->myECHOValue += "#" + data[2];
+            }
+            effect->myECHOValue += ">";
+            break;
+        default:
+            break;
+        }
+        return nullptr;
+    }
+    std::string KaraokeDocument::SerializeEffectProperty(KaraokeEffect *aStyleProperty)
+    {
+        std::string output = "";
+        switch (aStyleProperty->myType)
+        {
+        case KaraokeEffect::Color:
+            // (.StyleMiku=)1,00FFFFFF,30FFFFFF
+            KaraokeColorEffect* effect = (KaraokeColorEffect*)aStyleProperty;
+            output = "1," + ToHex(effect->myStartColor);
+            if(effect->myHasEndColor)
+            {
+                output += "," + ToHex(effect->myEndColor);
+            }
+            break;
+        default:
+            break;
+        }
+        return output;
     }
     uint KaraokeDocument::StringToTime(std::string aTimeStr)
     {

@@ -3,6 +3,7 @@
 namespace FileHandler
 {
     std::string OpenFolder(const char* aMode = "read");
+    std::string OpenDocument(const char* aSaveFolder = ".", const char* aFileType = "*", const char* aMode = "read");
     void DownloadDocument(const char* aPath);
     void SyncLocalFS();
     void SetLocalValue(std::string aName, std::string aValue);

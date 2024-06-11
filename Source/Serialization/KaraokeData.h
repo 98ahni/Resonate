@@ -14,7 +14,7 @@ namespace Serialization
             Image,
             Raw
         };
-        std::string mySerializedValue;
+        std::string myECHOValue;
         EffectType myType;
     };
     struct KaraokeColorEffect : public KaraokeEffect
@@ -80,6 +80,8 @@ namespace Serialization
         std::string GetFileID();
         std::string GetName();
 
+        static KaraokeEffect* ParseEffectProperty(std::string aRawProperty);
+        static std::string SerializeEffectProperty(KaraokeEffect* aStyleProperty);
         static uint StringToTime(std::string aTimeStr);
         static std::string TimeToString(uint aTime);
         static uint FromHex(std::string someHex);
@@ -89,6 +91,7 @@ namespace Serialization
 
     private:
         void ParseLine(std::string aLine);
+        void ReplaceEffectsInLine(std::string& aLine);
 
         static KaraokeDocument* ourInstance;
         inline static KaraokeToken ourNullToken = {"", false, 0};
@@ -110,6 +113,7 @@ namespace Serialization
         bool myHasOverrideColor = false;
         uint myOverrideStartColor = 0x0038F97C;
         uint myOverrideEndColor = 0x30FFCCE9;
+        std::unordered_map<std::string, std::string> myECHOtoResonateAliases;
         std::unordered_map<std::string, KaraokeEffect*> myEffectAliases;
         friend class PropertiesWindow;
     };
