@@ -5,6 +5,7 @@ namespace Serialization{ struct KaraokeEffect; }
 class PropertiesWindow : public EditorWindow
 {
 public:
+    PropertiesWindow();
     void OnImGuiDraw() override;
 
 private:
@@ -14,8 +15,11 @@ private:
         LocalTab
     };
 
-    void DrawEffectWidget(std::string anEffectAlias);
+    void DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect* anEffect);
+    void ApplyEdit(Serialization::KaraokeEffect* anEffect);
 
     TabIndex myCurrentTab;
+    std::string myEditingEffect;
+    std::string myNewEffectName;
     std::unordered_map<std::string, Serialization::KaraokeEffect*> myLocalEffectAliases;
 };

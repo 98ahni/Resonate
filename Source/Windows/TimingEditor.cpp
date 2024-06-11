@@ -1,5 +1,6 @@
 #include "TimingEditor.h"
 #include <Serialization/KaraokeData.h>
+#include <Serialization/Preferences.h>
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
 
@@ -11,6 +12,11 @@ TimingEditor::TimingEditor()
     myMarkHasMoved = false;
     myInputIsUnsafe = false;
     myDisableInput = false;
+    myLatencyOffset = 0;
+    if(Serialization::Preferences::HasKey("Timing/Latency"))
+    {
+        myLatencyOffset = Serialization::Preferences::GetInt("Timing/Latency");
+    }
 }
 
 void TimingEditor::OnImGuiDraw()
@@ -313,6 +319,16 @@ void TimingEditor::SetInputUnsafe(bool anUnsafe)
 {
     myInputIsUnsafe = anUnsafe;
     myDisableInput = anUnsafe ? true : myDisableInput;
+}
+
+void TimingEditor::SetLatencyOffset(int someCentiSeconds)
+{
+    myLatencyOffset = someCentiSeconds;
+}
+
+int TimingEditor::GetLatencyOffset()
+{
+    return myLatencyOffset;
 }
 
 void TimingEditor::DrawTextMarker()

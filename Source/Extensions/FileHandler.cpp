@@ -111,6 +111,12 @@ std::string FileHandler::OpenFolder(const char* aMode)
     return output + "/";
 }
 
+std::string FileHandler::OpenDocument(const char *aSaveFolder, const char *aFileType, const char *aMode)
+{
+    EM_ASM(alert("FileHandler::OpenDocument not implemented!"));
+    return std::string();
+}
+
 void FileHandler::DownloadDocument(const char *aPath)
 {
     download_document(VAR_TO_JS(aPath));

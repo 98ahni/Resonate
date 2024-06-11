@@ -6,6 +6,8 @@
 #define IM_COL32_GET_B(col) ((ImU8*)&col)[2]
 #define IM_COL32_GET_A(col) ((ImU8*)&col)[3]
 #define IM_COL32_FROM_DOC(col) IM_COL32(IM_COL32_GET_B(col), IM_COL32_GET_G(col), IM_COL32_GET_R(col), ~(IM_COL32_GET_A(col)))
+#define IM_LEFT_LABEL(widget, label, ...) ::ImGui::Text(label); ImGui::SameLine(); widget("##" label, __VA_ARGS__)
+
 typedef unsigned int uint;
 namespace ImGui{
     namespace Ext{

@@ -19,6 +19,8 @@ public:
     void MoveMarkerRight(bool aIsCharmode = false);
     void CheckMarkerIsSafe(bool aIsMovingRight);
     void SetInputUnsafe(bool anUnsafe);
+    void SetLatencyOffset(int someCentiSeconds);
+    int GetLatencyOffset();
 
 private:
     void DrawTextMarker();
@@ -30,4 +32,5 @@ private:
     bool myMarkHasMoved = false;
     bool myInputIsUnsafe = false;
     bool myDisableInput = false;
+    int myLatencyOffset = 0;
 };
