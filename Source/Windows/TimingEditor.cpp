@@ -37,7 +37,7 @@ void TimingEditor::OnImGuiDraw()
                 {
                     doc.ParseEffectToken(doc.GetToken(line, token));
                 }
-                if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress(), doc.GetLine(line)[token].myHasStart))
+                if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - myLatencyOffset, doc.GetLine(line)[token].myHasStart))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey_ModShift))
                     {
@@ -176,11 +176,11 @@ void TimingEditor::RecordStartTime()
     }
     if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
     {
-        doc.GetTimedTokenAfter(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress();
+        doc.GetTimedTokenAfter(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress() + myLatencyOffset;
     }
     else
     {
-        doc.GetToken(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress();
+        doc.GetToken(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress() + myLatencyOffset;
     }
     MoveMarkerRight();
 }
@@ -194,20 +194,20 @@ void TimingEditor::RecordEndTime()
     // Space token already exists
     if(doc.IsPauseToken(prevToken))
     {
-        prevToken.myStartTime = AudioPlayback::GetPlaybackProgress();
+        prevToken.myStartTime = AudioPlayback::GetPlaybackProgress() + myLatencyOffset;
         prevToken.myHasStart = true;
     }
     // Space token already exists and marker is on it
     else if(doc.IsPauseToken(currToken))
     {
-        currToken.myStartTime = AudioPlayback::GetPlaybackProgress();
+        currToken.myStartTime = AudioPlayback::GetPlaybackProgress() + myLatencyOffset;
         currToken.myHasStart = true;
         MoveMarkerRight();
     }
     // Token is on same line
     else if(prevToken.myHasStart && myMarkedToken != 0)
     {
-        doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken, {"", true, AudioPlayback::GetPlaybackProgress()});
+        doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken, {"", true, AudioPlayback::GetPlaybackProgress() + myLatencyOffset});
         MoveMarkerRight();
     }
     // Token is on previous line
@@ -216,7 +216,7 @@ void TimingEditor::RecordEndTime()
         Serialization::KaraokeLine& prevLine = doc.GetValidLineBefore(myMarkedLine);
         if(!doc.IsNull(prevLine))
         {
-            prevLine.push_back({"", true, AudioPlayback::GetPlaybackProgress()});
+            prevLine.push_back({"", true, AudioPlayback::GetPlaybackProgress() + myLatencyOffset});
         }
     }
 }
