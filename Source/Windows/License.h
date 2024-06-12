@@ -1,9 +1,9 @@
 #include "Base/EditorWindow.h"
 
-class LicenceWindow : public EditorWindow
+class LicenseWindow : public EditorWindow
 {
 public:
-    LicenceWindow();
+    LicenseWindow();
     void OnImGuiDraw();
 
 private:
