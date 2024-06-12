@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 typedef unsigned int uint;
+class PropertiesWindow;
 namespace Serialization 
 {
     struct KaraokeEffect
@@ -92,6 +93,7 @@ namespace Serialization
     private:
         void ParseLine(std::string aLine);
         void ReplaceEffectsInLine(std::string& aLine);
+        void ReplaceAliasesInLine(std::string& aLine);
 
         static KaraokeDocument* ourInstance;
         inline static KaraokeToken ourNullToken = {"", false, 0};
@@ -115,6 +117,6 @@ namespace Serialization
         uint myOverrideEndColor = 0x30FFCCE9;
         std::unordered_map<std::string, std::string> myECHOtoResonateAliases;
         std::unordered_map<std::string, KaraokeEffect*> myEffectAliases;
-        friend class PropertiesWindow;
+        friend class ::PropertiesWindow;
     };
 }

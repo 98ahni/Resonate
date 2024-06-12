@@ -24,7 +24,7 @@
 #include "Defines.h"
 #include <filesystem>
 
-bool g_showInputDebugger = true;
+bool g_showInputDebugger = false;
 char* g_testStr = new char[50];
 extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
@@ -183,7 +183,7 @@ void loop(void* window){
                     WindowManager::AddWindow<TouchControl>("Touch Control");
                 }
             }
-            if(ImGui::MenuItem("Document Properties", 0, WindowManager::GetWindow("Properties") != nullptr))
+            if(ImGui::MenuItem("Style Properties", 0, WindowManager::GetWindow("Properties") != nullptr))
             {
                 if(WindowManager::GetWindow("Properties") != nullptr)
                 {
@@ -194,9 +194,16 @@ void loop(void* window){
                     WindowManager::AddWindow<PropertiesWindow>("Properties");
                 }
             }
-            if(ImGui::MenuItem("Print ini"))
+            if(ImGui::MenuItem("Settings", 0, WindowManager::GetWindow("Settings") != nullptr))
             {
-                printf("%s\n", ImGui::SaveIniSettingsToMemory());
+                if(WindowManager::GetWindow("Settings") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Settings"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<Settings>("Settings");
+                }
             }
             ImGui::EndMenu();
         }
@@ -234,6 +241,40 @@ void loop(void* window){
                     }
                 }
                 ImGui::EndMenu();
+            }
+            ImGui::EndMenu();
+        }
+        if(ImGui::BeginMenu("About"))
+        {
+            if(ImGui::MenuItem("Help", 0, WindowManager::GetWindow("Touch Control") != nullptr))
+            {
+                if(WindowManager::GetWindow("Touch Control") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Touch Control"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<TouchControl>("Touch Control");
+                }
+            }
+            if(ImGui::MenuItem("Guidelines"))
+            {
+                // Open the guidelines in a new window.
+            }
+            if(ImGui::MenuItem("Licence", 0, WindowManager::GetWindow("Licence") != nullptr))
+            {
+                if(WindowManager::GetWindow("Licence") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Licence"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<TouchControl>("Licence");
+                }
+            }
+            if(ImGui::MenuItem("Report a Bug"))
+            {
+                // Open the Resonate GitHub Issues page.
             }
             ImGui::EndMenu();
         }

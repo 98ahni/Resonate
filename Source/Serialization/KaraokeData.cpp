@@ -151,8 +151,25 @@ namespace Serialization
         {
             if(i >= tags.size()) {printf("The for loop broke all logic and found \"%i\" to be less than \"%i\"!\n", i, tags.size()); break;}
             if(tags[i].empty()) continue;
+            std::string possibleAlias = tags[i];
+            StringTools::EraseSubString(possibleAlias, "<");
+            StringTools::EraseSubString(possibleAlias, ">");
             std::string lowTag = StringTools::tolower(tags[i]);
-            if(lowTag.starts_with("<font color"))
+            if(myEffectAliases.contains(possibleAlias))
+            {
+                switch (myEffectAliases[possibleAlias]->myType)
+                {
+                case KaraokeEffect::Color:
+                {
+                    KaraokeColorEffect* effect = (KaraokeColorEffect*)myEffectAliases[possibleAlias];
+                    if(effect->myHasEndColor) SetColor(effect->myStartColor, effect->myEndColor);
+                    else SetColor(effect->myStartColor);
+                    break;
+                }
+                }
+                output = true;
+            }
+            else if(lowTag.starts_with("<font color"))
             {
                 std::vector<std::string> colors = StringTools::Split(std::string(lowTag.data()), std::regex("[A-Za-z0-9 ]+"), true);
                 if(colors.size() > 2) SetColor(FromHex(colors[1]), FromHex(colors[2]));
@@ -313,10 +330,12 @@ namespace Serialization
         }
         if(aLine.starts_with(".Style"))
         {
+            if(!aLine.contains("=")) return;
             std::vector<std::string> data = StringTools::Split(aLine, "=");
             std::string alias = data[0].substr(6);
-            KaraokeEffect* effect = myEffectAliases[alias] = ParseEffectProperty(data[1]);
-            myECHOtoResonateAliases[effect->myECHOValue] = "<" + alias + ">";
+            KaraokeEffect* effect = ParseEffectProperty(data[1]);
+            myEffectAliases[alias] = effect;
+            myECHOtoResonateAliases[effect->myECHOValue.data()] = "<" + alias + ">";
             return;
         }
         myTokens.push_back(std::vector<KaraokeToken>());
@@ -354,25 +373,40 @@ namespace Serialization
             }
         }
     }
+    void KaraokeDocument::ReplaceAliasesInLine(std::string &aLine)
+    {
+        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        for(std::string tag : tags)
+        {
+            std::string possibleAlias = tag;
+            StringTools::EraseSubString(possibleAlias, "<");
+            StringTools::EraseSubString(possibleAlias, ">");
+            if(myEffectAliases.contains(possibleAlias))
+            {
+                StringTools::Replace(aLine, tag, myEffectAliases[possibleAlias]->myECHOValue);
+            }
+        }
+    }
     std::string KaraokeDocument::Serialize()
     {
+        std::string headers;
         std::string output;
         if(myFontSize != 50)
         {
-            output += (std::stringstream() << "font " << myFontSize << "\n").str();
+            headers += (std::stringstream() << "font " << myFontSize << "\n").str();
         }
         if(myHasBaseStartColor)
         {
-            output += "start color 0x" + ToHex(myBaseStartColor) + "\n";
+            headers += "start color 0x" + ToHex(myBaseStartColor) + "\n";
         }
         if(myHasBaseEndColor)
         {
-            output += "end color 0x" + ToHex(myBaseEndColor) + "\n";
+            headers += "end color 0x" + ToHex(myBaseEndColor) + "\n";
         }
-        output += ".Resonate=1.1\n";
+        headers += ".Resonate=1.1\n";
         for(auto&[alias, effect] : myEffectAliases)
         {
-            output += ".Style" + alias + "=" + SerializeEffectProperty(effect) + "\n";
+            headers += ".Style" + alias + "=" + SerializeEffectProperty(effect) + "\n";
         }
         for(int line = 0; line < myTokens.size(); line++)
         {
@@ -382,7 +416,8 @@ namespace Serialization
             }
             output += "\n";
         }
-        return output;
+        ReplaceAliasesInLine(output);
+        return headers + output;
     }
     std::string KaraokeDocument::SerializeAsText()
     {
@@ -473,9 +508,11 @@ namespace Serialization
     KaraokeEffect *KaraokeDocument::ParseEffectProperty(std::string aRawProperty)
     {
         std::vector<std::string> data = StringTools::Split(aRawProperty, ",");
+        printf("KaraokeDocument::ParseEffectProperty(%s)[data0=%s][data1=%s]\n", aRawProperty.data(), data[0].data(), data[1].data());
         switch (std::stoi(data[0]))
         {
         case KaraokeEffect::Color:
+        {
             KaraokeColorEffect* effect = new KaraokeColorEffect();
             effect->myType = KaraokeEffect::Color;
             effect->myStartColor = FromHex(data[1]);
@@ -487,9 +524,8 @@ namespace Serialization
                 effect->myECHOValue += "#" + data[2];
             }
             effect->myECHOValue += ">";
-            break;
-        default:
-            break;
+            return effect;
+        }
         }
         return nullptr;
     }
@@ -499,6 +535,7 @@ namespace Serialization
         switch (aStyleProperty->myType)
         {
         case KaraokeEffect::Color:
+        {
             // (.StyleMiku=)1,00FFFFFF,30FFFFFF
             KaraokeColorEffect* effect = (KaraokeColorEffect*)aStyleProperty;
             output = "1," + ToHex(effect->myStartColor);
@@ -507,8 +544,7 @@ namespace Serialization
                 output += "," + ToHex(effect->myEndColor);
             }
             break;
-        default:
-            break;
+        }
         }
         return output;
     }

@@ -3,7 +3,7 @@
 #include <Extensions/imguiExt.h>
 #include <Serialization/Preferences.h>
 #include <StringTools.h>
-#include <imgui_stdlib.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 PropertiesWindow::PropertiesWindow()
 {
@@ -98,10 +98,11 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
     ImVec2 size = ImGui::GetWindowSize();
     ImGui::Text("<%s>", anEffectAlias.data());
     ImGui::SameLine();
-    ImGui::TextDisabled("%s", anEffect->myECHOValue);
+    ImGui::TextDisabled("%s", anEffect->myECHOValue.data());
     switch (anEffect->myType)
     {
     case Serialization::KaraokeEffect::Color:
+    {
         ImGui::SameLine();
         Serialization::KaraokeColorEffect* colorEffect = (Serialization::KaraokeColorEffect*)anEffect;
         ImGui::ColorButton("##startColPrev", ImGui::ColorConvertU32ToFloat4(IM_COL32_FROM_DOC(colorEffect->myStartColor)), 0, ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()));
@@ -133,9 +134,9 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
             }
         }
         break;
+    }
     case Serialization::KaraokeEffect::Image:
     case Serialization::KaraokeEffect::Raw:
-    default:
         break;
     }
     ImGui::EndChild();
@@ -150,6 +151,7 @@ void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect)
     switch (anEffect->myType)
     {
     case Serialization::KaraokeEffect::Color:
+    {
         Serialization::KaraokeColorEffect* colorEffect = (Serialization::KaraokeColorEffect*)anEffect;
         colorEffect->myECHOValue = "<font color#" + Serialization::KaraokeDocument::ToHex(colorEffect->myStartColor);
         if(colorEffect->myHasEndColor)
@@ -158,10 +160,9 @@ void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect)
         }
         colorEffect->myECHOValue += ">";
         break;
+    }
     case Serialization::KaraokeEffect::Image:
     case Serialization::KaraokeEffect::Raw:
-    default:
-        break;
     }
     if(myCurrentTab == LocalTab)
     {
