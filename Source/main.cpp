@@ -12,6 +12,8 @@
 #include "Windows/TouchControl.h"
 #include "Windows/Settings.h"
 #include "Windows/Properties.h"
+#include "Windows/Help.h"
+#include "Windows/License.h"
 #include <webgl/webgl2.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -33,9 +35,10 @@ char* g_testStr = new char[50];
 extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
+bool g_hasGoogleAcc = false;
 bool g_fileTabOpenedThisFrame = true; // Only use in File tab!
 bool g_closeFileTab = false;
-bool g_hasGoogleAcc = false;
+bool g_closeAboutTab = false;
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
@@ -76,6 +79,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
     Serialization::KaraokeDocument::Get().AutoSave();
     AudioPlayback::SaveLocalBackup();
 }
+
+EM_JS(void, open_mooncat_guidelines. (), {
+    window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank');
+});
+EM_JS(void, open_resonate_issues. (), {
+    window.open('https://github.com/98ahni/Resonate/issues', '_blank');
+});
 
 void loop(void* window){
     MainWindow_NewFrame(window);
@@ -133,7 +143,7 @@ void loop(void* window){
             ImGui::EndMenu();
             g_fileTabOpenedThisFrame = false;
         }
-        else
+        else if(g_closeFileTab)
         {
             g_fileTabOpenedThisFrame = true;
             g_closeFileTab = false;
@@ -248,23 +258,21 @@ void loop(void* window){
             }
             ImGui::EndMenu();
         }
-        if(ImGui::BeginMenu("About"))
+        if(!g_closeAboutTab && ImGui::BeginMenu("About"))
         {
-            if(ImGui::MenuItem("Help", 0, WindowManager::GetWindow("Touch Control") != nullptr))
+            if(ImGui::MenuItem("Help", 0, WindowManager::GetWindow("Help") != nullptr))
             {
-                if(WindowManager::GetWindow("Touch Control") != nullptr)
+                if(WindowManager::GetWindow("Help") != nullptr)
                 {
-                    WindowManager::DestroyWindow(WindowManager::GetWindow("Touch Control"));
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Help"));
                 }
                 else
                 {
-                    WindowManager::AddWindow<TouchControl>("Touch Control");
+                    WindowManager::AddWindow<HelpWindow>("Help");
                 }
             }
-            if(ImGui::MenuItem("Guidelines"))
-            {
-                // Open the guidelines in a new window.
-            }
+            ImGui::MenuItem("Guidelines");
+            ImGui::Ext::CreateHTMLButton("MooncatGuidelines", "click", "open_mooncat_guidelines");
             if(ImGui::MenuItem("Licence", 0, WindowManager::GetWindow("Licence") != nullptr))
             {
                 if(WindowManager::GetWindow("Licence") != nullptr)
@@ -273,14 +281,18 @@ void loop(void* window){
                 }
                 else
                 {
-                    WindowManager::AddWindow<TouchControl>("Licence");
+                    WindowManager::AddWindow<LicenseWindow>("Licence");
                 }
             }
-            if(ImGui::MenuItem("Report a Bug"))
-            {
-                // Open the Resonate GitHub Issues page.
-            }
+            ImGui::MenuItem("Report a Bug");
+            ImGui::Ext::CreateHTMLButton("RepportBug", "click", "open_resonate_issues");
             ImGui::EndMenu();
+        }
+        else if(g_closeAboutTab)
+        {
+            g_closeAboutTab = false;
+            ImGui::Ext::DestroyHTMLElement("MooncatGuidelines");
+            ImGui::Ext::DestroyHTMLElement("RepportBug");
         }
         ImGui::EndMainMenuBar();
     }
