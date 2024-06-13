@@ -3,7 +3,7 @@
 
 #include "License.h"
 
-const char* g_firstPartyLicense = 
+char* g_firstPartyLicense = 
 "      <Resonate. Copyright (C) 2024 98ahni and Resonate Autohrs>\n"
 "\n"
 "                     Resonate Supplemental Terms\n"
@@ -743,8 +743,60 @@ const char* g_firstPartyLicense =
 "<https://www.gnu.org/licenses/why-not-lgpl.html>.\n";
 
 
-const char* g_thirdPartyMITLicenses = "";
-const char* g_thirdPartyOFLLicenses =
+char* g_thirdPartyLicenses = 
+"Emscripten:\n"
+"\n"
+"The MIT License (MIT)\n"
+"\n"
+"Copyright (c) 2010-2014 Emscripten authors.\n"
+"(see <https://github.com/emscripten-core/emscripten/blob/main/AUTHORS>)\n"
+"\n"
+"Permission is hereby granted, free of charge, to any person obtaining a copy\n"
+"of this software and associated documentation files (the \"Software\"), to deal\n"
+"in the Software without restriction, including without limitation the rights\n"
+"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
+"copies of the Software, and to permit persons to whom the Software is\n"
+"furnished to do so, subject to the following conditions:\n"
+"\n"
+"The above copyright notice and this permission notice shall be included in all\n"
+"copies or substantial portions of the Software.\n"
+"\n"
+"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
+"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
+"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
+"SOFTWARE.\n"
+"\n"
+"\n"
+"Dear ImGui:\n"
+"\n"
+"The MIT License (MIT)\n"
+"\n"
+"Copyright (c) 2014-2024 Omar Cornut\n"
+"\n"
+"Permission is hereby granted, free of charge, to any person obtaining a copy\n"
+"of this software and associated documentation files (the \"Software\"), to deal\n"
+"in the Software without restriction, including without limitation the rights\n"
+"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
+"copies of the Software, and to permit persons to whom the Software is\n"
+"furnished to do so, subject to the following conditions:\n"
+"\n"
+"The above copyright notice and this permission notice shall be included in all\n"
+"copies or substantial portions of the Software.\n"
+"\n"
+"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
+"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
+"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
+"SOFTWARE.\n"
+"\n"
+"\n"
+"Fredoka fonts:\n"
+"\n"
 "Copyright 2016 The Fredoka Project Authors (https://github.com/hafontia/Fredoka-One)\n"
 "\n"
 "This Font Software is licensed under the SIL Open Font License, Version 1.1.\n"
@@ -837,10 +889,36 @@ const char* g_thirdPartyOFLLicenses =
 "INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL\n"
 "DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\n"
 "FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM\n"
-"OTHER DEALINGS IN THE FONT SOFTWARE.\n";
+"OTHER DEALINGS IN THE FONT SOFTWARE.\n"
+"\n"
+"\n"
+"TeX Hyphenation patterns:\n"
+"\n"
+"Each language uses it's own license. \n"
+"See <https://www.hyphenation.org> for a complete list of copyright\n"
+"holders and licenses.\n"
+"\n";
 
 
+LicenseWindow::LicenseWindow()
+{
+    myShowThirdParty = false;
+}
 
 void LicenseWindow::OnImGuiDraw()
 {
+    Gui_Begin(ImGuiWindowFlags_HorizontalScrollbar);
+    if(ImGui::Button("Resonate License"))
+    {
+        myShowThirdParty = false;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Third Party Licenses"))
+    {
+        myShowThirdParty = true;
+    }
+    ImGui::BeginDisabled();
+    ImGui::InputTextMultiline("##LicenseField", myShowThirdParty ? g_thirdPartyLicenses : g_firstPartyLicense, strlen(myShowThirdParty ? g_thirdPartyLicenses : g_firstPartyLicense), ImVec2(0, 0), ImGuiInputTextFlags_ReadOnly);
+    ImGui::EndDisabled();
+    Gui_End();
 }
