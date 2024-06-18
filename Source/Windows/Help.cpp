@@ -3,6 +3,10 @@
 
 #include "Help.h"
 
+HelpWindow::HelpWindow()
+{
+
+}
 void HelpWindow::OnImGuiDraw()
 {
 }

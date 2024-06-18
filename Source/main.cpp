@@ -59,6 +59,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
     g_closeFileTab = true;
 }
 
+extern "C" EMSCRIPTEN_KEEPALIVE void LogInToGoogle()
+{
+    GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
+    Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
+    g_closeFileTab = true;
+}
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL aFSPath, emscripten::EM_VAL aFileID)
 {
     std::filesystem::path path = VAR_FROM_JS(aFSPath).as<std::string>();
@@ -80,10 +86,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
     AudioPlayback::SaveLocalBackup();
 }
 
-EM_JS(void, open_mooncat_guidelines. (), {
+EM_JS(void, open_mooncat_guidelines, (), {
     window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank');
 });
-EM_JS(void, open_resonate_issues. (), {
+EM_JS(void, open_resonate_issues, (), {
     window.open('https://github.com/98ahni/Resonate/issues', '_blank');
 });
 
@@ -105,24 +111,17 @@ void loop(void* window){
             {
                 g_hasGoogleAcc = GoogleDrive::HasToken();
             }
-            if(ImGui::MenuItem("Open Project"))
-            {
-            }
+            ImGui::MenuItem("Open Project");
             ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");
-            if(ImGui::MenuItem("Save Document"))
-            {
-            }
+            ImGui::MenuItem("Save Document");
             ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
             ImGui::Separator();
             if(ImGui::BeginMenu("Google Drive"))
             {
                 if(!g_hasGoogleAcc)
                 {
-                    if(ImGui::MenuItem("Log In With Google"))
-                    {
-                        GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
-                        Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
-                    }
+                    ImGui::MenuItem("Log In With Google");
+                    ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
                 }
                 else
                 {
@@ -143,12 +142,13 @@ void loop(void* window){
             ImGui::EndMenu();
             g_fileTabOpenedThisFrame = false;
         }
-        else if(g_closeFileTab)
+        else
         {
             g_fileTabOpenedThisFrame = true;
             g_closeFileTab = false;
             ImGui::Ext::DestroyHTMLElement("OpenProject");
             ImGui::Ext::DestroyHTMLElement("SaveProject");
+            ImGui::Ext::DestroyHTMLElement("GoogleLogin");
         }
         if(ImGui::BeginMenu("Edit"))
         {
@@ -288,7 +288,7 @@ void loop(void* window){
             ImGui::Ext::CreateHTMLButton("RepportBug", "click", "open_resonate_issues");
             ImGui::EndMenu();
         }
-        else if(g_closeAboutTab)
+        else
         {
             g_closeAboutTab = false;
             ImGui::Ext::DestroyHTMLElement("MooncatGuidelines");
