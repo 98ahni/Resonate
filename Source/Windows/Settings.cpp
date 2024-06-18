@@ -88,9 +88,9 @@ void Settings::OnImGuiDraw()
         EM_ASM({
             const dbname = '/local/';
             var req = indexedDB.deleteDatabase(dbName);
-            req.onsuccess = function() { console.log('Deleted IndexedDB cache ' + dbName + '!'); location.reload();}
-            req.onerror = function() { console.error('Failed to delete IndexedDB cache ' + dbName + '!');}
-            req.onblocked = function() { console.error('Failed to delete IndexedDB cache ' + dbName + ', DB was blocked!');}
+            req.onsuccess = function() { console.log('Deleted IndexedDB cache ' + dbName + '!'); location.reload();};
+            req.onerror = function() { console.error('Failed to delete IndexedDB cache ' + dbName + '!');};
+            req.onblocked = function() { console.error('Failed to delete IndexedDB cache ' + dbName + ', DB was blocked!');};
         });
     }
     ImGui::PopStyleColor(3);

@@ -917,8 +917,8 @@ void LicenseWindow::OnImGuiDraw()
     {
         myShowThirdParty = true;
     }
-    ImGui::BeginDisabled();
-    ImGui::InputTextMultiline("##LicenseField", myShowThirdParty ? g_thirdPartyLicenses : g_firstPartyLicense, strlen(myShowThirdParty ? g_thirdPartyLicenses : g_firstPartyLicense), ImVec2(0, 0), ImGuiInputTextFlags_ReadOnly);
-    ImGui::EndDisabled();
+    //ImGui::BeginDisabled();
+    ImGui::InputTextMultiline("##LicenseField", myShowThirdParty ? g_thirdPartyLicenses : g_firstPartyLicense, strlen(myShowThirdParty ? g_thirdPartyLicenses : g_firstPartyLicense), ImGui::GetContentRegionAvail(), ImGuiInputTextFlags_ReadOnly);
+    //ImGui::EndDisabled();
     Gui_End();
 }
