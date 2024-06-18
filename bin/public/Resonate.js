@@ -999,15 +999,16 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3599807: () => { alert("FileHandler::OpenDocument not implemented!") },  
- 3599859: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
- 3600016: ($0) => { init_gapi_with_key($0); },  
- 3600042: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3600165: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3600267: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3600330: () => { return global_audio_element.paused ? 1 : 0; },  
- 3600374: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3600630: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); }
+  3648514: () => { alert("FileHandler::OpenDocument not implemented!") },  
+ 3648566: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
+ 3648723: ($0) => { init_gapi_with_key($0); },  
+ 3648749: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3648872: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3648974: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3649037: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3649081: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3649337: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3649606: () => { const dbname = '/local/'; var req = indexedDB.deleteDatabase(dbName); req.onsuccess = function() { console.log('Deleted IndexedDB cache ' + dbName + '!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB cache ' + dbName + '!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB cache ' + dbName + ', DB was blocked!');}; }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -1035,6 +1036,8 @@ function always_show_touch_keyboard() { let input = document.createElement('inpu
 function hide_touch_keyboard() { let input = document.getElementById('temp-text-input'); input.remove(); }
 function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { _jsPrepPlayback(); for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
 function show_input_debugger() {_ShowInputDebugger(); }
+function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
+function open_resonate_issues() { window.open('https://github.com/98ahni/Resonate/issues', '_blank'); }
 function load_preferences_json() { if(!FS.analyzePath('/local/.Resonate').exists) { FS.writeFile('/local/.Resonate', '{}'); } global_preferences = JSON.parse(FS.readFile('/local/.Resonate', { encoding: 'utf8' })); } var global_preferences = {};
 function __asyncjs__set_preference_value(key,value) { return Asyncify.handleAsync(async () => { global_preferences[Emval.toValue(key)] = Emval.toValue(value); FS.writeFile('/local/.Resonate', JSON.stringify(global_preferences)); await new Promise((resolve)=>{FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); })}); }); }
 function get_preference_value(key) { return Emval.toHandle(global_preferences[Emval.toValue(key)]); }
@@ -11379,6 +11382,7 @@ var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = createExportWrapper(
 var _ShowInputDebugger = Module['_ShowInputDebugger'] = createExportWrapper('ShowInputDebugger');
 var _LoadProject = Module['_LoadProject'] = createExportWrapper('LoadProject');
 var _SaveProject = Module['_SaveProject'] = createExportWrapper('SaveProject');
+var _LogInToGoogle = Module['_LogInToGoogle'] = createExportWrapper('LogInToGoogle');
 var _LoadFileFromGoogleDrive = Module['_LoadFileFromGoogleDrive'] = createExportWrapper('LoadFileFromGoogleDrive');
 var _LoadCanceledFromGoogleDrive = Module['_LoadCanceledFromGoogleDrive'] = createExportWrapper('LoadCanceledFromGoogleDrive');
 var _main = Module['_main'] = createExportWrapper('main');
@@ -11431,9 +11435,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3550420;
-var ___start_em_js = Module['___start_em_js'] = 3584808;
-var ___stop_em_js = Module['___stop_em_js'] = 3599807;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3598904;
+var ___start_em_js = Module['___start_em_js'] = 3633304;
+var ___stop_em_js = Module['___stop_em_js'] = 3648514;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
