@@ -29,6 +29,7 @@ EM_JS(bool, gis_loaded, (), {
     global_client_token = google.accounts.oauth2.initTokenClient({
         client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com',
         scope: 'https://www.googleapis.com/auth/drive.file',
+        prompt: '',
         callback: '', // defined later
     });
     //google.accounts.id.initialize({
