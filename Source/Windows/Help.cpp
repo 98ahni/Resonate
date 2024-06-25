@@ -58,19 +58,22 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Simple Text Edits");
-    ImGui::TextWrapped("");
+    ImGui::TextWrapped("In the Edit menu you can split lines into two where the text marker is, merge lines with their neighbors, duplicate them and switch their places. ");
     EndTreeNode
 
     StartTreeNode("Adding Effects");
-    ImGui::TextWrapped("");
+    ImGui::TextWrapped("Adding effects is as simple as clicking the Effects menu and selecting the appropriate one. "
+    "After the built in effects are the effects used in the document then the ones saved to browser storage. "
+    "You can create effects by selecting Document Properties in the Edit menu. Here you can add or remove effects and store them to the browser storage. "
+    "A named effect will appear as its name in the Timing editor but when exporting will be translated to a command readable by ECHO.");
     EndTreeNode
 
     StartTreeNode("Settings");
-    ImGui::TextWrapped("");
+    ImGui::TextWrapped("In View > Settings you can set an offset to counter headphone delay, save and load internal data or restore the app to default.");
     EndTreeNode
 
     StartTreeNode("Dealing with Raw Text");
-    ImGui::TextWrapped("");
+    ImGui::TextWrapped("The Raw Text view is meant to make changes to the lyrics before timing");
     EndTreeNode
 
     StartTreeNode("Additional Tricks");
