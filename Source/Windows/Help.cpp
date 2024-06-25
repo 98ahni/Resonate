@@ -11,8 +11,11 @@ HelpWindow::HelpWindow()
 
 #define StartTreeNode(label) if(ImGui::TreeNode(label)){ImGui::PopFont()
 #define EndTreeNode ImGui::TreePop();ImGui::PushFont(MainWindow::Font);}
+#define BulletWrap(text) ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 10); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 7); ImGui::TextWrapped(text)
+#define Keybind(key, text) ImGui::Text(key); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 17); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 7); ImGui::TextWrapped(text)
 void HelpWindow::OnImGuiDraw()
 {
+    ImGui::SetNextWindowSize({std::min(ImGui::GetContentRegionAvail().x * .85f, 500.f), ImGui::GetContentRegionAvail().y * .8f}, ImGuiCond_FirstUseEver);
     Gui_Begin();
     ImGui::PushFont(MainWindow::Font);
     ImGui::Text("Using Resonate");
@@ -43,7 +46,8 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("The Audio Player");
-    ImGui::TextWrapped("The Audio window contains a Play and Pause button, the playback progress and a speed slider. The playback can be controlled by system or headphone controls as well.");
+    ImGui::TextWrapped("The Audio window contains a Play and Pause button, the playback progress and a speed slider. "
+    "When listening to check the syllable split a speed of 60%% is recomended, when timing use 40%% and when checking your finished result it's good to use 80%%. ");
     EndTreeNode
 
     StartTreeNode("Timing Basics");
@@ -73,19 +77,33 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Dealing with Raw Text");
-    ImGui::TextWrapped("The Raw Text view is meant to make changes to the lyrics before timing");
+    ImGui::TextWrapped("The Raw Text view is meant to make changes to the lyrics before timing in case you don't have access to an extrnal text editor. "
+    "It shows and allows you to edit the file that is readable by both ECHO and Resonate. Please note that if an effect value is changed it might not be recognized as a Resonate effect. "
+    "Changing the Resonate headers are not recommended as it may result in undefined behavior.");
     EndTreeNode
 
     StartTreeNode("Additional Tricks");
-    ImGui::TextWrapped("");
+    BulletWrap("If you are familiar with Hibikase's separation between Timing and Edit you can think of it as holding Ctrl for Edit mode and releasing it for Timing mode.");
+    BulletWrap("If another singer joins in the middle of a line you can split it where they join, duplicate that part and join the two original parts together with the Edit menu.");
+    BulletWrap("The Audio Playback can be controlled by system or headphone controls as well.");
     EndTreeNode
 
     StartTreeNode("Touch Controls");
-    ImGui::TextWrapped("");
+    ImGui::TextWrapped("The Touch Controls window can be opened from the View menu. It has buttons for navigating the Timing Editor and Audio Playback."
+    "The buttons ↻ and ↺ will fast forward and rewind the audio while the ◣ and ◢ buttons will set timing and add a pause respectively and "
+    "the center button [:] will add or remove a syllable split. The arrows will move the text marker in the specified direction and, lastly, the "
+    "Edit Mode toggle will switch between moving the text marker per character and per syllable. ");
+    ImGui::TextWrapped("You can scroll in any window using two fingers. ");
+    ImGui::TextWrapped("When using a touch screen you may need to double tap text boxes for the virtual keyboard to show.");
     EndTreeNode
 
     StartTreeNode("Keyboard Controls");
-    ImGui::TextWrapped("");
+    Keybind("[Space]", "Set timing at text marker and advance. ");
+    Keybind("+[Ctrl]", "Add or remove a syllable split. ");
+    Keybind("[Enter]", "Insert or set a pause to time at text marker. ");
+    Keybind("Arrow keys", "Move text marker in specified direction one syllable at a time. ");
+    Keybind("+[Ctrl]", "Move text marker in specified direction one character at a time. ");
+    Keybind("[Shift]+Click", "Set Audio Playback progress to the time of the syllable clicked. ");
     EndTreeNode
 
     ImGui::PopFont();

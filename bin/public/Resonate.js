@@ -999,16 +999,16 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3648514: () => { alert("FileHandler::OpenDocument not implemented!") },  
- 3648566: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
- 3648723: ($0) => { init_gapi_with_key($0); },  
- 3648749: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3648872: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3648974: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3649037: () => { return global_audio_element.paused ? 1 : 0; },  
- 3649081: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3649337: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3649606: () => { const dbname = '/local/'; var req = indexedDB.deleteDatabase(dbName); req.onsuccess = function() { console.log('Deleted IndexedDB cache ' + dbName + '!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB cache ' + dbName + '!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB cache ' + dbName + ', DB was blocked!');}; }
+  3651166: () => { alert("FileHandler::OpenDocument not implemented!") },  
+ 3651218: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
+ 3651375: ($0) => { init_gapi_with_key($0); },  
+ 3651401: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3651524: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3651626: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3651689: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3651733: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3651989: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3652258: () => { const dbName = '/local'; var req = indexedDB.deleteDatabase(dbName); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -1018,7 +1018,7 @@ function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); 
 function clear_local_storage() { localStorage.clear(); }
 function gapi_loaded() { gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
 function gapi_ready() { return global_gapi_inited && global_gis_inited; } var global_gapi_inited = false; var global_gis_inited = false;
-function gis_loaded() { global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive.file', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
+function gis_loaded() { global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive.file', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
 function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(APIKey), discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] }).then(()=>{global_gapi_inited = true;}); }
 function has_gapi_token() { if(gapi.client.getToken() !== null){ console.log('Already logged in'); }else{ console.log('Not logged in'); } return gapi.client.getToken() !== null; }
 function request_client_token(prompt) { global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)}); }
@@ -11435,9 +11435,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3598904;
-var ___start_em_js = Module['___start_em_js'] = 3633304;
-var ___stop_em_js = Module['___stop_em_js'] = 3648514;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3601544;
+var ___start_em_js = Module['___start_em_js'] = 3635944;
+var ___stop_em_js = Module['___stop_em_js'] = 3651166;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
