@@ -28,7 +28,7 @@ var global_gis_inited = false;
 EM_JS(bool, gis_loaded, (), {
     global_client_token = google.accounts.oauth2.initTokenClient({
         client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com',
-        scope: 'https://www.googleapis.com/auth/drive.file',
+        scope: 'https://www.googleapis.com/auth/drive',
         prompt: '',
         callback: '', // defined later
     });
@@ -68,10 +68,12 @@ EM_JS(bool, has_gapi_token, (), {
     //return gapi.auth2.getAuthInstance().isSignedIn.get();
 });
 
-EM_JS(void, request_client_token, (emscripten::EM_VAL prompt), {
+EM_JS(void, request_client_token, (emscripten::EM_VAL prompt, emscripten::EM_VAL token_callback), {
     // Prompt the user to select a Google Account and ask for consent to share their data
     // when establishing a new session.
+    global_client_token.callback = (token_data) =>{Module[token_callback](Emval.toHandle(Date.now() + token_data.expires_in));};
     global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)});
+    //global_client_token.requestAccessToken();
 });
 
 EM_JS(void, revoke_client_token, (), {
@@ -160,9 +162,9 @@ bool GoogleDrive::HasToken()
     return has_gapi_token();
 }
 
-void GoogleDrive::RequestToken(bool aShowPopup)
+void GoogleDrive::RequestToken(bool aShowPopup, std::string aTokenCallback)
 {
-    request_client_token(VAR_TO_JS(aShowPopup ? "consent" : "none"));
+    request_client_token(VAR_TO_JS(aShowPopup ? "consent" : "none"), VAR_TO_JS(aTokenCallback));
 }
 
 void GoogleDrive::LogOut()

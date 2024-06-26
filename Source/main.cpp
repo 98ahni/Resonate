@@ -59,10 +59,16 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
     g_closeFileTab = true;
 }
 
+extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::EM_VAL aTime)
+{
+    Serialization::Preferences::SetDouble("Google/ExpirationDate", VAR_FROM_JS(aTime).as<double>());
+    Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
+}
 extern "C" EMSCRIPTEN_KEEPALIVE void LogInToGoogle()
 {
-    GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
-    Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
+    float expiration = Serialization::Preferences::HasKey("Google/ExpirationDate") ? Serialization::Preferences::GetDouble("Google/ExpirationDate") : 0;
+    GoogleDrive::RequestToken(EM_ASM_DOUBLE({return Date.now();}) >= expiration, "GoogleTokenExpirationCallback");
+    //GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
     g_closeFileTab = true;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL aFSPath, emscripten::EM_VAL aFileID)
@@ -130,12 +136,12 @@ void loop(void* window){
                 ImGui::Separator();
                 if(ImGui::MenuItem("Open Project", 0, false, g_hasGoogleAcc))
                 {
-                    FileHandler::ClearLocalStorage();
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
                 }
                 if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
                 {
                     GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
+                    Serialization::KaraokeDocument::Get().UnsetIsDirty();
                 }
                 ImGui::EndMenu();
             }
@@ -286,6 +292,10 @@ void loop(void* window){
             }
             ImGui::MenuItem("Report a Bug");
             ImGui::Ext::CreateHTMLButton("RepportBug", "click", "open_resonate_issues");
+            if(ImGui::MenuItem("Print Prefs"))
+            {
+                Serialization::PrintPrefs();
+            }
             ImGui::EndMenu();
         }
         else

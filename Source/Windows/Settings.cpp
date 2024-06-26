@@ -86,8 +86,8 @@ void Settings::OnImGuiDraw()
     {
         FileHandler::ClearLocalStorage();
         EM_ASM({
-            const dbName = '/local';
-            var req = indexedDB.deleteDatabase(dbName);
+            const dbname = '/local';
+            var req = indexedDB.deleteDatabase(dbname);
             req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();};
             req.onerror = function() { console.error('Failed to delete IndexedDB /local!');};
             req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');};

@@ -268,7 +268,7 @@ namespace Serialization
             {
                 if (path.path().extension() == ".txt")
                 {
-                    Load(path.path().string());
+                    Load(path.path().string(), aFileID);
                     return;
                 }
             }
