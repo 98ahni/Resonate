@@ -15,6 +15,9 @@ EM_JS(void, load_preferences_json, (), {
 }
 var global_preferences = {};
 );
+EM_JS(void, print_preferences_json, (), {
+    console.log(JSON.stringify(global_preferences));
+});
 
 EM_ASYNC_JS(void, set_preference_value, (emscripten::EM_VAL key, emscripten::EM_VAL value), {
     global_preferences[Emval.toValue(key)] = Emval.toValue(value);
@@ -38,6 +41,11 @@ EM_JS(emscripten::EM_VAL, has_preference_key, (emscripten::EM_VAL key), {
 void Serialization::LoadPrefs()
 {
     load_preferences_json();
+}
+
+void Serialization::PrintPrefs()
+{
+    print_preferences_json();
 }
 
 void Serialization::Preferences::SetBool(std::string aKey, bool someValue)

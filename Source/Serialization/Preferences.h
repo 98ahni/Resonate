@@ -6,6 +6,7 @@
 namespace Serialization
 {
     void LoadPrefs();
+    void PrintPrefs();
 
     namespace Preferences
     {
