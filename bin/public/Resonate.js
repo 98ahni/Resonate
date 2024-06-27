@@ -989,17 +989,17 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3646036: () => { return Date.now(); },  
- 3646057: () => { alert("FileHandler::OpenDocument not implemented!") },  
- 3646109: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
- 3646266: ($0) => { init_gapi_with_key($0); },  
- 3646292: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3646415: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3646517: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3646580: () => { return global_audio_element.paused ? 1 : 0; },  
- 3646624: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3646880: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3647149: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3651732: () => { return Date.now(); },  
+ 3651753: () => { alert("FileHandler::OpenDocument not implemented!") },  
+ 3651805: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
+ 3651962: ($0) => { init_gapi_with_key($0); },  
+ 3651988: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3652111: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3652213: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3652276: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3652320: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3652576: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3652845: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function show_input_debugger() {_ShowInputDebugger(); }
 function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
@@ -11619,9 +11619,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3596192;
-var ___start_em_js = Module['___start_em_js'] = 3630600;
-var ___stop_em_js = Module['___stop_em_js'] = 3646036;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3601888;
+var ___start_em_js = Module['___start_em_js'] = 3636296;
+var ___stop_em_js = Module['___stop_em_js'] = 3651732;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

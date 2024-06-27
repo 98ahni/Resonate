@@ -90,8 +90,10 @@
                         // no run dependencies to log
                     }
                 };
-                window.onerror = function () {
-                    console.log("onerror: " + event);
+                window.onerror = function (event, source, lineno, colno, error) {
+                    console.error("onerror: " + event.name + ": " + event.message + 
+                    "\n\t/bin/public/" + source.split('/').slice(-1) + ":" + lineno + ":" + colno);
+                    console.error(error.stack);
     				  //if(window.matchMedia('(any-pointer: coarse)').matches) // Enable if alert should be for touch only.
                     alert("OnError: \n" + event.name + ": " + event.message);
                 };

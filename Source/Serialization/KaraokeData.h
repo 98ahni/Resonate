@@ -99,8 +99,8 @@ namespace Serialization
         void ReplaceAliasesInLine(std::string& aLine);
 
         static KaraokeDocument* ourInstance;
-        inline static KaraokeToken ourNullToken = {"", false, 0};
-        static inline KaraokeLine ourNullLine = KaraokeLine();
+        static KaraokeToken ourNullToken;
+        static KaraokeLine ourNullLine;
         
         std::string myPath;
         std::string myFileID;
