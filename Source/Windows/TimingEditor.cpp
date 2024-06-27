@@ -168,7 +168,6 @@ void TimingEditor::RecordStartTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     doc.MakeDirty();
-    // TODO: check if space token or if first on line
     if(myMarkedToken == 0)
     {
         auto& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
@@ -194,6 +193,7 @@ void TimingEditor::RecordEndTime()
     doc.MakeDirty();
     Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
+    if(doc.IsNull(prevToken)) return;
     // Space token already exists
     if(doc.IsPauseToken(prevToken))
     {
@@ -230,7 +230,7 @@ void TimingEditor::MoveMarkerUp()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myMarkedChar = 0;
     myMarkedLine = myMarkedLine > 0 ? myMarkedLine - 1 : 0;
-    myMarkedToken = myMarkedToken < doc.GetLine(myMarkedLine).size() ? myMarkedToken : (doc.GetLine(myMarkedLine).size() - 1);
+    //myMarkedToken = myMarkedToken < doc.GetLine(myMarkedLine).size() ? myMarkedToken : (doc.GetLine(myMarkedLine).size() - 1);
     CheckMarkerIsSafe(false);
 }
 
@@ -240,7 +240,7 @@ void TimingEditor::MoveMarkerDown()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myMarkedChar = 0;
     myMarkedLine = myMarkedLine + 1 < doc.GetData().size() ? myMarkedLine + 1 : (doc.GetData().size() - 1);
-    myMarkedToken = myMarkedToken < doc.GetLine(myMarkedLine).size() ? myMarkedToken : (doc.GetLine(myMarkedLine).size() - 1);
+    //myMarkedToken = myMarkedToken < doc.GetLine(myMarkedLine).size() ? myMarkedToken : (doc.GetLine(myMarkedLine).size() - 1);
     CheckMarkerIsSafe(true);
 }
 
@@ -254,20 +254,12 @@ void TimingEditor::MoveMarkerLeft(bool aIsCharmode)
         myMarkedToken -= doc.IsPauseToken(doc.GetTokenBefore(myMarkedLine, myMarkedToken)) ? 2 : 1;
         if(myMarkedToken < 0)
         {
-            if(myMarkedLine <= 0)
-            {
-                myMarkedToken = 0;
-                aIsCharmode = false;
-            }
-            else
-            {
-                myMarkedLine = myMarkedLine > 0 ? myMarkedLine - 1 : 0;
-                myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
-            }
+            myMarkedToken = doc.GetValidLineBefore(myMarkedLine).size() - 1;
+            myMarkedLine = myMarkedLine > 0 ? myMarkedLine - 1 : 0;
         }
+        CheckMarkerIsSafe(false);
         myMarkedChar = aIsCharmode ? doc.GetToken(myMarkedLine, myMarkedToken).myValue.size() - 1 : 0;
     }
-    CheckMarkerIsSafe(false);
 }
 
 void TimingEditor::MoveMarkerRight(bool aIsCharmode)
@@ -306,14 +298,30 @@ void TimingEditor::CheckMarkerIsSafe(bool aIsMovingRight)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     if(myMarkedLine < 0) myMarkedLine = 0;
+    if(myMarkedLine >= doc.GetData().size()) myMarkedLine = doc.GetData().size() - 1;
+    if(doc.GetLine(myMarkedLine).size() == 0)
+    {
+        // If the line is empty move to the next in specified direction if a valid target exists, else move back.
+        if(aIsMovingRight)
+        {
+            !doc.IsNull(doc.GetValidLineAfter(myMarkedLine)) ? MoveMarkerDown() : MoveMarkerUp();
+        }
+        else
+        {
+            !doc.IsNull(doc.GetValidLineBefore(myMarkedLine)) ? MoveMarkerUp() : MoveMarkerDown();
+        }
+    }
     if(myMarkedToken < 0) myMarkedToken = 0;
-    if(myMarkedLine >= doc.GetData().size() < 0) myMarkedLine = doc.GetData().size() - 1;
-    if(myMarkedToken >= doc.GetLine(myMarkedLine).size() < 0) myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
+    if(myMarkedToken >= doc.GetLine(myMarkedLine).size()) myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
     if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
     {
-        if(!(myMarkedLine == doc.GetData().size() - 1 && myMarkedToken == doc.GetLine(myMarkedLine).size() - 1))
+        if(aIsMovingRight)
         {
-            aIsMovingRight ? MoveMarkerRight() : MoveMarkerLeft();
+            myMarkedToken != doc.GetLine(myMarkedLine).size() - 1 ? MoveMarkerRight() : MoveMarkerLeft();
+        }
+        else
+        {
+            MoveMarkerLeft();
         }
     }
 }

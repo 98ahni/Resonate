@@ -76,7 +76,10 @@ else
 }
 
 if(!WIN32) {exec('sudo su root');}
-
+else
+{
+    // Get secret and put it into the correct file.
+}
 //while(!(readImguiDone && readSourceDone))
 //while(!readSourceDone)
 //{}

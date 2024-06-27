@@ -13,6 +13,8 @@
 namespace Serialization
 {
     KaraokeDocument* KaraokeDocument::ourInstance = new KaraokeDocument();
+    KaraokeToken KaraokeDocument::ourNullToken = {"", false, 0};
+    KaraokeLine KaraokeDocument::ourNullLine = KaraokeLine();
     KaraokeDocument& KaraokeDocument::Get()
     {
         return *ourInstance;
@@ -51,6 +53,10 @@ namespace Serialization
     }
     KaraokeToken &KaraokeDocument::GetToken(size_t aLine, size_t aToken)
     {
+        if(myTokens.size() <= aLine && myTokens[aLine].size() <= aToken)
+        {
+            return ourNullToken;
+        }
         return myTokens[aLine][aToken];
     }
     KaraokeToken &KaraokeDocument::GetTokenAfter(size_t aLine, size_t aToken)
@@ -88,7 +94,12 @@ namespace Serialization
             //{
             //    return GetTokenBefore(aLine - 1, 0);
             //}
-            return GetValidLineBefore(aLine).back();
+            KaraokeLine& lineBefore = GetValidLineBefore(aLine);
+            if(IsNull(lineBefore)) 
+            {
+                return ourNullToken;
+            }
+            return lineBefore.back();
         }
         return ourNullToken;
     }
@@ -581,12 +592,12 @@ namespace Serialization
     }
     bool KaraokeDocument::IsNull(KaraokeToken &aToken)
     {
-        return
-        aToken.myHasStart == ourNullToken.myHasStart &&
-        aToken.myValue == ourNullToken.myValue;
+        return &aToken == &ourNullToken;
+        //aToken.myHasStart == ourNullToken.myHasStart &&
+        //aToken.myValue == ourNullToken.myValue;
     }
     bool KaraokeDocument::IsNull(KaraokeLine &aLine)
     {
-        return aLine.size() == 0;
+        return &aLine == &ourNullLine;
     }
 }
