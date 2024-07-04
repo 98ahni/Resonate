@@ -331,7 +331,9 @@ int main(){
     MainWindow_Init("Resonate", &_window);
     MainWindow_StyleVarsShadow();
     MainWindow_StyleColorsShadow();
-
+#if defined(GOOGLE_API_SECRET)
+    printf("Secrets work\n");
+#endif
     Serialization::Syllabify_Init();
     Serialization::LoadPrefs();
     Serialization::KaraokeDocument::Get().Load("/local", (

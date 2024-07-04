@@ -36,6 +36,22 @@ EM_ASYNC_JS(emscripten::EM_VAL, init_file_system, (), {
 	}));
 });
 
+EM_JS(emscripten::EM_VAL, get_clipboard_content, (emscripten::EM_VAL user_data), {
+	return Emval.toHandle();
+});
+extern"C" EMSCRIPTEN_KEEPALIVE const char* GetClipboardContent(void*)
+{
+
+}
+
+EM_JS(void, set_clipboard_content, (emscripten::EM_VAL user_data, emscripten::EM_VAL content), {
+	
+});
+extern"C" EMSCRIPTEN_KEEPALIVE void SetClipboardContent(void*, const char* content)
+{
+	
+}
+
 EM_JS(bool, get_has_web_gpu, (), { 
   return navigator.gpu !== undefined;
 	});
@@ -268,6 +284,8 @@ void MainWindow_Init(const char* name, void** outWindow)
 	{
 		ImGui_ImplGlfw_InstallCallbacks(window);
 	}
+	io.GetClipboardTextFn = &GetClipboardContent;
+	io.SetClipboardTextFn = &SetClipboardContent;
 }
 
 void MainWindow_NewFrame(void* window)
