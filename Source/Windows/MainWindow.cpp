@@ -36,20 +36,37 @@ EM_ASYNC_JS(emscripten::EM_VAL, init_file_system, (), {
 	}));
 });
 
-EM_JS(emscripten::EM_VAL, get_clipboard_content, (emscripten::EM_VAL user_data), {
-	return Emval.toHandle();
+EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
+	//const output = await new Promise((resolve)=>{navigator.clipboard.readText().then((text)=>{resolve(text);});});
+	var output = '';
+	const clipboardContents = await navigator.clipboard.read();
+    for (const item of clipboardContents) {
+		if (item.types.includes("text/plain")) {
+    		let blob = await item.getType("text/plain");
+    		output = await blob.text();
+			console.log(output);
+			//return Emval.toHandle(output);
+		}
+	}
+	return Emval.toHandle(output);
 });
 extern"C" EMSCRIPTEN_KEEPALIVE const char* GetClipboardContent(void*)
 {
-
+	static std::string output = "";
+	output = VAR_FROM_JS(get_clipboard_content()).as<std::string>().c_str();
+	printf("Pasting '%s'\n", output.data());
+	return output.data();
 }
 
-EM_JS(void, set_clipboard_content, (emscripten::EM_VAL user_data, emscripten::EM_VAL content), {
-	
+EM_ASYNC_JS(void, set_clipboard_content, (emscripten::EM_VAL content), {
+	const type = "text/plain";
+  	const blob = new Blob([Emval.toValue(content)], { type });
+  	const data = [new ClipboardItem({ [type]: blob })];
+  	await navigator.clipboard.write(data);
 });
 extern"C" EMSCRIPTEN_KEEPALIVE void SetClipboardContent(void*, const char* content)
 {
-	
+	set_clipboard_content(VAR_TO_JS(content));
 }
 
 EM_JS(bool, get_has_web_gpu, (), { 
@@ -478,7 +495,7 @@ void MainWindow_StyleColorsShadow(ImGuiStyle* dst)
 	colors[ImGuiCol_TitleBg] = darkbg;
 	colors[ImGuiCol_TitleBgActive] = colors[ImGuiCol_TitleBg];
 	colors[ImGuiCol_TitleBgCollapsed] = colors[ImGuiCol_TitleBg];
-	colors[ImGuiCol_MenuBarBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+	colors[ImGuiCol_MenuBarBg] = colors[ImGuiCol_TitleBg];//ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
 	colors[ImGuiCol_ScrollbarBg] = darkbg;
 	colors[ImGuiCol_ScrollbarGrab] = lightItembg;
 	colors[ImGuiCol_ScrollbarGrabHovered] = lightItemHover;

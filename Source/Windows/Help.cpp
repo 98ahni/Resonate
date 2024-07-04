@@ -81,6 +81,18 @@ void HelpWindow::OnImGuiDraw()
     "It shows and allows you to edit the file that is readable by both ECHO and Resonate. Please note that if an effect value is changed it might not be recognized as a Resonate effect. "
     "Changing the Resonate headers are not recommended as it may result in undefined behavior.");
     EndTreeNode
+    
+    StartTreeNode("Installing as a PWA");
+    ImGui::TextWrapped("Resonate does not require any installation process. However, it can be installed as a Progressive Web App (PWA) for convenience. "
+    "A PWA looks like a normal app on your device, without most clutter of the web browser. The process vary by browser as listed below. \n");
+    Keybind("Chrome       ", "On all chromium based browsres the install button appears in the address bar on the right side. Click that button and then confirm the install. "
+    "The app will open and a shortcut is added to the desktop. To uninstall, click the three dots in the upper right of the PWA and select 'Uninstall'.");
+    Keybind("Safari, iOS  ", "Tap the [↑] Share icon then select [+] Add to Homescreen in the menu. Confirm the install and the PWA will appear on your homescreen. "
+    "To uninstall, remove it like a normal app. ");
+    Keybind("Safari, macOS", "(Untested) Presumably same as one of the above.");
+    Keybind("Firefox      ", "(Unknown)");
+    Keybind("Android      ", "(Unknown)");
+    EndTreeNode
 
     StartTreeNode("Additional Tricks");
     BulletWrap("If you are familiar with Hibikase's separation between Timing and Edit you can think of it as holding Ctrl for Edit mode and releasing it for Timing mode.");

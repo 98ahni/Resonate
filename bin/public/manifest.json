@@ -1,0 +1,17 @@
+{
+    "lang": "en-us",
+    "name": "Resonate",
+    "short_name": "Resonate",
+    "description": "A timing tool for ECHO",
+    "start_url": "./",
+    "background_color": "#5e5966",
+    "theme_color": "#17141f",
+    "orientation": "any",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "./icons/ResonateIconLarge.png",
+            "sizes": "256x256"
+        }
+    ]
+}

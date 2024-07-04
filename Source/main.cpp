@@ -296,6 +296,10 @@ void loop(void* window){
             {
                 Serialization::PrintPrefs();
             }
+            if(ImGui::MenuItem("Reload Page"))
+            {
+                EM_ASM(location.reload());
+            }
             ImGui::EndMenu();
         }
         else
