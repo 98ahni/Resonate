@@ -40,6 +40,13 @@
                 method: "POST",
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({type: 'log', data})
+            }).then(
+            /*resolve*/()=>{}, 
+            /*reject*/()=>{
+                // No server, restore functions
+                console.log = default_console_log;
+                console.warn = default_console_warn;
+                console.error = default_console_error;
             });
             default_console_log.apply(console, data);
         };
@@ -48,6 +55,13 @@
                 method: "POST",
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({type: 'warn', data})
+            }).then(
+            /*resolve*/()=>{}, 
+            /*reject*/()=>{
+                // No server, restore functions
+                console.log = default_console_log;
+                console.warn = default_console_warn;
+                console.error = default_console_error;
             });
             default_console_warn.apply(console, data);
         };
@@ -56,6 +70,13 @@
                 method: "POST",
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({type: 'error', data})
+            }).then(
+            /*resolve*/()=>{}, 
+            /*reject*/()=>{
+                // No server, restore functions
+                console.log = default_console_log;
+                console.warn = default_console_warn;
+                console.error = default_console_error;
             });
             default_console_error.apply(console, data);
         };

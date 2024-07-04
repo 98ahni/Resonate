@@ -31,8 +31,10 @@ self.addEventListener('fetch', event => {
 				// If the resource was not in the cache, try the network.
 				const fetchResponse = await fetch(event.request);
 
-				// Save the resource in the cache and return it.
-				cache.put(event.request, fetchResponse.clone());
+				if(event.request.method != 'POST'){
+					// Save the resource in the cache and return it.
+					cache.put(event.request, fetchResponse.clone());
+				}
 				return fetchResponse;
 			} catch (e) {
 				// The network failed.
