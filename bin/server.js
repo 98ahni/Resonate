@@ -7,6 +7,7 @@ const path = require('path');
 const { exec } = require('node:child_process');
 const { execSync } = require('node:child_process');
 var os = require('os');
+const WIN32 = os.platform() === "win32";
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
@@ -16,7 +17,12 @@ const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
 const FORCE_Linking = true;
 
-const WIN32 = os.platform() === "win32";
+// APIs gotten from Github Secrets
+const API_SECRETS = WIN32 ? ["NO_IMPORT_API_SECRETS=1"] : [
+    "GOOGLE_API_SECRET=" + process.env.GOOGLEAPIKEY,
+    "DROPBOX_API_SECRET=0"
+];
+
 let compileErr = false;
 const execOutFunc = function(err, output)
 {
@@ -76,10 +82,6 @@ else
 }
 
 if(!WIN32) {exec('sudo su root');}
-else
-{
-    // Get secret and put it into the correct file.
-}
 //while(!(readImguiDone && readSourceDone))
 //while(!readSourceDone)
 //{}
@@ -110,7 +112,7 @@ sourceFiles.forEach(file => {
     {
         if(REBUILD_Source || (!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs))
         {
-            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O0 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
+            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"' + API_SECRETS.join('\" -D\"') + '\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -g -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -c -O0 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');

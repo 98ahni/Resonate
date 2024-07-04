@@ -114,13 +114,17 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                 const files = [];
                 const res = await gapi.client.drive.files.list({
                     q: "'" + fileId + "' in parents",
-                    fields: 'nextPageToken, files(id, name)',
+                    fields: 'nextPageToken, files(id, name, trashed)',
                     spaces: 'drive'
                 });
                 console.log(JSON.stringify(res.result.files));
                 Array.prototype.push.apply(files, res.result.files);
                 console.log(files);
                 files.forEach(async function(file) {
+                    if(file.trashed){
+                        console.log('Found trashed file:', file.name, file.id, ', Skipping');
+                        return;
+                    }
                     console.log('Found file:', file.name, file.id);
                     const fres = await gapi.client.drive.files.get({
                         'fileId': file.id,
