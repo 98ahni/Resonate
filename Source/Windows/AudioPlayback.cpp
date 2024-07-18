@@ -249,6 +249,8 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
         printf("No audio file found!\n");
         return;
     }
+    std::error_code ferr;
+    std::filesystem::remove("/local/" + std::filesystem::path(ourInstance->myPath).filename().string(), ferr);
     //EM_ASM(if(global_audio_context != 'undefined')global_audio_context.close(););
     //ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
