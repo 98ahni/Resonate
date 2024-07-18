@@ -19,6 +19,10 @@ namespace ImGui{
         void CreateHTMLInput(const char* anID, const char* aType, const char* anEvent, const char* aJSFunctonName);
         void CreateHTMLInput(ImVec2 aPosition, ImVec2 aSize, const char* anID, const char* aType, const char* anEvent, const char* aJSFunctonName);
         void DestroyHTMLElement(const char* anID, int aDelayMillis = 0);
+        void AddWindowEvent(const char* anEvent, const char* aJSFunctionName);
+        void RemoveWindowEvent(const char* anEvent, const char* aJSFunctionName);
+
+        void SetShortcutEvents();
 
         bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress);
         void SetColor(unsigned int aCol);

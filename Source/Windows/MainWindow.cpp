@@ -36,39 +36,6 @@ EM_ASYNC_JS(emscripten::EM_VAL, init_file_system, (), {
 	}));
 });
 
-EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
-	//const output = await new Promise((resolve)=>{navigator.clipboard.readText().then((text)=>{resolve(text);});});
-	var output = '';
-	const clipboardContents = await navigator.clipboard.read();
-    for (const item of clipboardContents) {
-		if (item.types.includes("text/plain")) {
-    		let blob = await item.getType("text/plain");
-    		output = await blob.text();
-			console.log(output);
-			//return Emval.toHandle(output);
-		}
-	}
-	return Emval.toHandle(output);
-});
-extern"C" EMSCRIPTEN_KEEPALIVE const char* GetClipboardContent(void*)
-{
-	static std::string output = "";
-	output = VAR_FROM_JS(get_clipboard_content()).as<std::string>().c_str();
-	printf("Pasting '%s'\n", output.data());
-	return output.data();
-}
-
-EM_ASYNC_JS(void, set_clipboard_content, (emscripten::EM_VAL content), {
-	const type = "text/plain";
-  	const blob = new Blob([Emval.toValue(content)], { type });
-  	const data = [new ClipboardItem({ [type]: blob })];
-  	await navigator.clipboard.write(data);
-});
-extern"C" EMSCRIPTEN_KEEPALIVE void SetClipboardContent(void*, const char* content)
-{
-	set_clipboard_content(VAR_TO_JS(content));
-}
-
 EM_JS(bool, get_has_web_gpu, (), { 
   return navigator.gpu !== undefined;
 	});
@@ -301,8 +268,9 @@ void MainWindow_Init(const char* name, void** outWindow)
 	{
 		ImGui_ImplGlfw_InstallCallbacks(window);
 	}
-	io.GetClipboardTextFn = &GetClipboardContent;
-	io.SetClipboardTextFn = &SetClipboardContent;
+	// Moved to imguiExt.cpp
+	//io.GetClipboardTextFn = &GetClipboardContent;
+	//io.SetClipboardTextFn = &SetClipboardContent;
 }
 
 void MainWindow_NewFrame(void* window)
