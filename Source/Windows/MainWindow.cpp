@@ -424,8 +424,10 @@ void MainWindow_StyleVarsShadow(ImGuiStyle* dst)
 	style->WindowRounding = 1;
 	style->ItemSpacing = {10, 5};
 	style->FrameBorderSize = 0;
+	style->ChildBorderSize = 1;
 	style->FramePadding = {15, 3};
 	style->FrameRounding = 2;
+	style->ChildRounding = 3;
 	style->PopupRounding = 2;
 	if(TouchInput_HasTouch())
 	{

@@ -12,6 +12,10 @@
         {
             "src": "./icons/ResonateIconLarge.png",
             "sizes": "256x256"
+        },
+        {
+            "src": "./icons/ResonateIconLarger.png",
+            "sizes": "512x512"
         }
     ]
 }

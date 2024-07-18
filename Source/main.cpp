@@ -45,7 +45,6 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
     //AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
     if(folderPath == "") return;
-    FileHandler::ClearLocalStorage();
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);
     g_closeFileTab = true;
@@ -122,7 +121,7 @@ void loop(void* window){
             ImGui::MenuItem("Save Document");
             ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
             ImGui::Separator();
-            if(ImGui::BeginMenu("Google Drive"))
+            if(ImGui::BeginMenu("Google Drive", GoogleDrive::Ready()))
             {
                 if(!g_hasGoogleAcc)
                 {

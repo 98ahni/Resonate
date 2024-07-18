@@ -254,6 +254,20 @@ namespace Serialization
 
     void KaraokeDocument::Clear()
     {
+        myFontSize = 50;
+        myHasBaseStartColor = false;
+        myBaseStartColor = 0x0038F97C;
+        myHasBaseEndColor = false;
+        myBaseEndColor = 0x30FFCCE9;
+        myHasOverrideColor = false;
+        myOverrideStartColor = 0x0038F97C;
+        myOverrideEndColor = 0x30FFCCE9;
+        myECHOtoResonateAliases.clear();
+        for(auto&[name, pointer] : myEffectAliases)
+        {
+            delete pointer;
+        }
+        myEffectAliases.clear();
         for(int i = 0; i < myTokens.size(); i++)
         {
             myTokens[i].clear();
@@ -287,6 +301,13 @@ namespace Serialization
             return;
         }
         Clear();
+        if(!aPath.contains("local"))
+        {
+            std::error_code ferr;
+            std::filesystem::remove("/local/" + myName, ferr);
+            std::filesystem::copy(aPath, "/local", std::filesystem::copy_options::overwrite_existing);
+            FileHandler::SyncLocalFS();
+        }
         myPath = aPath;
         myFileID = aFileID;
         myName = std::filesystem::path(myPath).filename().string();
@@ -297,11 +318,6 @@ namespace Serialization
             ParseLine(line);
         }
         docFile.close();
-        if(!aPath.contains("local"))
-        {
-            std::filesystem::copy(aPath, "/local", std::filesystem::copy_options::overwrite_existing);
-            FileHandler::SyncLocalFS();
-        }
     }
     void KaraokeDocument::Parse(std::string aDocument)
     {
@@ -428,7 +444,10 @@ namespace Serialization
             {
                 output += (myTokens[line][token].myHasStart ? TimeToString(myTokens[line][token].myStartTime) : "") + myTokens[line][token].myValue;
             }
-            output += "\n";
+            if(line < myTokens.size() - 1)
+            {
+                output += "\n";
+            }
         }
         ReplaceAliasesInLine(output);
         return headers + output;
@@ -450,7 +469,10 @@ namespace Serialization
             {
                 output += myTokens[line][token].myValue;
             }
-            output += "\n";
+            if(line < myTokens.size() - 1)
+            {
+                output += "\n";
+            }
         }
         return output;
     }
@@ -587,7 +609,7 @@ namespace Serialization
     std::string KaraokeDocument::ToHex(uint aNum)
     {
         std::stringstream ss = std::stringstream();
-        ss << std::hex << aNum;
+        ss << std::setfill('0') << std::setw(8) << std::hex << aNum;
         return ss.str();
     }
     bool KaraokeDocument::IsNull(KaraokeToken &aToken)
