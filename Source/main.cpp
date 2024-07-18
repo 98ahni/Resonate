@@ -344,6 +344,8 @@ int main(){
         Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
     ));
 
+    ImGui::Ext::SetShortcutEvents();
+    
     WindowManager::Init();
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");

@@ -55,6 +55,12 @@ EM_ASYNC_JS(void, destroy_element_async, (emscripten::EM_VAL id, int delay_ms), 
         input.remove();
     }
 });
+EM_JS(void, add_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL callback), {
+    window.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true);
+});
+EM_JS(void, remove_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL callback), {
+    window.removeEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true);
+});
 
 void ImGui::Ext::CreateHTMLButton(const char *anID, const char *anEvent, const char *aJSFunctonName)
 {
@@ -86,6 +92,76 @@ void ImGui::Ext::DestroyHTMLElement(const char *anID, int aDelayMillis)
     {
         destroy_element(emscripten::val(anID).as_handle());
     }
+}
+
+void ImGui::Ext::AddWindowEvent(const char *anEvent, const char *aJSFunctionName)
+{
+    add_window_event(VAR_TO_JS(anEvent), VAR_TO_JS(aJSFunctionName));
+}
+
+void ImGui::Ext::RemoveWindowEvent(const char *anEvent, const char *aJSFunctionName)
+{
+    remove_window_event(VAR_TO_JS(anEvent), VAR_TO_JS(aJSFunctionName));
+}
+
+EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
+	//const output = await new Promise((resolve)=>{navigator.clipboard.readText().then((text)=>{resolve(text);});});
+	var output = '';
+	const clipboardContents = await navigator.clipboard.read();
+    for (const item of clipboardContents) {
+		if (item.types.includes("text/plain")) {
+    		let blob = await item.getType("text/plain");
+    		output = await blob.text();
+			console.log(output);
+			//return Emval.toHandle(output);
+		}
+	}
+	return Emval.toHandle(output);
+});
+extern"C" EMSCRIPTEN_KEEPALIVE void GetClipboardContent()
+{
+	static std::string output = "";
+	output = VAR_FROM_JS(get_clipboard_content()).as<std::string>().c_str();
+	printf("Pasting '%s'\n", output.data());
+    if(ImGui::GetIO().WantTextInput)
+    {
+        ImGui::GetIO().AddInputCharactersUTF8(output.data());
+    }
+}
+
+EM_ASYNC_JS(void, set_clipboard_content, (emscripten::EM_VAL content), {
+	const type = "text/plain";
+  	const blob = new Blob([Emval.toValue(content)], { type });
+  	const data = [new ClipboardItem({ [type]: blob })];
+  	await navigator.clipboard.write(data);
+});
+void SetClipboardContent(bool aShouldCut)
+{
+    ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
+    if(ImGui::GetIO().WantTextInput && state)
+    {
+        const char* content = std::string(state->TextA.Data).substr(state->GetSelectionStart(), state->GetSelectionEnd()).data();
+	    set_clipboard_content(VAR_TO_JS(content));
+        if(aShouldCut)
+        {
+            state->ClearSelection();
+        }
+    }
+}
+extern"C" EMSCRIPTEN_KEEPALIVE void CopyClipboardContent()
+{
+    SetClipboardContent(false);
+}
+extern"C" EMSCRIPTEN_KEEPALIVE void CutClipboardContent()
+{
+    SetClipboardContent(true);
+}
+
+void ImGui::Ext::SetShortcutEvents()
+{
+    AddWindowEvent("copy", "_CopyClipboardContent");
+    AddWindowEvent("cut", "_CutClipboardContent");
+    AddWindowEvent("paste", "_GetClipboardContent");
 }
 
 bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress)
