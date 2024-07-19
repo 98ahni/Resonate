@@ -187,6 +187,12 @@ void loop(void* window){
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
                 doc.DuplicateLine(timing->GetMarkedLine());
             }
+            ImGui::Separator();
+            if(ImGui::MenuItem("Remove Line"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                doc.RemoveLine(timing->GetMarkedLine());
+            }
             ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("View"))
@@ -222,6 +228,39 @@ void loop(void* window){
                 else
                 {
                     WindowManager::AddWindow<Settings>("Settings");
+                }
+            }
+            ImGui::EndMenu();
+        }
+        if(ImGui::BeginMenu("Effects"))
+        {
+            ImGui::BeginDisabled();
+            ImGui::SeparatorText("Line Effects");
+            ImGui::EndDisabled();
+            if(ImGui::BeginMenu("Image", false))
+            {
+                // This menu should be active if there are any images in the project.
+                ImGui::EndMenu();
+            }
+            if(ImGui::MenuItem("No Effect", "<no effect>"))
+            {
+                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                doc.GetLine(timing->GetMarkedLine()).insert(doc.GetLine(timing->GetMarkedLine()).begin(), {"<no effect>", false, 0});
+            }
+            if(ImGui::MenuItem("Display Line", "<line#>", nullptr, false))
+            {
+                // This should display buttons in the Timing Editor for changing the value.
+            }
+            ImGui::BeginDisabled();
+            ImGui::SeparatorText("Text Effects");
+            ImGui::EndDisabled();
+            for(const auto& [alias, effect] : doc.GetEffectAliases())
+            {
+                if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data()))
+                {
+                    TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+                    Serialization::KaraokeToken& token = doc.GetToken(timing->GetMarkedLine(), timing->GetMarkedToken());
+                    doc.GetLine(timing->GetMarkedLine()).insert(doc.GetLine(timing->GetMarkedLine()).begin() + timing->GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
                 }
             }
             ImGui::EndMenu();

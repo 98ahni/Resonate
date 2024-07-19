@@ -252,6 +252,11 @@ namespace Serialization
         myTokens.erase(myTokens.begin() + aLine);
     }
 
+    const KaraokeAliasMap& KaraokeDocument::GetEffectAliases()
+    {
+        return myEffectAliases;
+    }
+
     void KaraokeDocument::Clear()
     {
         myFontSize = 50;
