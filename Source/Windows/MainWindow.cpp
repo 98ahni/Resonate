@@ -479,7 +479,7 @@ void MainWindow_StyleColorsShadow(ImGuiStyle* dst)
 	colors[ImGuiCol_Header] = itembg;
 	colors[ImGuiCol_HeaderHovered] = itemHover;
 	colors[ImGuiCol_HeaderActive] = itemActive;
-	colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
+	colors[ImGuiCol_Separator] = lightItembg;
 	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
 	colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
 	colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.20f);

@@ -39,6 +39,7 @@ namespace Serialization
     };
     typedef std::vector<std::vector<KaraokeToken>> KaraokeData;
     typedef std::vector<KaraokeToken> KaraokeLine;
+    typedef std::unordered_map<std::string, KaraokeEffect*> KaraokeAliasMap;
     class KaraokeDocument
     {
     public:
@@ -65,6 +66,7 @@ namespace Serialization
         void MoveLineUp(size_t aLineToMove);
         void DuplicateLine(size_t aLine);
         void RemoveLine(size_t aLine);
+        const KaraokeAliasMap& GetEffectAliases();
 
         void Clear();
         void Load(std::string aPath, std::string aFileID = "");
@@ -119,7 +121,7 @@ namespace Serialization
         uint myOverrideStartColor = 0x0038F97C;
         uint myOverrideEndColor = 0x30FFCCE9;
         std::unordered_map<std::string, std::string> myECHOtoResonateAliases;
-        std::unordered_map<std::string, KaraokeEffect*> myEffectAliases;
+        KaraokeAliasMap myEffectAliases;
         friend class ::PropertiesWindow;
     };
 }

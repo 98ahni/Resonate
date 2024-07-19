@@ -67,8 +67,8 @@ void HelpWindow::OnImGuiDraw()
 
     StartTreeNode("Adding Effects");
     ImGui::TextWrapped("Adding effects is as simple as clicking the Effects menu and selecting the appropriate one. "
-    "After the built in effects are the effects used in the document then the ones saved to browser storage. "
-    "You can create effects by selecting Document Properties in the Edit menu. Here you can add or remove effects and store them to the browser storage. "
+    "After the built in line effects are the text effects added to the document. "
+    "You can create effects by selecting Document Properties in the View menu. Here you can add or remove effects and store them to the browser storage. "
     "A named effect will appear as its name in the Timing editor but when exporting will be translated to a command readable by ECHO.");
     EndTreeNode
 
