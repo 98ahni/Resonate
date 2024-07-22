@@ -1,4 +1,4 @@
-//  This file is licenced under the GNU General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
+//  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "License.h"
@@ -43,7 +43,7 @@ char* g_firstPartyLicense =
 "           II ) \"Resonate Developers\"\n"
 "           III) \"Resonate Team\"\n"
 "\n"
-"       c) Include these terms and the GNU General Public License with and\n"
+"       c) Include these terms and the GNU Affero General Public License with and\n"
 "       apply them to any source files containing parts of the software. \n"
 "\n"
 "                   End of Resonate Supplemental Terms\n"
