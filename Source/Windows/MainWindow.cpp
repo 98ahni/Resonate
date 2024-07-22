@@ -320,9 +320,16 @@ void MainWindow_NewFrame(void* window)
 	ImGui_ImplGlfw_NewFrame();
 	if(MainWindow::HasWebGPU)
 		ImGui_ImplWGPU_NewFrame();
+	if(TouchInput_HasTouch())
+	{
+		TouchInput_RunInput(true);
+	}
 	ImGui::NewFrame();
-	if(TouchInput_HasTouch()) { TouchInput_RunInput(); }
-	if(TouchInput_HasTouch()) { TouchInput_CheckKeyboard(); }   // Not working...
+	if(TouchInput_HasTouch())
+	{
+		TouchInput_RunPostInput();
+		TouchInput_CheckKeyboard();   // Not working...
+	}
 
 	ImVec2 vWindowSize = ImGui::GetMainViewport()->Size;
 	ImVec2 vPos0 = ImGui::GetMainViewport()->Pos;
@@ -433,6 +440,7 @@ void MainWindow_StyleVarsShadow(ImGuiStyle* dst)
 	{
 		style->ScaleAllSizes(1.5f);
 		style->TouchExtraPadding = {5, 5};
+		style->FramePadding = {15, 5};
 	}
 	style->ScrollbarSize = 15;
 }
