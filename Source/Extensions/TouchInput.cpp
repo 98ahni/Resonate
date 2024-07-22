@@ -222,7 +222,7 @@ void TouchInput_Init()
 {
 	touch_input_handler();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_IsTouchScreen;
-	ImGui::GetIO().ConfigInputTrickleEventQueue = false;
+	ImGui::GetIO().ConfigInputTrickleEventQueue = true;
 	ImGui::GetIO().MouseDoubleClickMaxDist = 16.f;
 	//always_show_touch_keyboard();
 }
