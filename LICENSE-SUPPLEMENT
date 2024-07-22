@@ -2,8 +2,8 @@
 
                      Resonate Supplemental Terms
 
-  In accordance with section 7 of the GNU GENERAL PUBLIC LICENSE, as 
-written in the supplied LICENSE file, the following supplemental terms 
+  In accordance with section 7 of the GNU AFFERO GENERAL PUBLIC LICENSE, 
+as written in the supplied LICENSE file, the following supplemental terms 
 must also be followed.
 
    1) Any exising copyright, trademark or source notice must be left 
@@ -11,28 +11,11 @@ must also be followed.
    to a file, you may add such a notice below any existing ones, 
    denoting your changes.
 
-   2) You must make sure that anyone who has access to a copy of the 
-   software, modified or not, that you convey can find the source from 
-   where the software was conveyed to you.
-
-   3) Any modifications made to the software must be propagated back to 
-   the source from where the software was conveyed to you and to the 
-   copyright holder of the modified files. The copyright holder of the 
-   modified files has no obligation to implement the changes. 
-   This term does not apply if, and only if:
-
-       a) The modified files are part of a third party library. Third 
-       party libraries should be handled according to their own licenses. 
-
-       b) The modified files are not part of Resonate, the software or 
-       any application that presents itself as a modified version of 
-       the software.
-
-   4) A modified version of the software may never present itself as
+   2) A modified version of the software may never present itself as
    an unmodified copy of any other version of the software. This 
    distinction must be easily available to any user of the software.
 
-   5) You may not alter any supplemental terms included with the 
+   3) You may not alter any supplemental terms included with the 
    copy of the software that was conveyed to you. You may, however, 
    add supplemental terms of your own if, and only if:
 
@@ -41,7 +24,7 @@ must also be followed.
 
        b) The added terms does not contradict any existing terms.
 
-   6) If you implement or include any part of the software as part of any 
+   4) If you implement or include any part of the software as part of any 
    other application, including other versions of the software, you must:
 
        a) Include all copyright, trademark and source notices applied to
