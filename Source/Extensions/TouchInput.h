@@ -4,7 +4,8 @@
 #pragma once
 
 void TouchInput_Init();
-void TouchInput_RunInput();
+void TouchInput_RunInput(bool usePost = false);
+void TouchInput_RunPostInput();
 // Not currently working
 void TouchInput_ReadyKeyboard(bool isNum = false);
 void TouchInput_CheckKeyboard();

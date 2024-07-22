@@ -232,23 +232,34 @@ void TouchInput_Init()
 	//always_show_touch_keyboard();
 }
 
-void TouchInput_RunInput()
+void TouchInput_RunInput(bool usePost)
 {
 	for(int i = 0; i < g_inputQueue.Size; i++)
 	{
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
 		ImGui::GetIO().AddMousePosEvent(g_inputQueue[i].myPosition.x, g_inputQueue[i].myPosition.y);
+	}
+	if(!usePost)
+	{
+		g_inputQueue.clear();
+	}
+	if(g_mainTouch != -1)
+	{
+		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+		ImGui::GetIO().AddMousePosEvent(g_touches[g_mainTouch].x, g_touches[g_mainTouch].y);
+	}
+}
+
+void TouchInput_RunPostInput()
+{
+	for(int i = 0; i < g_inputQueue.Size; i++)
+	{
 		if(g_inputQueue[i].myIsInitial)
 		{
 			ImGui::GetIO().AddMouseButtonEvent(0, true);
 		}
 	}
 	g_inputQueue.clear();
-	if(g_mainTouch != -1)
-	{
-		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(g_touches[g_mainTouch].x, g_touches[g_mainTouch].y);
-	}
 }
 
 void TouchInput_ReadyKeyboard(bool isNum)
