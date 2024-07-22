@@ -8,8 +8,13 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+struct TouchEvent
+{
+	ImVec2 myPosition;
+	bool myIsInitial;
+};
 std::unordered_map<int, ImVec2> g_touches;
-ImVector<ImVec2> g_inputQueue;
+ImVector<TouchEvent> g_inputQueue;
 int g_mainTouch = -1;
 int g_subTouch = -1;
 bool g_usingKeyboard = false;
@@ -133,8 +138,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchStart(int ID, double X, double Y)
 	{
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
 		ImGui::GetIO().AddMousePosEvent(X, Y);
-		ImGui::GetIO().AddMouseButtonEvent(0, true);
-		g_inputQueue.push_back({(float)X, (float)Y});
+		//ImGui::GetIO().AddMouseButtonEvent(0, true);
+		g_inputQueue.push_back({{(float)X, (float)Y}, true});
 		//EM_ASM(if(!document.getElementById('mobile-text-input')) { always_show_touch_keyboard(); }
 		//	document.getElementById('mobile-text-input').focus({preventScroll: true}););
 		EM_ASM(if(document.getElementById('temp-text-input')) { 
@@ -157,7 +162,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchEnd(int ID, double X, double Y)
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
 		ImGui::GetIO().AddMousePosEvent(X, Y);
 		ImGui::GetIO().AddMouseButtonEvent(0, false);
-		g_inputQueue.push_back({(float)X, (float)Y});
+		g_inputQueue.push_back({{(float)X, (float)Y}, false});
 	}
 	else if(g_subTouch == ID)
 	{
@@ -175,7 +180,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchCancel(int ID, double X, double Y)
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
 		ImGui::GetIO().AddMousePosEvent(X, Y);
 		ImGui::GetIO().AddMouseButtonEvent(0, false);
-		g_inputQueue.push_back({(float)X, (float)Y});
+		g_inputQueue.push_back({{(float)X, (float)Y}, false});
 	}
 	else if(g_subTouch == ID)
 	{
@@ -203,7 +208,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchMove(int ID, double X, double Y)
 	}
 	if(g_mainTouch == ID)
 	{
-		g_inputQueue.push_back({(float)X, (float)Y});
+		g_inputQueue.push_back({{(float)X, (float)Y}, false});
 	}
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void TouchExtraKeyEvents(int ID, bool Down)
@@ -222,7 +227,7 @@ void TouchInput_Init()
 {
 	touch_input_handler();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_IsTouchScreen;
-	ImGui::GetIO().ConfigInputTrickleEventQueue = true;
+	ImGui::GetIO().ConfigInputTrickleEventQueue = false;
 	ImGui::GetIO().MouseDoubleClickMaxDist = 16.f;
 	//always_show_touch_keyboard();
 }
@@ -232,7 +237,11 @@ void TouchInput_RunInput()
 	for(int i = 0; i < g_inputQueue.Size; i++)
 	{
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(g_inputQueue[i].x, g_inputQueue[i].y);
+		ImGui::GetIO().AddMousePosEvent(g_inputQueue[i].myPosition.x, g_inputQueue[i].myPosition.y);
+		if(g_inputQueue[i].myIsInitial)
+		{
+			ImGui::GetIO().AddMouseButtonEvent(0, true);
+		}
 	}
 	g_inputQueue.clear();
 	if(g_mainTouch != -1)
