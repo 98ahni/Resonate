@@ -41,7 +41,10 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({type: 'log', data: ['Log server open']})
             }).then(
-            /*resolve*/()=>{
+            /*resolve*/(response)=>{
+                if(response.status == 405){
+                    return;
+                }
                 console.log = (...data) => {
                     fetch("/console", {
                         method: "POST",
