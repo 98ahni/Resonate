@@ -8,6 +8,7 @@
 #include <Serialization/Preferences.h>
 #include <StringTools.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include <Extensions/TouchInput.h>
 
 PropertiesWindow::PropertiesWindow()
 {
@@ -69,9 +70,11 @@ void PropertiesWindow::OnImGuiDraw()
     {
         DrawEffectWidget(alias, effect);
     }
-    ImGui::BeginChild("New Effect");
+    ImGui::BeginChild("New Effect", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border);
     ImGui::Text("Alias  <"); ImGui::SameLine();
-    ImGui::InputText("##Alias", &myNewEffectName); ImGui::SameLine(); ImGui::Text(">");
+    ImGui::InputText("##Alias", &myNewEffectName);
+    TouchInput_ReadyKeyboard();
+    ImGui::SameLine(); ImGui::Text(">");
     ImGui::Text("Create"); ImGui::SameLine();
     if(ImGui::Button("Color"))
     {
@@ -128,6 +131,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
                 colorEffect->myStartColor = IM_COL32_FROM_DOC(colorEffect->myStartColor);
                 ApplyEdit(anEffect);
             }
+            TouchInput_ReadyKeyboard();
             ImVec4 endCol = ImGui::ColorConvertU32ToFloat4(IM_COL32_FROM_DOC(colorEffect->myEndColor));
             ImGui::Text("End Color"); ImGui::SameLine();
             if(ImGui::ColorEdit4("##End Color", &endCol.x))
@@ -136,6 +140,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
                 colorEffect->myEndColor = IM_COL32_FROM_DOC(colorEffect->myEndColor);
                 ApplyEdit(anEffect);
             }
+            TouchInput_ReadyKeyboard();
             ImGui::SameLine();
             if(ImGui::Ext::ToggleSwitch("##UseEndCol", &(colorEffect->myHasEndColor)))
             {
