@@ -170,8 +170,8 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     ImVec2 pos = GetCursorScreenPos();
     float start = aStartTime;
     float end = anEndTime;
-    ImVec2 timeStartPos = {pos.x, pos.y + (size.y * 1.2f)};
-    ImVec2 timeEndPos = {remap(clamp(aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.2f)};
+    ImVec2 timeStartPos = {pos.x, pos.y + (size.y * 1.1f)};
+    ImVec2 timeEndPos = {remap(clamp(aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.1f)};
     if(aCurrentTime < start)
     {
         uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();

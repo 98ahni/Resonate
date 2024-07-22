@@ -52,6 +52,7 @@ void PropertiesWindow::OnImGuiDraw()
             doc.myBaseStartColor = ImGui::ColorConvertFloat4ToU32(startCol);
             doc.myBaseStartColor = IM_COL32_FROM_DOC(doc.myBaseStartColor);
             doc.myHasBaseStartColor = true;
+            doc.MakeDirty();
         }
         ImVec4 endCol = ImGui::ColorConvertU32ToFloat4(IM_COL32_FROM_DOC(doc.myBaseEndColor));
         if(ImGui::ColorEdit4("##EndCol", &endCol.x))
@@ -59,11 +60,12 @@ void PropertiesWindow::OnImGuiDraw()
             doc.myBaseEndColor = ImGui::ColorConvertFloat4ToU32(endCol);
             doc.myBaseEndColor = IM_COL32_FROM_DOC(doc.myBaseEndColor);
             doc.myHasBaseEndColor = true;
+            doc.MakeDirty();
         }
         ImGui::SeparatorText("Text");
-        ImGui::Text("Font Size"); ImGui::SameLine(); ImGui::DragInt("##FontSize", (int*)&doc.myFontSize);
+        ImGui::Text("Font Size"); ImGui::SameLine(); if(ImGui::DragInt("##FontSize", (int*)&doc.myFontSize)){doc.MakeDirty();}
         ImGui::TextDisabled("ECHO will show %i lines.", doc.myFontSize <= 43 ? 7 : doc.myFontSize <= 50 ? 6 : 5);
-        ImGui::Ext::ToggleSwitch("Use Direct Text", nullptr);
+        if(ImGui::Ext::ToggleSwitch("Use Direct Text", nullptr)){doc.MakeDirty();}
     }
     auto& aliases = myCurrentTab == LocalTab ? myLocalEffectAliases : doc.myEffectAliases;
     for(auto&[alias, effect] : aliases)
@@ -197,7 +199,11 @@ void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect)
     case Serialization::KaraokeEffect::Image:
     case Serialization::KaraokeEffect::Raw:
     }
-    if(myCurrentTab == LocalTab)
+    if(myCurrentTab == DocumentTab)
+    {
+        Serialization::KaraokeDocument::Get().MakeDirty();
+    }
+    else if(myCurrentTab == LocalTab)
     {
         std::string keys = myEditingEffect;
         if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
