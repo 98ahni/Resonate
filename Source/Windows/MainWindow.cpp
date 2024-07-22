@@ -320,8 +320,8 @@ void MainWindow_NewFrame(void* window)
 	ImGui_ImplGlfw_NewFrame();
 	if(MainWindow::HasWebGPU)
 		ImGui_ImplWGPU_NewFrame();
-	if(TouchInput_HasTouch()) { TouchInput_RunInput(); }
 	ImGui::NewFrame();
+	if(TouchInput_HasTouch()) { TouchInput_RunInput(); }
 	if(TouchInput_HasTouch()) { TouchInput_CheckKeyboard(); }   // Not working...
 
 	ImVec2 vWindowSize = ImGui::GetMainViewport()->Size;
