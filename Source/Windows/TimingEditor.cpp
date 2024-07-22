@@ -58,6 +58,7 @@ void TimingEditor::OnImGuiDraw()
             }
             doc.PopColor();
             ImGui::NewLine();
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 3);
         }
         if(myFont) ImGui::PopFont();
         ImGui::PopStyleVar();

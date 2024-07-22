@@ -345,6 +345,7 @@ namespace Serialization
         if(aLine.starts_with("font"))
         {
             myFontSize = std::stoi(aLine.substr(5));
+            return;
         }
         if(aLine.starts_with("start color"))
         {

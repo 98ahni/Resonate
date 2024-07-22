@@ -35,51 +35,60 @@
         const default_console_log = console.log;
         const default_console_warn = console.warn;
         const default_console_error = console.error;
-        console.log = (...data) => {
+        (()=>{
             fetch("/console", {
                 method: "POST",
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({type: 'log', data})
+                body: JSON.stringify({type: 'log', data: ['Log server open']})
             }).then(
-            /*resolve*/()=>{}, 
-            /*reject*/()=>{
-                // No server, restore functions
-                console.log = default_console_log;
-                console.warn = default_console_warn;
-                console.error = default_console_error;
+            /*resolve*/()=>{
+                console.log = (...data) => {
+                    fetch("/console", {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({type: 'log', data})
+                    }).then(
+                    /*resolve*/()=>{}, 
+                    /*reject*/()=>{
+                        // No server, restore functions
+                        console.log = default_console_log;
+                        console.warn = default_console_warn;
+                        console.error = default_console_error;
+                    });
+                    default_console_log.apply(console, data);
+                };
+                console.warn = (...data) => {
+                    fetch("/console", {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({type: 'warn', data})
+                    }).then(
+                    /*resolve*/()=>{}, 
+                    /*reject*/()=>{
+                        // No server, restore functions
+                        console.log = default_console_log;
+                        console.warn = default_console_warn;
+                        console.error = default_console_error;
+                    });
+                    default_console_warn.apply(console, data);
+                };
+                console.error = (...data) => {
+                    fetch("/console", {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({type: 'error', data})
+                    }).then(
+                    /*resolve*/()=>{}, 
+                    /*reject*/()=>{
+                        // No server, restore functions
+                        console.log = default_console_log;
+                        console.warn = default_console_warn;
+                        console.error = default_console_error;
+                    });
+                    default_console_error.apply(console, data);
+                };
             });
-            default_console_log.apply(console, data);
-        };
-        console.warn = (...data) => {
-            fetch("/console", {
-                method: "POST",
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({type: 'warn', data})
-            }).then(
-            /*resolve*/()=>{}, 
-            /*reject*/()=>{
-                // No server, restore functions
-                console.log = default_console_log;
-                console.warn = default_console_warn;
-                console.error = default_console_error;
-            });
-            default_console_warn.apply(console, data);
-        };
-        console.error = (...data) => {
-            fetch("/console", {
-                method: "POST",
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({type: 'error', data})
-            }).then(
-            /*resolve*/()=>{}, 
-            /*reject*/()=>{
-                // No server, restore functions
-                console.log = default_console_log;
-                console.warn = default_console_warn;
-                console.error = default_console_error;
-            });
-            default_console_error.apply(console, data);
-        };
+        })();
     </script>
 </head>
     <body>
