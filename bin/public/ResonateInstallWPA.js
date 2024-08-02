@@ -22,6 +22,18 @@ self.addEventListener('fetch', event => {
 	event.respondWith((async () => {
 		const cache = await caches.open(CACHE_NAME);
 
+		//const injectHeaders = (request)=>{
+		//	const headers = new Headers(request.headers);
+		//	headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+		//	headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+		//	const newRequest = new Request(request, {
+		//		mode: request.mode,
+		//		credentials: request.credentials,
+		//		headers: headers
+		//	});
+		//	return newRequest;
+		//};
+
 		// Get the resource from the cache.
 		//const cachedResponse = await cache.match(event.request);
 		//if (cachedResponse) {
@@ -29,6 +41,7 @@ self.addEventListener('fetch', event => {
 		//} else {
 			try {
 				// If the resource was not in the cache, try the network.
+				//const fetchResponse = await fetch(injectHeaders(event.request));
 				const fetchResponse = await fetch(event.request);
 
 				if(event.request.method != 'POST'){

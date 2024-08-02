@@ -13,8 +13,10 @@ const RELEASE_Build = false;
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
+const REBUILD_Rubberband = false;
 const REBUILD_Source = false;
 const SKIP_ImguiCompile = true;
+const SKIP_RubberbandCompile = false;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
 const FORCE_Linking = true;
@@ -99,6 +101,15 @@ if(fs.existsSync(projectPath + 'bin/public/Resonate.wasm'))
 }
 let hasUnlinkedFiles = false;
 
+
+if(REBUILD_Rubberband || (!SKIP_RubberbandCompile && lastCompileTime < fs.statSync(projectPath + 'Rubberband/Resonate/main.cpp').mtimeMs))
+{
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/single/RubberBandSingle.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c -O2 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/Rubberband.o\"', {env: process.env})));//
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/Resonate/main.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c -O2 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/RubberbandMain.o\"', {env: process.env})));//
+    //hasUnlinkedFiles = true;
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'bin/intermediate/RubberbandMain.o' + '\" \"' + projectPath + 'bin/intermediate/Rubberband.o' + '\" -o \"' + projectPath + 'bin/public/plugins/RubberBand.js\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lidbfs.js -sWASM=0 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));
+}
+//objectFiles.push(projectPath + 'bin/intermediate/Rubberband.o');
 imguiFiles.forEach(file => {
     if(path.extname(file).startsWith('.c'))
     {
@@ -115,7 +126,7 @@ sourceFiles.forEach(file => {
     {
         if(REBUILD_Source || (!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs))
         {
-            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"' + API_SECRETS.join('\" -D\"') + '\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" ' + (RELEASE_Build ? '' : '-g') + ' -D\"NO_FREETYPE\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
+            console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"' + API_SECRETS.join('\" -D\"') + '\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -I\"' + projectPath + 'Rubberband/rubberband/\" ' + (RELEASE_Build ? '' : '-g') + ' -D\"NO_FREETYPE\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;
         }
         objectFiles.push(projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o');

@@ -4,11 +4,21 @@
 #include "Base/EditorWindow.h"
 #include <emscripten/val.h>
 #include <string>
+#include <RubberBandStretcher.h>
 
 typedef unsigned int uint;
 class AudioPlayback : public EditorWindow
 {
 public:
+    //struct RubberbandLogger : public RubberBand::RubberBandStretcher::Logger
+    //{
+    //    /// Receive a log message with no numeric values.
+    //    void log(const char* aMsg);
+    //    /// Receive a log message and one accompanying numeric value.
+    //    void log(const char* aMsg, double aValue);
+    //    /// Receive a log message and two accompanying numeric values.
+    //    void log(const char* aMsg, double aValue, double anotherValue);
+    //};
     AudioPlayback();
     void OnImGuiDraw();
 
@@ -22,6 +32,7 @@ public:
 private:
     static inline AudioPlayback* ourInstance;
 
+    void ProcessAudio();
     void DrawPlaybackProgress(float aDrawUntil);
     void DrawPlaybackSpeed();
 

@@ -12,4 +12,5 @@
 
 // Emscripten
 #define VAR_TO_JS(var) (emscripten::val(var).as_handle())
+#define VEC_TO_JS(vec) (emscripten::val::array(vec).as_handle())
 #define VAR_FROM_JS(var) (emscripten::val::take_ownership(var))

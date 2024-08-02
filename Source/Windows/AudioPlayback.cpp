@@ -19,6 +19,7 @@ EM_JS(void, create_audio_element, (), {
 var global_audio_element = null;
 var global_audio_context = null;
 var global_audio_blobs = [];
+const global_audio_worker = new Worker('plugins/audiostretchworker.js');
 if(false){
 });
 
@@ -73,9 +74,9 @@ EM_ASYNC_JS(void, set_audio_playback_file, (emscripten::EM_VAL fs_path), {
         for(var i = 0; i < buffer.numberOfChannels; i++){
             audioDatas[i] = buffer.getChannelData(i);
         }
-        const worker = new Worker('plugins/audiostretchworker.js');
-        worker.postMessage([audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
-        worker.onmessage = (result) => {
+        //const worker = new Worker('plugins/audiostretchworker.js');
+        global_audio_worker.postMessage([true, audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
+        global_audio_worker.onmessage = (result) => {
             global_audio_blobs[result.data[1] - 1] = result.data[0];
         };
     });
@@ -106,11 +107,41 @@ EM_JS(void, create_audio_playback, (), {
     audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
     if(audio.hasAttribute("webkitPreservesPitch"))
     {
-        audio.webkitPreservesPitch = false;
+        audio.webkitPreservesPitch = true;
     }
     else
     {
-        audio.preservesPitch = false;
+        audio.preservesPitch = true;
+    }
+    console.log(global_audio_context.state);   // This console.log() is necessary!
+    global_audio_context.resume();
+    audio.play().then(()=>{
+        audio.pause();
+    });
+    window.onpagehide = (e) => {
+        global_audio_context.close();
+    };
+});
+
+EM_JS(void, create_audio_playback_with_worklet, (), {
+    global_audio_element = new Audio();
+    const audio = global_audio_element;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    global_audio_context = new AudioContext();
+    global_audio_context.audioWorklet.addModule("plugins/rubberbandworklet.js").then(()=>{
+        const track = global_audio_context.createMediaElementSource(global_audio_element);
+        const rubberband = new AudioWorkletNode(global_audio_context, "rubberband-processor");
+        track.connect(rubberband);
+        rubberband.connect(global_audio_context.destination);
+    });
+    audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+    if(audio.hasAttribute("webkitPreservesPitch"))
+    {
+        audio.webkitPreservesPitch = true;
+    }
+    else
+    {
+        audio.preservesPitch = true;
     }
     console.log(global_audio_context.state);   // This console.log() is necessary!
     global_audio_context.resume();
@@ -214,7 +245,8 @@ void AudioPlayback::PrepPlayback()
     if(ourInstance->myHasAudio) return;
     //if(ourInstance->myHasAudio || ourInstance->myPath.empty()) return;
     EM_ASM(if(global_audio_context !== null)global_audio_context.close(););
-    create_audio_playback();
+    //create_audio_playback();
+    create_audio_playback_with_worklet();
     //set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
     if(ourInstance->myPath.empty()) 
     {
@@ -254,7 +286,9 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     //EM_ASM(if(global_audio_context != 'undefined')global_audio_context.close(););
     //ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
-    set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
+    
+    //set_audio_playback_file(VAR_TO_JS(aPath.c_str()));
+    ourInstance->ProcessAudio();
     
     SaveLocalBackup();
 
@@ -286,6 +320,111 @@ std::string AudioPlayback::GetPath()
     return ourInstance->myPath;
 }
 
+EM_ASYNC_JS(void, get_audio_samples, (emscripten::EM_VAL fs_path), {
+	const audioData = FS.readFile(Emval.toValue(fs_path));
+    const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
+    global_audio_blobs.length = 10;
+    global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
+        const isSafari = !!window['safari'] && safari !== 'undefined';
+        global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate);
+        set_audio_playback_buffer(Emval.toHandle(10));
+        var audioDatas = [];
+        audioDatas.length = buffer.numberOfChannels;
+        for(var i = 0; i < buffer.numberOfChannels; i++){
+            audioDatas[i] = buffer.getChannelData(i);
+        }
+        //const worker = new Worker('plugins/audiostretchworker.js');
+        global_audio_worker.postMessage([false, audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
+        global_audio_worker.onmessage = (result) => {
+            global_audio_blobs[result.data[1]] = result.data[0];
+        }
+    });
+});
+EM_ASYNC_JS(void, get_audio_samples_no_stretch, (emscripten::EM_VAL fs_path), {
+	const audioData = FS.readFile(Emval.toValue(fs_path));
+    const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
+    global_audio_blobs.length = 10;
+    global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
+        global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate);
+        set_audio_playback_buffer(Emval.toHandle(10));
+    });
+});
+//EM_ASYNC_JS(void, get_audio_samples, (emscripten::EM_VAL fs_path), {
+//	const audioData = FS.readFile(Emval.toValue(fs_path));
+//    const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
+//    global_audio_blobs.length = 10;
+//    global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
+//        global_audio_buffer = buffer;
+//        _jsRubberbandAudio(Emval.toHandle(buffer.sampleRate), Emval.toHandle(buffer.numberOfChannels));
+//    });
+//});
+//EM_JS(emscripten::EM_VAL, get_channel_from_buffer, (emscripten::EM_VAL index), {
+//    return Emval.toHandle(global_audio_buffer.getChannelData(Emval.toValue(index)));
+//}
+//var global_audio_buffer = {};
+//);
+//extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSampleRate, emscripten::EM_VAL aChannelNum)
+//{
+//#if _RELEASE
+//    RubberBand::RubberBandStretcher::setDefaultDebugLevel(0);
+//#else
+//    RubberBand::RubberBandStretcher::setDefaultDebugLevel(1);
+//#endif
+//    size_t sampleRate = VAR_FROM_JS(aSampleRate).as<size_t>();
+//    size_t channelNum = VAR_FROM_JS(aChannelNum).as<size_t>();
+//    std::vector<std::vector<float>> channelArrays;
+//    std::vector<float*> channelStarts;
+//    size_t numSamples = -1;
+//    for(int i = 0; i < channelNum; i++)
+//    {
+//        channelArrays.push_back(emscripten::vecFromJSArray<float>(VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i)))));
+//        channelStarts.push_back(channelArrays[channelArrays.size() - 1].data());
+//        numSamples = std::min(numSamples, channelArrays[channelArrays.size() - 1].size());
+//    }
+//    for(int i = 10; i > 3; i--)
+//    {
+//        printf("Stretching audio %i...\n", i);
+//        RubberBand::RubberBandStretcher stretcher(sampleRate, channelNum, std::make_shared<AudioPlayback::RubberbandLogger>(), RubberBand::RubberBandStretcher::Option::OptionThreadingAlways | RubberBand::RubberBandStretcher::Option::OptionWindowShort);
+//        stretcher.setTimeRatio(1 / (i * 0.1));
+//        stretcher.study(channelStarts.data(), numSamples, true);
+//        stretcher.process(channelStarts.data(), numSamples, true);
+//        size_t avail = stretcher.available();
+//        std::vector<std::vector<float>> answer;
+//        std::vector<float*> answerPointers;
+//
+//        //float answer[channelNum][avail];
+//        //float* answerPointers[channelNum];
+//        for(int j = 0; j < channelNum; j++)
+//        {
+//        //    answerPointers[j] = &answer[j][0];
+//            std::vector<float> newVec;
+//            newVec.resize(avail);
+//            answer.push_back(newVec);
+//            answerPointers.push_back(answer[answer.size() - 1].data());
+//        }
+//        stretcher.retrieve(answerPointers.data(), avail);
+//        std::vector<emscripten::val> output;
+//        for(int j = 0; j < channelNum; j++)
+//        {
+//            output.push_back(emscripten::val::array(answer[j]));
+//        }
+//        EM_ASM({
+//            let input = Emval.toValue($0);
+//            //for(let i = 0; i < input.length; i++) {
+//            //    input[i] = Emval.toValue(input[i]);
+//            //}
+//            global_audio_blobs[$2] = Module.audioDataArrayToBlob(input, $1);
+//        }, VEC_TO_JS(output), sampleRate, i - 1);
+//    }
+//    printf("Done stretching audio!\n");
+//}
+void AudioPlayback::ProcessAudio()
+{
+    //get_audio_samples(VAR_TO_JS(myPath));
+    get_audio_samples_no_stretch(VAR_TO_JS(myPath));
+    set_audio_playback_buffer(VAR_TO_JS(10));
+}
+
 void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
 {
     ImGui::Text(Serialization::KaraokeDocument::TimeToString(myProgress).c_str());
@@ -308,10 +447,26 @@ void AudioPlayback::DrawPlaybackSpeed()
     if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
         bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
-        set_audio_playback_buffer(VAR_TO_JS(mySpeed > 4 ? mySpeed % 2 ? mySpeed - 1 : mySpeed : 4));
-        set_audio_playback_speed(VAR_TO_JS(mySpeed >= 4 ? mySpeed % 2 ? 1.f + (1.f / ((float)mySpeed - 1.f)) : 1 : ((float)mySpeed / 4.f)));
-        myTimeScale = (float)(mySpeed > 4 ? mySpeed % 2 ? mySpeed - 1 : mySpeed : 4) * .1f;
+        //set_audio_playback_buffer(VAR_TO_JS(mySpeed > 4 ? mySpeed % 2 ? mySpeed - 1 : mySpeed : 4));
+        set_audio_playback_buffer(VAR_TO_JS(mySpeed > 4 ? mySpeed : 4));
+        //set_audio_playback_speed(VAR_TO_JS(mySpeed >= 4 ? mySpeed % 2 ? 1.f + (1.f / ((float)mySpeed - 1.f)) : 1 : ((float)mySpeed / 4.f)));
+        set_audio_playback_speed(VAR_TO_JS(mySpeed >= 4 ? 1 : ((float)mySpeed / 4.f)));
+        //myTimeScale = (float)(mySpeed > 4 ? mySpeed % 2 ? mySpeed - 1 : mySpeed : 4) * .1f;
+        myTimeScale = (float)(mySpeed > 4 ? mySpeed : 4) * .1f;
         set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
         if(!isPaused) audio_element_play();
     }
 }
+
+//void AudioPlayback::RubberbandLogger::log(const char *aMsg)
+//{
+//    printf("RubberBand | %s\n", aMsg);
+//}
+//void AudioPlayback::RubberbandLogger::log(const char *aMsg, double aValue)
+//{
+//    printf("RubberBand | %s | %f\n", aMsg, aValue);
+//}
+//void AudioPlayback::RubberbandLogger::log(const char *aMsg, double aValue, double anotherValue)
+//{
+//    printf("RubberBand | %s | %f | %f\n", aMsg, aValue, anotherValue);
+//}
