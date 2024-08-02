@@ -98,6 +98,8 @@
         "__verbose_abort": "cpp",
         "regex": "cpp",
         "__memory": "cpp",
-        "strstream": "cpp"
+        "strstream": "cpp",
+        "set": "cpp",
+        "iostream": "cpp"
     }
 }
