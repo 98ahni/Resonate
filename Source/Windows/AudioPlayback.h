@@ -26,6 +26,7 @@ public:
     static void SetPlaybackFile(std::string aPath);
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
+    static int GetPlaybackSpeed();
     static void SaveLocalBackup();
     static std::string GetPath();
 
