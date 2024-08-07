@@ -100,6 +100,7 @@
         "__memory": "cpp",
         "strstream": "cpp",
         "set": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "cinttypes": "cpp"
     }
 }

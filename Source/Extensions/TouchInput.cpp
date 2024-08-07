@@ -96,7 +96,6 @@ EM_JS(void, hide_touch_keyboard, (), {
 EM_JS(void, touch_input_handler, (), {
 	const el = document.getElementById('canvas');
 	el.addEventListener('touchstart', (evt) => {
-		_jsPrepPlayback();
 		for(var i = 0; i < evt.changedTouches.length; ++i)
 		{
 			var touch = evt.changedTouches[i];
@@ -105,6 +104,7 @@ EM_JS(void, touch_input_handler, (), {
 		evt.preventDefault();
 	});
 	el.addEventListener('touchend', (evt) => {
+		_jsPrepPlayback();
 		for(var i = 0; i < evt.changedTouches.length; ++i)
 		{
 			var touch = evt.changedTouches[i];

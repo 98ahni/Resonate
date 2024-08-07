@@ -1,4 +1,71 @@
 var Module = {};
+const default_console_log = console.log;
+const default_console_warn = console.warn;
+const default_console_error = console.error;
+(()=>{
+    self.onerror = function (event, source, lineno, colno, error) {
+        console.error("onerror: " + event.name + ": " + event.message + 
+        "\n\t/bin/public/" + source.split('/').slice(-1) + ":" + lineno + ":" + colno);
+        console.error(error.stack);
+          //if(window.matchMedia('(any-pointer: coarse)').matches) // Enable if alert should be for touch only.
+        alert("OnError: \n" + event.name + ": " + event.message);
+    };
+    fetch("/console", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({type: 'log', data: ['Log server open']})
+    }).then(
+    /*resolve*/(response)=>{
+        if(response.status == 405){
+            return;
+        }
+        console.log = (...data) => {
+            fetch("/console", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'log', data})
+            }).then(
+            /*resolve*/()=>{}, 
+            /*reject*/()=>{
+                // No server, restore functions
+                console.log = default_console_log;
+                console.warn = default_console_warn;
+                console.error = default_console_error;
+            });
+            default_console_log.apply(console, data);
+        };
+        console.warn = (...data) => {
+            fetch("/console", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'warn', data})
+            }).then(
+            /*resolve*/()=>{}, 
+            /*reject*/()=>{
+                // No server, restore functions
+                console.log = default_console_log;
+                console.warn = default_console_warn;
+                console.error = default_console_error;
+            });
+            default_console_warn.apply(console, data);
+        };
+        console.error = (...data) => {
+            fetch("/console", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'error', data})
+            }).then(
+            /*resolve*/()=>{}, 
+            /*reject*/()=>{
+                // No server, restore functions
+                console.log = default_console_log;
+                console.warn = default_console_warn;
+                console.error = default_console_error;
+            });
+            default_console_error.apply(console, data);
+        };
+    });
+})();
 importScripts('timestretch.js', 'RubberBand.js', 'VexWarp/main.js', 'paulstretch.js');
 
 onmessage = async function (msg)
@@ -24,7 +91,7 @@ onmessage = async function (msg)
     }
     else if(engine === 'RubberBand'){
         global_audio_buffer = channelDataArray;
-        Module._jsRubberbandAudio(Emval.toHandle(sampleRate), Emval.toHandle(channelDataArray.length));
+        Module._jsRubberbandAudio(Emval.toHandle(sampleRate), Emval.toHandle(channelDataArray.length), Emval.toHandle(4));
     }
     else if(engine === 'VexWarp' || engine === 'VexWarpHybrid'){
         for(var ind = (engine === 'VexWarp' ? 9 : 4); ind > 3; ind--){

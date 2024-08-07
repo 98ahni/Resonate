@@ -14,6 +14,14 @@ self.addEventListener('install', event => {
 			'./icons/ResonateIconUnsaved.png',
 			'./plugins/audiostretchworker.js',
 			'./plugins/timestretch.js',
+			'./public/plugins/RubberBand.js',
+			'./public/plugins/paulstretch.js',
+			'./public/plugins/VexWarp/tools.js',
+			'./public/plugins/VexWarp/stretch.js',
+			'./public/plugins/VexWarp/require.js',
+			'./public/plugins/VexWarp/main.js',
+			'./public/plugins/VexWarp/jquery-2.0.3.js',
+			'./public/plugins/VexWarp/dsp.js',
 		]);
 	})());
 });

@@ -113,7 +113,7 @@ EM_JS(void, create_audio_playback, (), {
     {
         audio.preservesPitch = true;
     }
-    console.log(global_audio_context.state);   // This console.log() is necessary!
+    default_console_log(global_audio_context.state);   // This console.log() is necessary!
     global_audio_context.resume();
     audio.play().then(()=>{
         audio.pause();
