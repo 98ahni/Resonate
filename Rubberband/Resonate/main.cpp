@@ -46,14 +46,15 @@ var global_audio_buffer = {};
 size_t sampleRate;
 size_t channelNum;
 size_t stretchTo;
-std::vector<std::vector<float>> channelArrays;
-std::vector<float*> channelStarts;
+std::vector<std::vector<float>> channelArrays = {};
+std::vector<float*> channelStarts = {};
 size_t numSamples;
 RubberBand::RubberBandStretcher* stretcher;
-std::vector<std::vector<float>> answer;
-std::vector<float*> answerPointers;
+std::vector<std::vector<float>> answer = {};
+std::vector<float*> answerPointers = {};
 
 size_t queueStart;
+bool hasStarted;
 
 extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSampleRate, emscripten::EM_VAL aChannelNum, emscripten::EM_VAL aStretchTo)
 {
@@ -65,12 +66,13 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
     sampleRate = VAR_FROM_JS(aSampleRate).as<size_t>();
     channelNum = VAR_FROM_JS(aChannelNum).as<size_t>();
     stretchTo = VAR_FROM_JS(aStretchTo).as<size_t>();
-    //channelArrays.clear();
-    //channelStarts.clear();
-    //answer.clear();
-    //answerPointers.clear();
+    channelArrays.clear();
+    channelStarts.clear();
+    answer.clear();
+    answerPointers.clear();
     numSamples = -1;
     queueStart = 0;
+    hasStarted = false;
     for(int i = 0; i < channelNum; i++)
     {
         channelArrays.push_back(emscripten::vecFromJSArray<float>(VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i)))));
@@ -85,23 +87,26 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
         RubberBand::RubberBandStretcher::Option::OptionWindowShort |
         RubberBand::RubberBandStretcher::Option::OptionEngineFaster);
     stretcher->setTimeRatio(1 / (stretchTo * 0.1));
-    std::vector<std::vector<float>> answer;
-    std::vector<float*> answerPointers;
     for(int j = 0; j < channelNum; j++)
     {
         std::vector<float> newVec;
         answer.push_back(newVec);
         answerPointers.push_back(answer[answer.size() - 1].data());
     }
+    EM_ASM(console.log('RubberBand | INIT COMPLETE'));
 }
 
 void RubberBandLoop()
 {
     if(!stretcher) return;
     queueStart += stretcher->getSamplesRequired();
+    if(!hasStarted)
+    {
+        EM_ASM(console.log('RubberBand | LOOP BEGIN'));
+        hasStarted = true;
+    }
     if(queueStart < numSamples)
     {
-        //EM_ASM(console.log('RubberBand | PROCESS'));
         size_t queue = numSamples - queueStart;
         size_t numProcess = stretcher->getSamplesRequired() < queue ? stretcher->getSamplesRequired() : queue;
         stretcher->process(channelStarts.data(), numProcess, queue <= stretcher->getSamplesRequired());
@@ -113,12 +118,13 @@ void RubberBandLoop()
             answer[ch].resize(answer[ch].size() + avail);
         }
         stretcher->retrieve(answerPointers.data(), avail);
+        //EM_ASM(console.log('RubberBand | PROCESS'));
     }
     else
     {
         EM_ASM(console.log('RubberBand | DONE STRETCHING'));
-        delete stretcher;
-        stretcher = nullptr;
+        //delete stretcher;
+        //stretcher = nullptr;
         std::vector<emscripten::val> output;
         for(int j = 0; j < channelNum; j++)
         {
