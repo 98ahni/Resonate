@@ -13,7 +13,7 @@ const RELEASE_Build = false;
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
-const REBUILD_Rubberband = true;
+const REBUILD_Rubberband = false;
 const REBUILD_Source = false;
 const SKIP_ImguiCompile = true;
 const SKIP_RubberbandCompile = false;
@@ -104,10 +104,10 @@ let hasUnlinkedFiles = false;
 
 if(REBUILD_Rubberband || (!SKIP_RubberbandCompile && lastCompileTime < fs.statSync(projectPath + 'Rubberband/Resonate/main.cpp').mtimeMs))
 {
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/single/RubberBandSingle.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c -O2 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/Rubberband.o\"', {env: process.env})));//
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/Resonate/main.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c -O2 -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/RubberbandMain.o\"', {env: process.env})));//
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/single/RubberBandSingle.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/Rubberband.o\"', {env: process.env})));//
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/Resonate/main.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/RubberbandMain.o\"', {env: process.env})));//
     //hasUnlinkedFiles = true;
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'bin/intermediate/RubberbandMain.o' + '\" \"' + projectPath + 'bin/intermediate/Rubberband.o' + '\" -o \"' + projectPath + 'bin/public/plugins/RubberBand.js\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lidbfs.js -sWASM=0 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH -sINITIAL_MEMORY=1024MB', {env: process.env})));
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'bin/intermediate/RubberbandMain.o' + '\" \"' + projectPath + 'bin/intermediate/Rubberband.o' + '\" -o \"' + projectPath + 'bin/public/plugins/RubberBand.js\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lidbfs.js -sWASM=0 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=10MB', {env: process.env})));
 }
 //objectFiles.push(projectPath + 'bin/intermediate/Rubberband.o');
 imguiFiles.forEach(file => {
