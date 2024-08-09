@@ -114,11 +114,12 @@ void RubberBandLoop()
         for(int ch = 0; ch < channelNum; ch++)
         {
             channelStarts[ch] += numProcess;
-            answerPointers[ch] = &answer[ch].back() + 1;
+            size_t answerCurrSize = answer[ch].size();
             answer[ch].resize(answer[ch].size() + avail);
+            answerPointers[ch] = (&answer[ch].front()) + answerCurrSize;
         }
         stretcher->retrieve(answerPointers.data(), avail);
-        //EM_ASM(console.log('RubberBand | PROCESS'));
+        EM_ASM(console.log('RubberBand | PROCESS : ' + $0 + ' : ' + $1), queueStart, numSamples);
     }
     else
     {
@@ -137,7 +138,7 @@ void RubberBandLoop()
             //}
             //global_audio_blobs[$2] = Module.audioDataArrayToBlob(input, $1);
             postMessage([Module.audioDataArrayToBlob(input, $1), $2]);
-        }, VEC_TO_JS(output), sampleRate, stretchTo - 1);
+        }, VEC_TO_JS(output), sampleRate, stretchTo);
     }
 }
 
