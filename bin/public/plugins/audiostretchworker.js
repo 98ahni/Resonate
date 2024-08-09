@@ -84,22 +84,35 @@ onmessage = async function (msg)
     else if(msgFunction === 'Work'){
         const engine = msg.data[1];
         const stretchIndex = msg.data[2];
-        
+        const useCrude = msg.data[3];
+
         console.time('Audio stretch completed in');
         console.log('Stretching audio using ' + engine + ' engine...');
         if(engine === 'Legacy' || engine === 'LegacyHybrid'){
             var outblob = null;
-        console.log(worker_isSafari ? 'Browser is Safari' : 'Browser is not Safari');
-        outblob = Module.audioDataArrayToBlob(Module.stretch(worker_channelDataArray, worker_samples, 1 / (stretchIndex * 0.1), (worker_isSafari ? worker_sampleRate : worker_sampleRate / 2)), worker_sampleRate);
-        console.log('Streched blob nr ' + stretchIndex);
-        postMessage([outblob, stretchIndex]);
+            console.log(worker_isSafari ? 'Browser is Safari' : 'Browser is not Safari');
+            outblob = Module.audioDataArrayToBlob(Module.stretch(worker_channelDataArray, worker_samples, 1 / (stretchIndex * 0.1), (worker_isSafari ? worker_sampleRate : worker_sampleRate / 2)), worker_sampleRate);
+            console.log('Streched blob nr ' + stretchIndex);
+            postMessage([outblob, stretchIndex]);
         }
         else if(engine === 'RubberBand'){
             global_audio_buffer = worker_channelDataArray;
             Module._jsRubberbandAudio(Emval.toHandle(worker_sampleRate), Emval.toHandle(worker_channelDataArray.length), Emval.toHandle(stretchIndex));
         }
         else if(engine === 'VexWarp' || engine === 'VexWarpHybrid'){
-            const VexWarp = new Module.VexWarpStretch({vocode:false, stftBins:8192, stftHop:1 / (6 - (stretchIndex * 0.5)), stretchFactor:1 / (stretchIndex * 0.1), sampleRate:worker_sampleRate});
+            const VexWarp = new Module.VexWarpStretch({
+                vocode:false,
+                stftBins:(useCrude ? 8192 : (
+                    5 < stretchIndex ? 8192 :(
+                    3 < stretchIndex ? 8192 :
+                    5120)
+                )),
+                stftHop:1 / (useCrude ? 2 : (
+                    5 < stretchIndex ? 3 :(
+                    3 < stretchIndex ? 4.7 :
+                    6))),
+                stretchFactor:1 / (stretchIndex * 0.1),
+                sampleRate:worker_sampleRate});
             var output = [];
             for(var ch = 0; ch < worker_channelDataArray.length; ch++){
                 VexWarp.setBuffer(worker_channelDataArray[ch], worker_sampleRate);

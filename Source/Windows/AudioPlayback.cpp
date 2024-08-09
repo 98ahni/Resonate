@@ -279,31 +279,31 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsUpdateAudioBuffer(emscripten::EM_VAL buffe
     if(AudioPlayback::GetPlaybackSpeed() == ind)
     {
         uint progress = AudioPlayback::GetPlaybackProgress();
-        float scale = (float)(AudioPlayback::GetPlaybackSpeed() == 10 ? 10 : 4) * .1f;
+        float scale = (float)(AudioPlayback::GetPlaybackSpeed()) * .1f;
         bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
         set_audio_playback_buffer(VAR_TO_JS(ind));
-        set_audio_playback_progress(VAR_TO_JS(((float)progress) * .01f / scale));
+        set_audio_playback_progress(VAR_TO_JS((((float)progress) * .01f) / scale));
         if(!isPaused) audio_element_play();
     }
 }
-EM_ASYNC_JS(void, get_audio_samples_legacy, (emscripten::EM_VAL fs_path), {
-    global_audio_worker.postMessage(['Work', 'Legacy', Emval.toValue(stretch_index)]);
+EM_ASYNC_JS(void, get_audio_samples_legacy, (emscripten::EM_VAL stretch_index), {
+    global_audio_worker.postMessage(['Work', 'Legacy', Emval.toValue(stretch_index), false]);
     global_audio_worker.onmessage = (result) => {
         global_audio_blobs[result.data[1] - 1] = result.data[0];
         global_audio_completion[result.data[1] - 1] = true;
         _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
     }
 });
-EM_ASYNC_JS(void, get_audio_samples_rubberband, (emscripten::EM_VAL fs_path), {
-    global_audio_worker.postMessage(['Work', 'RubberBand', Emval.toValue(stretch_index)]);
+EM_ASYNC_JS(void, get_audio_samples_rubberband, (emscripten::EM_VAL stretch_index), {
+    global_audio_worker.postMessage(['Work', 'RubberBand', Emval.toValue(stretch_index), true]);
     global_audio_worker.onmessage = (result) => {
-        global_audio_blobs[result.data[1]] = result.data[0];
-        global_audio_completion[result.data[1]] = true;
-        _jsUpdateAudioBuffer(Emval.toHandle(result.data[1] + 1));
+        global_audio_blobs[result.data[1] - 1] = result.data[0];
+        global_audio_completion[result.data[1] - 1] = true;
+        _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
     }
 });
-EM_ASYNC_JS(void, get_audio_samples_vexwarp, (emscripten::EM_VAL stretch_index), {
-    global_audio_worker.postMessage(['Work', 'VexWarp', Emval.toValue(stretch_index)]);
+EM_ASYNC_JS(void, get_audio_samples_vexwarp, (emscripten::EM_VAL stretch_index, emscripten::EM_VAL use_crude), {
+    global_audio_worker.postMessage(['Work', 'VexWarp', Emval.toValue(stretch_index), Emval.toValue(use_crude)]);
     global_audio_worker.onmessage = (result) => {
         global_audio_blobs[result.data[1] - 1] = result.data[0];
         global_audio_completion[result.data[1] - 1] = true;
@@ -363,6 +363,7 @@ EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
     global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
         const isSafari = !!window['safari'] && safari !== 'undefined';
         global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate);
+        global_audio_completion[9] = true;
         set_audio_playback_buffer(Emval.toHandle(10));
         var audioDatas = [];
         audioDatas.length = buffer.numberOfChannels;
@@ -452,12 +453,6 @@ EM_ASYNC_JS(void, get_audio_samples_no_stretch, (emscripten::EM_VAL fs_path), {
 //}
 void AudioPlayback::ProcessAudio()
 {
-    //set_audio_playback_file(VAR_TO_JS(myPath)); // Legacy
-    //get_audio_samples_hybrid(VAR_TO_JS(myPath));
-    //get_audio_samples_rubberband(VAR_TO_JS(myPath));
-    //get_audio_samples_no_stretch(VAR_TO_JS(myPath));
-    //get_audio_samples_vexwarp(VAR_TO_JS(myPath));
-    //get_audio_samples_paulstretch(VAR_TO_JS(myPath));
     get_audio_samples_setup(VAR_TO_JS(myPath));
     set_audio_playback_buffer(VAR_TO_JS(10));
 }
@@ -484,24 +479,18 @@ void AudioPlayback::DrawPlaybackSpeed()
     if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
         bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
-        //set_audio_playback_buffer(VAR_TO_JS(mySpeed > 4 ? mySpeed % 2 ? mySpeed - 1 : mySpeed : 4));
-        //set_audio_playback_buffer(VAR_TO_JS(mySpeed > 4 ? mySpeed : 4));
-        //set_audio_playback_buffer(VAR_TO_JS(mySpeed == 10 ? 10 : 4));
         set_audio_playback_buffer(VAR_TO_JS(mySpeed));
-        //set_audio_playback_speed(VAR_TO_JS(mySpeed >= 4 ? mySpeed % 2 ? 1.f + (1.f / ((float)mySpeed - 1.f)) : 1 : ((float)mySpeed / 4.f)));
-        //set_audio_playback_speed(VAR_TO_JS(mySpeed >= 4 ? 1 : ((float)mySpeed / 4.f)));
-        //set_audio_playback_speed(VAR_TO_JS(mySpeed == 10 ? 1 : ((float)mySpeed / 4.f)));
         set_audio_playback_speed(VAR_TO_JS(1));
-        //myTimeScale = (float)(mySpeed > 4 ? mySpeed % 2 ? mySpeed - 1 : mySpeed : 4) * .1f;
-        //myTimeScale = (float)(mySpeed > 4 ? mySpeed : 4) * .1f;
-        //myTimeScale = (float)(mySpeed == 10 ? 10 : 4) * .1f;
         myTimeScale = ((float)mySpeed) * .1f;
         set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
         if(!isPaused) audio_element_play();
     }
-    if(ImGui::IsItemDeactivatedAfterEdit())
+    if(ImGui::IsItemDeactivatedAfterEdit() && EM_ASM_INT(return global_audio_completion[($0) - 1] ? 1 : 0;, mySpeed) == false)
     {
-        get_audio_samples_vexwarp(VAR_TO_JS(mySpeed));
+        get_audio_samples_legacy(VAR_TO_JS(mySpeed));
+        //get_audio_samples_vexwarp(VAR_TO_JS(mySpeed), VAR_TO_JS(true));
+        get_audio_samples_vexwarp(VAR_TO_JS(mySpeed), VAR_TO_JS(false));
+        //get_audio_samples_rubberband(VAR_TO_JS(mySpeed));
     }
 }
 
