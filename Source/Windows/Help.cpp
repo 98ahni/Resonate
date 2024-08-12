@@ -47,7 +47,9 @@ void HelpWindow::OnImGuiDraw()
 
     StartTreeNode("The Audio Player");
     ImGui::TextWrapped("The Audio window contains a Play and Pause button, the playback progress and a speed slider. "
-    "When listening to check the syllable split a speed of 60%% is recomended, when timing use 40%% and when checking your finished result it's good to use 80%%. ");
+    "When listening to check the syllable split a speed of 60%% is recomended, when timing use 40%% and when checking your finished result it's good to use 80%%. \n"
+    "When first starting the app, you need to click/tap anywhere in the app to start the audio processor. "
+    "After that when first selecting a speed the sound will play after a few seconds and then switch to a higher quality after up to a minute. ");
     EndTreeNode
 
     StartTreeNode("Timing Basics");

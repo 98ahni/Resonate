@@ -76,6 +76,10 @@ EM_JS(void, set_audio_playback_buffer, (emscripten::EM_VAL rate_index), {
     }
 });
 
+EM_JS(emscripten::EM_VAL, is_audio_stretched, (emscripten::EM_VAL rate_index), {
+    return Emval.toHandle(global_audio_completion[Emval.toValue(rate_index)]);
+});
+
 EM_JS(void, create_audio_playback, (), {
     global_audio_element = new Audio();
     const audio = global_audio_element;
