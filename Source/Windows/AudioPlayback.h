@@ -27,6 +27,7 @@ public:
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
     static int GetPlaybackSpeed();
+    static bool GetIsWaitingToPlay(bool aShouldReset = false);
     static void SaveLocalBackup();
     static std::string GetPath();
 
@@ -39,6 +40,7 @@ private:
 
     emscripten::val myAudio;
     bool myHasAudio = false;
+    bool myWaitingToPlay = false;
     std::string myPath = "";
     int mySpeed;
     uint myProgress;

@@ -77,7 +77,7 @@ EM_JS(void, set_audio_playback_buffer, (emscripten::EM_VAL rate_index), {
 });
 
 EM_JS(emscripten::EM_VAL, is_audio_stretched, (emscripten::EM_VAL rate_index), {
-    return Emval.toHandle(global_audio_completion[Emval.toValue(rate_index)]);
+    return Emval.toHandle(global_audio_completion[Emval.toValue(rate_index) - 1]);
 });
 
 EM_JS(void, create_audio_playback, (), {
@@ -154,6 +154,7 @@ AudioPlayback::AudioPlayback()
     mySpeed = 10;
     myTimeScale = 1;
     myHasAudio = false;
+    myWaitingToPlay = false;
 }
 
 void AudioPlayback::OnImGuiDraw()
@@ -162,17 +163,27 @@ void AudioPlayback::OnImGuiDraw()
     {
         if(myHasAudio)
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100 * myTimeScale);
-        if(ImGui::Button("Play") && myHasAudio)
+        if(myWaitingToPlay || !myHasAudio) ImGui::BeginDisabled();
+        if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "Loading" : "Play") : "Interact"))
         {
-            myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
-            audio_element_play();
+            if(VAR_FROM_JS(is_audio_stretched(VAR_TO_JS(mySpeed))).as<bool>())
+            {
+                myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
+                audio_element_play();
+            }
+            else
+            {
+                myWaitingToPlay = true;
+                ImGui::BeginDisabled();
+            }
         }
         //ImGui::Ext::CreateHTMLButton("htmlPlay", "touchstart", "audio_element_play");
         ImGui::SameLine();
-        if(ImGui::Button("Pause") && myHasAudio)
+        if(ImGui::Button(myHasAudio ? "Pause" : "to start"))
         {
             audio_element_pause();
         }
+        if(myWaitingToPlay || !myHasAudio) ImGui::EndDisabled();
         ImGui::SameLine();
         if(ImGui::GetWindowSize().x < ImGui::GetIO().DisplaySize.y) // It needs to react to windows docked next to it.
         {
@@ -263,6 +274,13 @@ int AudioPlayback::GetPlaybackSpeed()
     return ourInstance->mySpeed;
 }
 
+bool AudioPlayback::GetIsWaitingToPlay(bool aShouldReset)
+{
+    bool output = ourInstance->myWaitingToPlay;
+    if(aShouldReset) ourInstance->myWaitingToPlay = false;
+    return output;
+}
+
 void AudioPlayback::SaveLocalBackup()
 {
     if(!ourInstance->myPath.contains("local"))
@@ -287,7 +305,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsUpdateAudioBuffer(emscripten::EM_VAL buffe
         bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
         set_audio_playback_buffer(VAR_TO_JS(ind));
         set_audio_playback_progress(VAR_TO_JS((((float)progress) * .01f) / scale));
-        if(!isPaused) audio_element_play();
+        if(AudioPlayback::GetIsWaitingToPlay(true) || !isPaused) audio_element_play();
     }
 }
 EM_ASYNC_JS(void, get_audio_samples_legacy, (emscripten::EM_VAL stretch_index), {
@@ -487,7 +505,17 @@ void AudioPlayback::DrawPlaybackSpeed()
         set_audio_playback_speed(VAR_TO_JS(1));
         myTimeScale = ((float)mySpeed) * .1f;
         set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
-        if(!isPaused) audio_element_play();
+        if(!isPaused) 
+        {
+            if(VAR_FROM_JS(is_audio_stretched(VAR_TO_JS(mySpeed))).as<bool>())
+            {
+                audio_element_play();
+            }
+            else
+            {
+                myWaitingToPlay = true;
+            }
+        }
     }
     if(ImGui::IsItemDeactivatedAfterEdit() && EM_ASM_INT(return global_audio_completion[($0) - 1] ? 1 : 0;, mySpeed) == false)
     {
