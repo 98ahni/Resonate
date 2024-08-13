@@ -66,7 +66,8 @@ const default_console_error = console.error;
         };
     });
 })();
-importScripts('timestretch.js', 'RubberBand.js', 'VexWarp/main.js', 'paulstretch.js');
+//importScripts('timestretch.js', 'RubberBand.js', 'VexWarp/main.js', 'paulstretch.js');
+importScripts('timestretch.js', 'VexWarp/main.js', 'paulstretch.js');
 
 var worker_channelDataArray;
 var worker_samples;
@@ -89,16 +90,16 @@ onmessage = async function (msg)
         console.time('Audio stretch completed in');
         console.log('Stretching audio using ' + engine + ' engine...');
         if(engine === 'Legacy' || engine === 'LegacyHybrid'){
-            var outblob = null;
+            let outblob = null;
             console.log(worker_isSafari ? 'Browser is Safari' : 'Browser is not Safari');
             outblob = Module.audioDataArrayToBlob(Module.stretch(worker_channelDataArray, worker_samples, 1 / (stretchIndex * 0.1), (worker_isSafari ? worker_sampleRate : worker_sampleRate / 2)), worker_sampleRate);
             console.log('Streched blob nr ' + stretchIndex);
             postMessage([outblob, stretchIndex]);
         }
-        else if(engine === 'RubberBand'){
-            global_audio_buffer = worker_channelDataArray;
-            Module._jsRubberbandAudio(Emval.toHandle(worker_sampleRate), Emval.toHandle(worker_channelDataArray.length), Emval.toHandle(stretchIndex));
-        }
+        //else if(engine === 'RubberBand'){
+        //    global_audio_buffer = worker_channelDataArray;
+        //    Module._jsRubberbandAudio(Emval.toHandle(worker_sampleRate), Emval.toHandle(worker_channelDataArray.length), Emval.toHandle(stretchIndex));
+        //}
         else if(engine === 'VexWarp' || engine === 'VexWarpHybrid'){
             const VexWarp = new Module.VexWarpStretch({
                 vocode:false,
@@ -113,8 +114,8 @@ onmessage = async function (msg)
                     6))),
                 stretchFactor:1 / (stretchIndex * 0.1),
                 sampleRate:worker_sampleRate});
-            var output = [];
-            for(var ch = 0; ch < worker_channelDataArray.length; ch++){
+            let output = [];
+            for(let ch = 0; ch < worker_channelDataArray.length; ch++){
                 VexWarp.setBuffer(worker_channelDataArray[ch], worker_sampleRate);
                 VexWarp.stretch();
                 output[ch] = VexWarp.getStretchedBuffer();
@@ -148,5 +149,8 @@ onmessage = async function (msg)
         }
         console.log('Audio stretching completed using ' + engine);
         console.timeEnd('Audio stretch completed in');
+    }
+    else if(msgFunction === 'Revive'){
+        postMessage(['data', worker_channelDataArray, worker_samples, worker_sampleRate, worker_isSafari]);
     }
 }
