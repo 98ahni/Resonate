@@ -53,6 +53,7 @@ RubberBand::RubberBandStretcher* stretcher;
 std::vector<std::vector<float>> answer = {};
 std::vector<float*> answerPointers = {};
 
+bool RubberBandLoop();
 size_t queueStart;
 bool hasStarted;
 
@@ -94,11 +95,12 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
         answerPointers.push_back(answer[answer.size() - 1].data());
     }
     EM_ASM(console.log('RubberBand | INIT COMPLETE'));
+    while(RubberBandLoop());
 }
 
-void RubberBandLoop()
+bool RubberBandLoop()
 {
-    if(!stretcher) return;
+    if(!stretcher) return true;
     queueStart += stretcher->getSamplesRequired();
     if(!hasStarted)
     {
@@ -119,7 +121,8 @@ void RubberBandLoop()
             answerPointers[ch] = (&answer[ch].front()) + answerCurrSize;
         }
         stretcher->retrieve(answerPointers.data(), avail);
-        EM_ASM(console.log('RubberBand | PROCESS : ' + $0 + ' : ' + $1), queueStart, numSamples);
+        //EM_ASM(console.log('RubberBand | PROCESS : ' + $0 + ' : ' + $1), queueStart, numSamples);
+        return false;
     }
     else
     {
@@ -139,11 +142,13 @@ void RubberBandLoop()
             //global_audio_blobs[$2] = Module.audioDataArrayToBlob(input, $1);
             postMessage([Module.audioDataArrayToBlob(input, $1), $2]);
         }, VEC_TO_JS(output), sampleRate, stretchTo);
+        return true;
     }
+    return true;
 }
 
 int main()
 {
-    emscripten_set_main_loop(RubberBandLoop, 0, false);
+    //emscripten_set_main_loop(RubberBandLoop, 0, false);
     return 0;
 }

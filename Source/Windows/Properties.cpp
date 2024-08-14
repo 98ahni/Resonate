@@ -15,10 +15,14 @@ PropertiesWindow::PropertiesWindow()
     if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
     {
         std::vector<std::string> keys = StringTools::Split(Serialization::Preferences::GetString("StyleProperties/Keys"), ",");
+        std::string uniqueKeys = "";
         for(std::string key : keys)
         {
+            if(myLocalEffectAliases.contains(key)) continue;
+            uniqueKeys += uniqueKeys == "" ? key : ("," + key);
             myLocalEffectAliases[key] = Serialization::KaraokeDocument::ParseEffectProperty(Serialization::Preferences::GetString("StyleProperties/" + key));
         }
+        Serialization::Preferences::SetString("StyleProperties/Keys", uniqueKeys);
     }
     myCurrentTab = DocumentTab;
     myEditingEffect = "";
@@ -26,6 +30,7 @@ PropertiesWindow::PropertiesWindow()
 
 void PropertiesWindow::OnImGuiDraw()
 {
+    ImGui::SetNextWindowSize({450, 350}, ImGuiCond_FirstUseEver);
     Gui_Begin();
     // Two tabs; Document and Local
     // "Document" contains the Echo headers and the singers used in the document.
@@ -206,11 +211,15 @@ void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect)
     else if(myCurrentTab == LocalTab)
     {
         std::string keys = myEditingEffect;
-        if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
+        if(!Serialization::Preferences::HasKey("StyleProperties/Keys"))
+        {
+            Serialization::Preferences::SetString("StyleProperties/Keys", keys);
+        }
+        else if(!Serialization::Preferences::HasKey("StyleProperties/" + myEditingEffect))
         {
             keys = Serialization::Preferences::GetString("StyleProperties/Keys") + "," + keys;
+            Serialization::Preferences::SetString("StyleProperties/Keys", keys);
         }
-        Serialization::Preferences::SetString("StyleProperties/Keys", keys);
         Serialization::Preferences::SetString("StyleProperties/" + myEditingEffect, Serialization::KaraokeDocument::SerializeEffectProperty(anEffect));
     }
 }
