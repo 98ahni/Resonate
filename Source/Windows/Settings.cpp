@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include <emscripten.h>
 #include "TimingEditor.h"
+#include "AudioPlayback.h"
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
 
@@ -32,24 +33,25 @@ void Settings::OnImGuiDraw()
     ImGui::SameLine();
     TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
     int latency = timing->GetLatencyOffset();
-    if(ImGui::Button("<<"))
+    if(ImGui::Button("<<", {40, 0}))
     {
         latency -= 5;
     }
     ImGui::SameLine();
-    if(ImGui::Button("<"))
+    if(ImGui::Button("<", {40, 0}))
     {
         latency -= 1;
     }
     ImGui::SameLine();
+    ImGui::SetNextItemWidth(60);
     ImGui::DragInt("##LatencyOffset", &latency);
     ImGui::SameLine();
-    if(ImGui::Button(">"))
+    if(ImGui::Button(">", {40, 0}))
     {
         latency += 1;
     }
     ImGui::SameLine();
-    if(ImGui::Button(">>"))
+    if(ImGui::Button(">>", {40, 0}))
     {
         latency += 5;
     }
@@ -57,6 +59,32 @@ void Settings::OnImGuiDraw()
     {
         timing->SetLatencyOffset(latency);
     }
+    ImGui::SeparatorText("Audio Processor");
+    if(ImGui::RadioButton("Default", AudioPlayback::GetEngine() == AudioPlayback::Default))
+    {
+        AudioPlayback::SetEngine(AudioPlayback::Default);
+    }
+    ImGui::Indent();
+    ImGui::TextDisabled("Fast and consistent on all devices. (Recomended)");
+    ImGui::Unindent();
+    if(ImGui::RadioButton("RubberBand", AudioPlayback::GetEngine() == AudioPlayback::RubberBand))
+    {
+        AudioPlayback::SetEngine(AudioPlayback::RubberBand);
+    }
+    ImGui::Indent();
+    ImGui::TextDisabled("The same processor used in Hibikase. \nIt's very slow and won't complete on low power devices.");
+    ImGui::Unindent();
+    if(ImGui::RadioButton("Browser", AudioPlayback::GetEngine() == AudioPlayback::Browser))
+    {
+        AudioPlayback::SetEngine(AudioPlayback::Browser);
+    }
+    ImGui::Indent();
+    ImGui::TextDisabled("Uses the browsers own functions. \nVery fast, but some browsers won't do a very good job.");
+    ImGui::Unindent();
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
     // Toggle fullscreen (might not be nessesary)
     // Download/Upload preferences
     ImGui::Button("Export Preferences");
@@ -64,6 +92,7 @@ void Settings::OnImGuiDraw()
     ImGui::SameLine();
     ImGui::Button("Import Preferences");
     ImGui::Ext::CreateHTMLButton("ImportPreferences", "click", "_LoadPreferences");
+    ImGui::Spacing();
     // Download/Upload ImGui layout
     ImGui::Button("Export Layout");
     ImGui::Ext::CreateHTMLButton("ExportLayout", "click", "_SaveLayout");
@@ -77,8 +106,10 @@ void Settings::OnImGuiDraw()
         ImGui::Ext::DestroyHTMLElement("ExportLayout", 100);
         ImGui::Ext::DestroyHTMLElement("ImportLayout", 100);
     }
+    ImGui::Spacing();
     // Clear data
     ImGui::Separator();
+    ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Button, 0xFFFF0F2F);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, 0xFFFF1F5F);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xFFFF0F4F);

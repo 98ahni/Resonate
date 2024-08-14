@@ -5,9 +5,9 @@
 #include <emscripten.h>
 #include <emscripten/val.h>
 #include <filesystem>
-#include "Base/WindowManager.h"
 #include <Defines.h>
 #include <Serialization/KaraokeData.h>
+#include <Serialization/Preferences.h>
 #include <Extensions/imguiExt.h>
 #include <Extensions/FileHandler.h>
 
@@ -19,8 +19,9 @@ var global_audio_element = null;
 var global_audio_context = null;
 var global_audio_blobs = [];
 var global_audio_completion = [];
-var global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
-var global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
+var global_audio_worker_corse;// = new Worker('plugins/audiostretchworker.js');
+var global_audio_worker_fine;// = new Worker('plugins/audiostretchworker.js');
+var global_audio_worker_setup_data = [];
 if(false){
 });
 
@@ -109,6 +110,9 @@ AudioPlayback::AudioPlayback()
         WindowManager::DestroyWindow(this);
         return;
     }
+    myEngine = Serialization::Preferences::HasKey("AudioPlayback/Engine") ?
+        (ProcessEngine)Serialization::Preferences::GetInt("AudioPlayback/Engine") :
+        ProcessEngine::Default;
     ourInstance = this;
     myProgress = 0;
     myDuration = 0;
@@ -220,6 +224,18 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     //printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
 }
 
+AudioPlayback::ProcessEngine AudioPlayback::GetEngine()
+{
+    return ourInstance->myEngine;
+}
+
+void AudioPlayback::SetEngine(AudioPlayback::ProcessEngine anEngine)
+{
+    ourInstance->myEngine = anEngine;
+    Serialization::Preferences::SetInt("AudioPlayback/Engine", anEngine);
+    if(anEngine == ProcessEngine::Browser){set_audio_playback_buffer(VAR_TO_JS(10));}
+}
+
 uint AudioPlayback::GetPlaybackProgress()
 {
     return ourInstance->myProgress;
@@ -274,7 +290,9 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
     const fineEngine = Emval.toValue(fine_engine);
     const stretchIndex = Emval.toValue(stretch_index);
     var useCrude = crudeEngine !== '';
-    var audioWorker = useCrude ? global_audio_worker_corse : global_audio_worker_fine;
+    //var audioWorker = useCrude ? global_audio_worker_corse : global_audio_worker_fine;
+    var audioWorker = new Worker('plugins/audiostretchworker.js');
+    audioWorker.postMessage(global_audio_worker_setup_data);
     audioWorker.postMessage(['Work', useCrude ? crudeEngine : fineEngine, stretchIndex, useCrude]);
     audioWorker.onmessage = (result) => {
         if(useCrude){get_audio_samples_hybrid(Emval.toHandle(stretchIndex), Emval.toHandle(''), Emval.toHandle(fineEngine));}
@@ -282,20 +300,29 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
         global_audio_completion[result.data[1] - 1] = true;
         _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
         audioWorker.postMessage(['Revive']);
+        //audioWorker.onmessage = (result) => {
+        //    audioWorker.terminate();
+        //    if(useCrude){
+        //        global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
+        //        console.log('Resetting corse');
+        //    }
+        //    else {
+        //        global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
+        //        console.log('Resetting fine');
+        //    }
+        //    result.data[0] = 'Setup';
+        //    (useCrude ? global_audio_worker_corse : global_audio_worker_fine).postMessage(result.data);
+        //};
         audioWorker.onmessage = (result) => {
             audioWorker.terminate();
             if(useCrude){
-                global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting corse');
+                console.log('Resetting corse engine ' + result.data[0]);
             }
             else {
-                global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting fine');
+                console.log('Resetting fine engine ' + result.data[0]);
             }
-            result.data[0] = 'Setup';
-            (useCrude ? global_audio_worker_corse : global_audio_worker_fine).postMessage(result.data);
         };
-    }
+    };
 });
 EM_JS(void, get_audio_samples_legacy, (emscripten::EM_VAL stretch_index, emscripten::EM_VAL use_crude), {
     var useCrude = Emval.toValue(use_crude);
@@ -369,26 +396,6 @@ EM_JS(void, get_audio_samples_vexwarp, (emscripten::EM_VAL stretch_index, emscri
         };
     }
 });
-EM_ASYNC_JS(void, get_audio_samples_paulstretch, (emscripten::EM_VAL fs_path), {
-	const audioData = FS.readFile(Emval.toValue(fs_path));
-    const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
-    global_audio_blobs.length = 10;
-    global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
-        const isSafari = !!window['safari'] && safari !== 'undefined';
-        global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate);
-        set_audio_playback_buffer(Emval.toHandle(10));
-        var audioDatas = [];
-        audioDatas.length = buffer.numberOfChannels;
-        for(var i = 0; i < buffer.numberOfChannels; i++){
-            audioDatas[i] = buffer.getChannelData(i);
-        }
-        //const worker = new Worker('plugins/audiostretchworker.js');
-        global_audio_worker_corse.postMessage(['PaulStretch', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
-        global_audio_worker_corse.onmessage = (result) => {
-            global_audio_blobs[result.data[1] - 1] = result.data[0];
-        }
-    });
-});
 EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
 	const audioData = FS.readFile(Emval.toValue(fs_path));
     const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
@@ -404,8 +411,9 @@ EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
         for(var i = 0; i < buffer.numberOfChannels; i++){
             audioDatas[i] = buffer.getChannelData(i);
         }
-        global_audio_worker_corse.postMessage(['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
-        global_audio_worker_fine.postMessage(['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
+        //global_audio_worker_corse.postMessage(['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
+        //global_audio_worker_fine.postMessage(['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
+        global_audio_worker_setup_data = ['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari];
     });
 });
 EM_ASYNC_JS(void, get_audio_samples_no_stretch, (emscripten::EM_VAL fs_path), {
@@ -445,6 +453,12 @@ void AudioPlayback::DrawPlaybackSpeed()
     ImGui::SetNextItemWidth(width - 20);
     if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
+        if(myEngine == ProcessEngine::Browser)
+        {
+            myTimeScale = ((float)mySpeed) * .1f;
+            set_audio_playback_speed(VAR_TO_JS(myTimeScale));
+            return;
+        }
         bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
         set_audio_playback_buffer(VAR_TO_JS(mySpeed));
         set_audio_playback_speed(VAR_TO_JS(1));
@@ -464,23 +478,17 @@ void AudioPlayback::DrawPlaybackSpeed()
     }
     if(ImGui::IsItemDeactivatedAfterEdit() && EM_ASM_INT(return global_audio_completion[($0) - 1] ? 1 : 0;, mySpeed) == false)
     {
-        //get_audio_samples_legacy(VAR_TO_JS(mySpeed), VAR_TO_JS(true));
-        //get_audio_samples_vexwarp(VAR_TO_JS(mySpeed), VAR_TO_JS(true));
-        //get_audio_samples_vexwarp(VAR_TO_JS(mySpeed), VAR_TO_JS(false));
-        //get_audio_samples_rubberband(VAR_TO_JS(mySpeed), VAR_TO_JS(false));
-        get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("Legacy"), VAR_TO_JS("VexWarp"));
+        if(myEngine == ProcessEngine::Default)
+        {
+            get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("Legacy"), VAR_TO_JS("VexWarp"));
+        }
+        else if(myEngine == ProcessEngine::RubberBand)
+        {
+            get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("VexWarp"), VAR_TO_JS("RubberBand"));
+        }
+        else if(myEngine == ProcessEngine::Browser)
+        {
+            //get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("VexWarp"), VAR_TO_JS("RubberBand"));
+        }
     }
 }
-
-//void AudioPlayback::RubberbandLogger::log(const char *aMsg)
-//{
-//    printf("RubberBand | %s\n", aMsg);
-//}
-//void AudioPlayback::RubberbandLogger::log(const char *aMsg, double aValue)
-//{
-//    printf("RubberBand | %s | %f\n", aMsg, aValue);
-//}
-//void AudioPlayback::RubberbandLogger::log(const char *aMsg, double aValue, double anotherValue)
-//{
-//    printf("RubberBand | %s | %f | %f\n", aMsg, aValue, anotherValue);
-//}

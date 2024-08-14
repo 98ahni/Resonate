@@ -2,28 +2,25 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "Base/EditorWindow.h"
-#include <emscripten/val.h>
 #include <string>
-#include <RubberBandStretcher.h>
 
 typedef unsigned int uint;
 class AudioPlayback : public EditorWindow
 {
 public:
-    //struct RubberbandLogger : public RubberBand::RubberBandStretcher::Logger
-    //{
-    //    /// Receive a log message with no numeric values.
-    //    void log(const char* aMsg);
-    //    /// Receive a log message and one accompanying numeric value.
-    //    void log(const char* aMsg, double aValue);
-    //    /// Receive a log message and two accompanying numeric values.
-    //    void log(const char* aMsg, double aValue, double anotherValue);
-    //};
+    enum ProcessEngine
+    {
+        Default,
+        RubberBand,
+        Browser
+    };
     AudioPlayback();
     void OnImGuiDraw();
 
     static void PrepPlayback();
     static void SetPlaybackFile(std::string aPath);
+    static ProcessEngine GetEngine();
+    static void SetEngine(ProcessEngine anEngine);
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
     static int GetPlaybackSpeed();
@@ -38,7 +35,7 @@ private:
     void DrawPlaybackProgress(float aDrawUntil);
     void DrawPlaybackSpeed();
 
-    emscripten::val myAudio;
+    ProcessEngine myEngine;
     bool myHasAudio = false;
     bool myWaitingToPlay = false;
     std::string myPath = "";

@@ -73,6 +73,7 @@ var worker_channelDataArray;
 var worker_samples;
 var worker_sampleRate;
 var worker_isSafari;
+var worker_engine;
 onmessage = async function (msg)
 {
     const msgFunction = msg.data[0];
@@ -84,6 +85,7 @@ onmessage = async function (msg)
     }
     else if(msgFunction === 'Work'){
         const engine = msg.data[1];
+        worker_engine = engine;
         const stretchIndex = msg.data[2];
         const useCrude = msg.data[3];
 
@@ -96,22 +98,25 @@ onmessage = async function (msg)
             console.log('Streched blob nr ' + stretchIndex);
             postMessage([outblob, stretchIndex]);
         }
-        //else if(engine === 'RubberBand'){
-        //    global_audio_buffer = worker_channelDataArray;
-        //    Module._jsRubberbandAudio(Emval.toHandle(worker_sampleRate), Emval.toHandle(worker_channelDataArray.length), Emval.toHandle(stretchIndex));
-        //}
+        else if(engine === 'RubberBand'){
+            importScripts('RubberBand.js');
+            global_audio_buffer = worker_channelDataArray;
+            Module._jsRubberbandAudio(Emval.toHandle(worker_sampleRate), Emval.toHandle(worker_channelDataArray.length), Emval.toHandle(stretchIndex));
+        }
         else if(engine === 'VexWarp' || engine === 'VexWarpHybrid'){
             const VexWarp = new Module.VexWarpStretch({
                 vocode:false,
                 stftBins:(useCrude ? 8192 : (
                     5 < stretchIndex ? 8192 :(
-                    3 < stretchIndex ? 8192 :
-                    5120)
+                    4 < stretchIndex ? 8192 :(
+                    3 < stretchIndex ? 6144 :
+                    5120))
                 )),
                 stftHop:1 / (useCrude ? 2 : (
                     5 < stretchIndex ? 3 :(
-                    3 < stretchIndex ? 4.7 :
-                    6))),
+                    4 < stretchIndex ? 4.7 :(
+                    3 < stretchIndex ? 4.6 :
+                    6)))),
                 stretchFactor:1 / (stretchIndex * 0.1),
                 sampleRate:worker_sampleRate});
             let output = [];
@@ -151,6 +156,7 @@ onmessage = async function (msg)
         console.timeEnd('Audio stretch completed in');
     }
     else if(msgFunction === 'Revive'){
-        postMessage(['data', worker_channelDataArray, worker_samples, worker_sampleRate, worker_isSafari]);
+        //postMessage(['data', worker_channelDataArray, worker_samples, worker_sampleRate, worker_isSafari]);
+        postMessage([worker_engine]);
     }
 }
