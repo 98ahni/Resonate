@@ -38,7 +38,9 @@ function stretch (channelDataArray, samples, scale, sampleRate) {
 
   for(var ch = 0; ch < channelDataArray.length; ch++){
     var inL = channelDataArray[ch];
-    var outL = [];
+    var outL = [0];
+    //outL.fill(null);
+    //outL.length = Math.round(numSamples * scale);
     
     // STATE
     // where to read then next sequence
@@ -50,13 +52,13 @@ function stretch (channelDataArray, samples, scale, sampleRate) {
     
     while (numSamples - read > seqSize) {
       // write the first overlap
-      copy(overlap, outL, write, function (i) {
+      copy(overlap, outL, Math.round(write), function (i) {
         var fadeIn = i / overlap;
         var fadeOut = 1 - fadeIn;
         // Mix the begin of the new sequence with the tail of the sequence last
         return (inL[read + i] * fadeIn + inL[readOverlap + i] * fadeOut) / 2;
       });
-      copy(seqSize - overlap, outL, write + overlap, function (i) {
+      copy(seqSize - overlap, outL, Math.round(write + overlap), function (i) {
         // Copy the tail of the sequence
         return inL[read + overlap + i];
       });

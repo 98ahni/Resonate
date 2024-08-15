@@ -100,7 +100,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
 
 bool RubberBandLoop()
 {
-    if(!stretcher) return true;
+    if(!stretcher) return false;
     queueStart += stretcher->getSamplesRequired();
     if(!hasStarted)
     {
@@ -122,7 +122,7 @@ bool RubberBandLoop()
         }
         stretcher->retrieve(answerPointers.data(), avail);
         //EM_ASM(console.log('RubberBand | PROCESS : ' + $0 + ' : ' + $1), queueStart, numSamples);
-        return false;
+        return true;
     }
     else
     {
@@ -142,9 +142,9 @@ bool RubberBandLoop()
             //global_audio_blobs[$2] = Module.audioDataArrayToBlob(input, $1);
             postMessage([Module.audioDataArrayToBlob(input, $1), $2]);
         }, VEC_TO_JS(output), sampleRate, stretchTo);
-        return true;
+        return false;
     }
-    return true;
+    return false;
 }
 
 int main()

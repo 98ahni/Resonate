@@ -353,7 +353,7 @@ void MainWindow_NewFrame(void* window)
 	{
 		static const ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
 		ImGuiID dockSpace = ImGui::GetID("EditorMain");
-		ImGui::DockSpace(dockSpace, ImVec2(0.0f, 0.0f), dockspaceFlags);
+		ImGui::DockSpace(dockSpace, ImVec2(0 - MainWindow::DockSizeOffset.x, 0 - MainWindow::DockSizeOffset.y), dockspaceFlags);
 	}
 	ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
