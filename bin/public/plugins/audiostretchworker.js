@@ -1,3 +1,6 @@
+//  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
+//  <Copyright (C) 2024 98ahni> Original file author
+
 var Module = {};
 const default_console_log = console.log;
 const default_console_warn = console.warn;
@@ -91,7 +94,7 @@ onmessage = async function (msg)
 
         console.time('Audio stretch completed in');
         console.log('Stretching audio using ' + engine + ' engine...');
-        if(engine === 'Legacy' || engine === 'LegacyHybrid'){
+        if(engine === 'Legacy'){
             let outblob = null;
             console.log(worker_isSafari ? 'Browser is Safari' : 'Browser is not Safari');
             outblob = Module.audioDataArrayToBlob(Module.stretch(worker_channelDataArray, worker_samples, 1 / (stretchIndex * 0.1), (worker_isSafari ? worker_sampleRate : worker_sampleRate / 2)), worker_sampleRate);
@@ -99,24 +102,26 @@ onmessage = async function (msg)
             postMessage([outblob, stretchIndex]);
         }
         else if(engine === 'RubberBand'){
-            importScripts('RubberBand.js');
+            await new Promise((resolve) =>{
+                Module['onRuntimeInitialized'] = ()=>{resolve();};
+                importScripts('RubberBand.js');
+            });
             global_audio_buffer = worker_channelDataArray;
             Module._jsRubberbandAudio(Emval.toHandle(worker_sampleRate), Emval.toHandle(worker_channelDataArray.length), Emval.toHandle(stretchIndex));
         }
-        else if(engine === 'VexWarp' || engine === 'VexWarpHybrid'){
+        else if(engine === 'VexWarp'){
             const VexWarp = new Module.VexWarpStretch({
                 vocode:false,
-                stftBins:(useCrude ? 8192 : (
+                stftBins:(
                     5 < stretchIndex ? 8192 :(
                     4 < stretchIndex ? 8192 :(
                     3 < stretchIndex ? 6144 :
-                    5120))
-                )),
-                stftHop:1 / (useCrude ? 2 : (
+                    5120))),
+                stftHop:1 / (
                     5 < stretchIndex ? 3 :(
                     4 < stretchIndex ? 4.7 :(
-                    3 < stretchIndex ? 4.6 :
-                    6)))),
+                    3 < stretchIndex ? 4.8 :
+                    6))),
                 stretchFactor:1 / (stretchIndex * 0.1),
                 sampleRate:worker_sampleRate});
             let output = [];

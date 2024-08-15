@@ -4,6 +4,7 @@
 #pragma once
 #include <webgpu/webgpu.h>
 #include <string>
+#include <imgui.h>
 
 // Global WebGPU required states
 struct ImFont;
@@ -20,6 +21,8 @@ struct MainWindow
 	inline static ImFont*           Font = nullptr;
 	static inline std::string		Name = "";
 	inline static std::string		IconPath = "";
+
+	static inline ImVec2			DockSizeOffset = {0, 0};		// Space to reserve in the x/y axis for other content
 };
 
 void MainWindow_Init(const char* name, void** outWindow);

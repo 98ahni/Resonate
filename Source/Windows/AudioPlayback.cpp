@@ -1,7 +1,9 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
 //  <Copyright (C) 2024 98ahni> Original file author
 
+#define private public
 #include "AudioPlayback.h"
+#undef private
 #include <emscripten.h>
 #include <emscripten/val.h>
 #include <filesystem>
@@ -10,6 +12,7 @@
 #include <Serialization/Preferences.h>
 #include <Extensions/imguiExt.h>
 #include <Extensions/FileHandler.h>
+#include "MainWindow.h"
 
 EM_JS(void, create_audio_element, (), {
     //global_audio_element = new Howl({src:["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"]});
@@ -19,8 +22,6 @@ var global_audio_element = null;
 var global_audio_context = null;
 var global_audio_blobs = [];
 var global_audio_completion = [];
-var global_audio_worker_corse;// = new Worker('plugins/audiostretchworker.js');
-var global_audio_worker_fine;// = new Worker('plugins/audiostretchworker.js');
 var global_audio_worker_setup_data = [];
 if(false){
 });
@@ -65,6 +66,9 @@ EM_JS(void, create_audio_playback, (), {
     audio.play().then(()=>{
         audio.pause();
     });
+    audio.onplay = (e) => { _AudioOnPlay(); };
+    audio.onpause = (e) => { _AudioOnPause(); };
+    audio.onended = (e) => { _AudioOnEnded(); };
     window.onpagehide = (e) => {
         global_audio_context.close();
     };
@@ -91,9 +95,9 @@ EM_JS(void , set_audio_playback_speed, (emscripten::EM_VAL play_rate), {
     audio.playbackRate = Emval.toValue(play_rate);
 });
 
-extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnEnded(){}
-extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPause(){}
-extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPlay(){}
+extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnEnded(){AudioPlayback::ourInstance->myIsPlaying = false;}
+extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPause(){AudioPlayback::ourInstance->myIsPlaying = false;}
+extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPlay(){AudioPlayback::ourInstance->myIsPlaying = true;}
 
 EM_JS(void, audio_element_play, (), {
     global_audio_element.play();
@@ -119,35 +123,51 @@ AudioPlayback::AudioPlayback()
     mySpeed = 10;
     myTimeScale = 1;
     myHasAudio = false;
+    myIsPlaying = false;
     myWaitingToPlay = false;
 }
 
 void AudioPlayback::OnImGuiDraw()
 {
-    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNav))
+    //if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration))
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+    if(ImGui::BeginChild(GetName().c_str(), {0, 0}, ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border))
     {
+        ImGui::Spacing();
+        ImGui::Spacing();
         if(myHasAudio)
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100 * myTimeScale);
         if(myWaitingToPlay || !myHasAudio) ImGui::BeginDisabled();
-        if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "Loading" : "Play") : "Interact"))
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-10, -10));
+        if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "Loading" : (myIsPlaying ? "Pause" : "Play")) : "Interact"))
         {
-            if(VAR_FROM_JS(is_audio_stretched(VAR_TO_JS(mySpeed))).as<bool>())
+            if(!myIsPlaying)
             {
-                myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
-                audio_element_play();
+                if(VAR_FROM_JS(is_audio_stretched(VAR_TO_JS(mySpeed))).as<bool>())
+                {
+                    myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
+                    audio_element_play();
+                }
+                else
+                {
+                    myWaitingToPlay = true;
+                    ImGui::BeginDisabled();
+                }
             }
             else
             {
-                myWaitingToPlay = true;
-                ImGui::BeginDisabled();
+                audio_element_pause();
             }
         }
         //ImGui::Ext::CreateHTMLButton("htmlPlay", "touchstart", "audio_element_play");
         ImGui::SameLine();
-        if(ImGui::Button(myHasAudio ? "Pause" : "to start"))
+        if(ImGui::Button(myHasAudio ? "Stop" : "to start"))
         {
             audio_element_pause();
+            SetPlaybackProgress(0);
         }
+        ImGui::PopStyleVar();
         if(myWaitingToPlay || !myHasAudio) ImGui::EndDisabled();
         ImGui::SameLine();
         if(ImGui::GetWindowSize().x < ImGui::GetIO().DisplaySize.y) // It needs to react to windows docked next to it.
@@ -161,8 +181,13 @@ void AudioPlayback::OnImGuiDraw()
             ImGui::SameLine();
             DrawPlaybackSpeed();
         }
+        ImGui::Spacing();
+        ImGui::Spacing();
     }
-    Gui_End();
+    MainWindow::DockSizeOffset = ImVec2(0, (ImGui::GetWindowContentRegionMax().y + (ImGui::GetStyle().WindowPadding.y * 2)) - 6);
+    //Gui_End();
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
 }
 
 extern"C" EMSCRIPTEN_KEEPALIVE void jsPrepPlayback()
@@ -172,15 +197,13 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsPrepPlayback()
 void AudioPlayback::PrepPlayback()
 {
     if(ourInstance->myHasAudio) return;
-    //if(ourInstance->myHasAudio || ourInstance->myPath.empty()) return;
     EM_ASM(if(global_audio_context !== null)global_audio_context.close(););
     create_audio_playback();
-    //create_audio_playback_with_worklet();
-    //set_audio_playback_file(VAR_TO_JS(ourInstance->myPath.c_str()));
     if(ourInstance->myPath.empty()) 
     {
         SetPlaybackFile("/local");
     }
+    ourInstance->myIsPlaying = false;
     ourInstance->myHasAudio = true;
 }
 
@@ -212,16 +235,11 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
     }
     std::error_code ferr;
     std::filesystem::remove("/local/" + std::filesystem::path(ourInstance->myPath).filename().string(), ferr);
-    //EM_ASM(if(global_audio_context != 'undefined')global_audio_context.close(););
-    //ourInstance->myHasAudio = false;
     ourInstance->myPath = aPath;
     
     ourInstance->ProcessAudio();
     
     SaveLocalBackup();
-
-    //ourInstance->myDuration = 100 * VAR_FROM_JS(set_audio_playback_file(VAR_TO_JS(aPath.c_str()))).await().as<double>();
-    //printf("Audio duration: %s\n", Serialization::KaraokeDocument::TimeToString(ourInstance->myDuration).c_str());
 }
 
 AudioPlayback::ProcessEngine AudioPlayback::GetEngine()
@@ -290,7 +308,6 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
     const fineEngine = Emval.toValue(fine_engine);
     const stretchIndex = Emval.toValue(stretch_index);
     var useCrude = crudeEngine !== '';
-    //var audioWorker = useCrude ? global_audio_worker_corse : global_audio_worker_fine;
     var audioWorker = new Worker('plugins/audiostretchworker.js');
     audioWorker.postMessage(global_audio_worker_setup_data);
     audioWorker.postMessage(['Work', useCrude ? crudeEngine : fineEngine, stretchIndex, useCrude]);
@@ -300,19 +317,6 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
         global_audio_completion[result.data[1] - 1] = true;
         _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
         audioWorker.postMessage(['Revive']);
-        //audioWorker.onmessage = (result) => {
-        //    audioWorker.terminate();
-        //    if(useCrude){
-        //        global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
-        //        console.log('Resetting corse');
-        //    }
-        //    else {
-        //        global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
-        //        console.log('Resetting fine');
-        //    }
-        //    result.data[0] = 'Setup';
-        //    (useCrude ? global_audio_worker_corse : global_audio_worker_fine).postMessage(result.data);
-        //};
         audioWorker.onmessage = (result) => {
             audioWorker.terminate();
             if(useCrude){
@@ -323,78 +327,6 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
             }
         };
     };
-});
-EM_JS(void, get_audio_samples_legacy, (emscripten::EM_VAL stretch_index, emscripten::EM_VAL use_crude), {
-    var useCrude = Emval.toValue(use_crude);
-    var audioWorker = useCrude ? global_audio_worker_corse : global_audio_worker_fine;
-    audioWorker.postMessage(['Work', 'Legacy', Emval.toValue(stretch_index), useCrude]);
-    audioWorker.onmessage = (result) => {
-        global_audio_blobs[result.data[1] - 1] = result.data[0];
-        global_audio_completion[result.data[1] - 1] = true;
-        _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
-        audioWorker.postMessage(['Revive']);
-        audioWorker.onmessage = (result) => {
-            audioWorker.terminate();
-            if(useCrude){
-                global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting corse');
-            }
-            else {
-                global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting fine');
-            }
-            result.data[0] = 'Setup';
-            (useCrude ? global_audio_worker_corse : global_audio_worker_fine).postMessage(result.data);
-        };
-    }
-});
-EM_JS(void, get_audio_samples_rubberband, (emscripten::EM_VAL stretch_index, emscripten::EM_VAL use_crude), {
-    var useCrude = Emval.toValue(use_crude);
-    var audioWorker = useCrude ? global_audio_worker_corse : global_audio_worker_fine;
-    audioWorker.postMessage(['Work', 'RubberBand', Emval.toValue(stretch_index), useCrude]);
-    audioWorker.onmessage = (result) => {
-        global_audio_blobs[result.data[1] - 1] = result.data[0];
-        global_audio_completion[result.data[1] - 1] = true;
-        _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
-        audioWorker.postMessage(['Revive']);
-        audioWorker.onmessage = (result) => {
-            audioWorker.terminate();
-            if(useCrude){
-                global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting corse');
-            }
-            else {
-                global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting fine');
-            }
-            result.data[0] = 'Setup';
-            (useCrude ? global_audio_worker_corse : global_audio_worker_fine).postMessage(result.data);
-        };
-    }
-});
-EM_JS(void, get_audio_samples_vexwarp, (emscripten::EM_VAL stretch_index, emscripten::EM_VAL use_crude), {
-    var useCrude = Emval.toValue(use_crude);
-    var audioWorker = useCrude ? global_audio_worker_corse : global_audio_worker_fine;
-    audioWorker.postMessage(['Work', 'VexWarp', Emval.toValue(stretch_index), useCrude]);
-    audioWorker.onmessage = (result) => {
-        global_audio_blobs[result.data[1] - 1] = result.data[0];
-        global_audio_completion[result.data[1] - 1] = true;
-        _jsUpdateAudioBuffer(Emval.toHandle(result.data[1]));
-        audioWorker.postMessage(['Revive']);
-        audioWorker.onmessage = (result) => {
-            audioWorker.terminate();
-            if(useCrude){
-                global_audio_worker_corse = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting corse');
-            }
-            else {
-                global_audio_worker_fine = new Worker('plugins/audiostretchworker.js');
-                console.log('Resetting fine');
-            }
-            result.data[0] = 'Setup';
-            (useCrude ? global_audio_worker_corse : global_audio_worker_fine).postMessage(result.data);
-        };
-    }
 });
 EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
 	const audioData = FS.readFile(Emval.toValue(fs_path));
@@ -411,18 +343,7 @@ EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
         for(var i = 0; i < buffer.numberOfChannels; i++){
             audioDatas[i] = buffer.getChannelData(i);
         }
-        //global_audio_worker_corse.postMessage(['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
-        //global_audio_worker_fine.postMessage(['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]);
         global_audio_worker_setup_data = ['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari];
-    });
-});
-EM_ASYNC_JS(void, get_audio_samples_no_stretch, (emscripten::EM_VAL fs_path), {
-	const audioData = FS.readFile(Emval.toValue(fs_path));
-    const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
-    global_audio_blobs.length = 10;
-    global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
-        global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate);
-        set_audio_playback_buffer(Emval.toHandle(10));
     });
 });
 
@@ -455,8 +376,8 @@ void AudioPlayback::DrawPlaybackSpeed()
     {
         if(myEngine == ProcessEngine::Browser)
         {
-            myTimeScale = ((float)mySpeed) * .1f;
-            set_audio_playback_speed(VAR_TO_JS(myTimeScale));
+            myTimeScale = 1;
+            set_audio_playback_speed(VAR_TO_JS(((float)mySpeed) * .1f));
             return;
         }
         bool isPaused = EM_ASM_INT(return global_audio_element.paused ? 1 : 0;);
@@ -480,7 +401,7 @@ void AudioPlayback::DrawPlaybackSpeed()
     {
         if(myEngine == ProcessEngine::Default)
         {
-            get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("Legacy"), VAR_TO_JS("VexWarp"));
+            get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS(""), VAR_TO_JS("VexWarp"));
         }
         else if(myEngine == ProcessEngine::RubberBand)
         {

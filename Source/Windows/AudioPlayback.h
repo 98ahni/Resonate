@@ -28,7 +28,7 @@ public:
     static void SaveLocalBackup();
     static std::string GetPath();
 
-private:
+private:            // Is defined as public in AudioPlayback.cpp
     static inline AudioPlayback* ourInstance;
 
     void ProcessAudio();
@@ -37,6 +37,7 @@ private:
 
     ProcessEngine myEngine;
     bool myHasAudio = false;
+    bool myIsPlaying = false;
     bool myWaitingToPlay = false;
     std::string myPath = "";
     int mySpeed;
