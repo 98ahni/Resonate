@@ -71,7 +71,7 @@ EM_JS(void, create_audio_playback, (), {
     audio.onpause = (e) => { _AudioOnPause(); };
     audio.onended = (e) => { _AudioOnEnded(); };
     window.onpagehide = (e) => {
-        global_audio_context.close();
+        //global_audio_context.close();
     };
 });
 
@@ -135,9 +135,12 @@ void AudioPlayback::OnImGuiDraw()
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     if(ImGui::BeginChild(GetName().c_str(), {0, 0}, ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border))
     {
+        if(!TouchInput_HasTouch())
+        {
+            ImGui::Spacing();   // This is too much space on phones.
+        }
         ImGui::Spacing();
-        ImGui::Spacing();
-        if(myHasAudio)
+        if(myHasAudio && !myWaitingToPlay)
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100 * myTimeScale);
         if(myWaitingToPlay || !myHasAudio) ImGui::BeginDisabled();
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetStyle().FramePadding.y));

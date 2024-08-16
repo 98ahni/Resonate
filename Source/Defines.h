@@ -12,6 +12,7 @@
 
 // Graphics
 #define DPI_SCALED(pixel) (pixel * ImGui::GetIO().FontGlobalScale)
+#define DPI_UNSCALED(pixel) (pixel / ImGui::GetIO().FontGlobalScale)
 
 // Emscripten
 #define VAR_TO_JS(var) (emscripten::val(var).as_handle())

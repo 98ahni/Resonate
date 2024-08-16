@@ -57,7 +57,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * backPosMult + offset);
     if(ImGui::Button("##5sBack", buttonSize))
     {
-        AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() - (500.f / (AudioPlayback::GetPlaybackSpeed() * .1f)));
+        AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() - (500.f * (AudioPlayback::GetPlaybackSpeed() * .1f)));
     }
     // 5s
     ImVec2 btnCenter = contentSize * backPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos();
@@ -85,7 +85,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * skipPosMult + offset);
     if(ImGui::Button("##5sSkip", buttonSize))
     {
-        AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() + (500.f / (AudioPlayback::GetPlaybackSpeed() * .1f)));
+        AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() + (500.f * (AudioPlayback::GetPlaybackSpeed() * .1f)));
     }
     // 5s
     btnCenter = contentSize * skipPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos();

@@ -728,23 +728,28 @@ static void ImGui_ImplGlfw_UpdateMouseData()
             if (io.WantSetMousePos)
                 glfwSetCursorPos(window, (double)(mouse_pos_prev.x - viewport->Pos.x), (double)(mouse_pos_prev.y - viewport->Pos.y));
 
+            // Modified for Resonate!!
+            // There's seemingly no way to circumvent this setting the mouse position outside of directly removing it...
+
             // (Optional) Fallback to provide mouse position when focused (ImGui_ImplGlfw_CursorPosCallback already provides this when hovered or captured)
-            if (bd->MouseWindow == nullptr)
-            {
-                double mouse_x, mouse_y;
-                glfwGetCursorPos(window, &mouse_x, &mouse_y);
-                if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-                {
-                    // Single viewport mode: mouse position in client window coordinates (io.MousePos is (0,0) when the mouse is on the upper-left corner of the app window)
-                    // Multi-viewport mode: mouse position in OS absolute coordinates (io.MousePos is (0,0) when the mouse is on the upper-left of the primary monitor)
-                    int window_x, window_y;
-                    glfwGetWindowPos(window, &window_x, &window_y);
-                    mouse_x += window_x;
-                    mouse_y += window_y;
-                }
-                bd->LastValidMousePos = ImVec2((float)mouse_x, (float)mouse_y);
-                io.AddMousePosEvent((float)mouse_x, (float)mouse_y);
-            }
+            //if (bd->MouseWindow == nullptr)
+            //{
+            //    double mouse_x, mouse_y;
+            //    glfwGetCursorPos(window, &mouse_x, &mouse_y);
+            //    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            //    {
+            //        // Single viewport mode: mouse position in client window coordinates (io.MousePos is (0,0) when the mouse is on the upper-left corner of the app window)
+            //        // Multi-viewport mode: mouse position in OS absolute coordinates (io.MousePos is (0,0) when the mouse is on the upper-left of the primary monitor)
+            //        int window_x, window_y;
+            //        glfwGetWindowPos(window, &window_x, &window_y);
+            //        mouse_x += window_x;
+            //        mouse_y += window_y;
+            //    }
+            //    bd->LastValidMousePos = ImVec2((float)mouse_x, (float)mouse_y);
+            //    io.AddMousePosEvent((float)mouse_x, (float)mouse_y);
+            //}
+
+            // End of modification for Resonate!
         }
 
         // (Optional) When using multiple viewports: call io.AddMouseViewportEvent() with the viewport the OS mouse cursor is hovering.
