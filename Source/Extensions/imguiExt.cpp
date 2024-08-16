@@ -64,22 +64,22 @@ EM_JS(void, remove_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL c
 
 void ImGui::Ext::CreateHTMLButton(const char *anID, const char *anEvent, const char *aJSFunctonName)
 {
-    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)ImGui::GetItemRectMin().x, (int)ImGui::GetItemRectMin().y, (int)ImGui::GetItemRectSize().x, (int)ImGui::GetItemRectSize().y);
+    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(ImGui::GetItemRectMin().x), (int)DPI_UNSCALED(ImGui::GetItemRectMin().y), (int)DPI_UNSCALED(ImGui::GetItemRectSize().x), (int)DPI_UNSCALED(ImGui::GetItemRectSize().y));
 }
 
 void ImGui::Ext::CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char *anID, const char *anEvent, const char *aJSFunctonName)
 {
-    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)aPosition.x, (int)aPosition.y, (int)aSize.x, (int)aSize.y);
+    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(aPosition.x), (int)DPI_UNSCALED(aPosition.y), (int)DPI_UNSCALED(aSize.x), (int)DPI_UNSCALED(aSize.y));
 }
 
 void ImGui::Ext::CreateHTMLInput(const char *anID, const char *aType, const char *anEvent, const char *aJSFunctonName)
 {
-    create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)ImGui::GetItemRectMin().x, (int)ImGui::GetItemRectMin().y, (int)ImGui::GetItemRectSize().x, (int)ImGui::GetItemRectSize().y);
+    create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(ImGui::GetItemRectMin().x), (int)DPI_UNSCALED(ImGui::GetItemRectMin().y), (int)DPI_UNSCALED(ImGui::GetItemRectSize().x), (int)DPI_UNSCALED(ImGui::GetItemRectSize().y));
 }
 
 void ImGui::Ext::CreateHTMLInput(ImVec2 aPosition, ImVec2 aSize, const char *anID, const char *aType, const char *anEvent, const char *aJSFunctonName)
 {
-    create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)aPosition.x, (int)aPosition.y, (int)aSize.x, (int)aSize.y);
+    create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(aPosition.x), (int)DPI_UNSCALED(aPosition.y), (int)DPI_UNSCALED(aSize.x), (int)DPI_UNSCALED(aSize.y));
 }
 
 void ImGui::Ext::DestroyHTMLElement(const char *anID, int aDelayMillis)

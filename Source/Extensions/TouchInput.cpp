@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <Defines.h>
 
 struct TouchEvent
 {
@@ -137,7 +138,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchStart(int ID, double X, double Y)
 	if(g_mainTouch == ID)
 	{
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(X, Y);
+		ImGui::GetIO().AddMousePosEvent(DPI_SCALED(X), DPI_SCALED(Y));
 		//ImGui::GetIO().AddMouseButtonEvent(0, true);
 		g_inputQueue.push_back({{(float)X, (float)Y}, true});
 		//EM_ASM(if(!document.getElementById('mobile-text-input')) { always_show_touch_keyboard(); }
@@ -160,7 +161,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchEnd(int ID, double X, double Y)
 	{
 		g_mainTouch = -1;
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(X, Y);
+		ImGui::GetIO().AddMousePosEvent(DPI_SCALED(X), DPI_SCALED(Y));
 		ImGui::GetIO().AddMouseButtonEvent(0, false);
 		g_inputQueue.push_back({{(float)X, (float)Y}, false});
 	}
@@ -178,7 +179,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void TouchCancel(int ID, double X, double Y)
 	{
 		g_mainTouch = -1;
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(X, Y);
+		ImGui::GetIO().AddMousePosEvent(DPI_SCALED(X), DPI_SCALED(Y));
 		ImGui::GetIO().AddMouseButtonEvent(0, false);
 		g_inputQueue.push_back({{(float)X, (float)Y}, false});
 	}
@@ -237,7 +238,7 @@ void TouchInput_RunInput(bool usePost)
 	for(int i = 0; i < g_inputQueue.Size; i++)
 	{
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(g_inputQueue[i].myPosition.x, g_inputQueue[i].myPosition.y);
+		ImGui::GetIO().AddMousePosEvent(DPI_SCALED(g_inputQueue[i].myPosition.x), DPI_SCALED(g_inputQueue[i].myPosition.y));
 	}
 	if(!usePost)
 	{
@@ -246,7 +247,7 @@ void TouchInput_RunInput(bool usePost)
 	if(g_mainTouch != -1)
 	{
 		ImGui::GetIO().AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-		ImGui::GetIO().AddMousePosEvent(g_touches[g_mainTouch].x, g_touches[g_mainTouch].y);
+		ImGui::GetIO().AddMousePosEvent(DPI_SCALED(g_touches[g_mainTouch].x), DPI_SCALED(g_touches[g_mainTouch].y));
 	}
 }
 
