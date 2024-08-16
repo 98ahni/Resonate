@@ -10,6 +10,7 @@
 #include <Defines.h>
 #include <Serialization/KaraokeData.h>
 #include <Serialization/Preferences.h>
+#include <Extensions/TouchInput.h>
 #include <Extensions/imguiExt.h>
 #include <Extensions/FileHandler.h>
 #include "MainWindow.h"
@@ -131,7 +132,7 @@ void AudioPlayback::OnImGuiDraw()
 {
     //if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration))
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     if(ImGui::BeginChild(GetName().c_str(), {0, 0}, ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border))
     {
         ImGui::Spacing();
@@ -139,8 +140,8 @@ void AudioPlayback::OnImGuiDraw()
         if(myHasAudio)
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100 * myTimeScale);
         if(myWaitingToPlay || !myHasAudio) ImGui::BeginDisabled();
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-10, -10));
-        if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "Loading" : (myIsPlaying ? "Pause" : "Play")) : "Interact"))
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetStyle().FramePadding.y));
+        if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "Loading" : (myIsPlaying ? "Pause" : "Play")) : "Interact", {DPI_SCALED(60), 0}))
         {
             if(!myIsPlaying)
             {
@@ -162,7 +163,7 @@ void AudioPlayback::OnImGuiDraw()
         }
         //ImGui::Ext::CreateHTMLButton("htmlPlay", "touchstart", "audio_element_play");
         ImGui::SameLine();
-        if(ImGui::Button(myHasAudio ? "Stop" : "to start"))
+        if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "..." : "Stop") : "to start", {DPI_SCALED(60), 0}))
         {
             audio_element_pause();
             SetPlaybackProgress(0);
@@ -183,8 +184,12 @@ void AudioPlayback::OnImGuiDraw()
         }
         ImGui::Spacing();
         ImGui::Spacing();
+        if(TouchInput_HasTouch())
+        {
+            ImGui::Spacing();   // Leave extra space for the 'Home bar' gestures.
+        }
     }
-    MainWindow::DockSizeOffset = ImVec2(0, (ImGui::GetWindowContentRegionMax().y + (ImGui::GetStyle().WindowPadding.y * 2)) - 6);
+    MainWindow::DockSizeOffset = ImVec2(0, (ImGui::GetWindowContentRegionMax().y + (ImGui::GetStyle().WindowPadding.y * 2)) - DPI_SCALED(6));
     //Gui_End();
     ImGui::EndChild();
     ImGui::PopStyleColor();

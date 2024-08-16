@@ -54,8 +54,8 @@ EM_JS(void, auto_resize_canvas, (), {
 });
 
 EM_JS(void, resize_canvas, (), {
-	document.getElementById('canvas').width = window.innerWidth;
-	document.getElementById('canvas').height = window.innerHeight;
+	document.getElementById('canvas').width = window.innerWidth * window.devicePixelRatio;
+	document.getElementById('canvas').height = window.innerHeight * window.devicePixelRatio;
 });
 
 EM_JS(int, canvas_get_width, (), {
@@ -64,6 +64,10 @@ EM_JS(int, canvas_get_width, (), {
 
 EM_JS(int, canvas_get_height, (), {
   return Module.canvas.height;
+});
+
+EM_JS(double, canvas_get_device_pixel_ratio, (), {
+  return window.devicePixelRatio;
 });
 
 EM_JS(bool, has_fullscreen, (), {
@@ -224,6 +228,7 @@ void MainWindow_Init(const char* name, void** outWindow)
 	// You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
 	//io.IniFilename = nullptr;
 
+	MainWindow::DPIScale = canvas_get_device_pixel_ratio();
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
@@ -287,6 +292,13 @@ void MainWindow_NewFrame(void* window)
 		glfwSetWindowSize((GLFWwindow*)window, canvasWidth, canvasHeight);
 		width = canvasWidth;
 		height = canvasHeight;
+	}
+	if(MainWindow::DPIScale != canvas_get_device_pixel_ratio())
+	{
+		ImGui::GetStyle() = ImGuiStyle();
+		MainWindow::DPIScale = canvas_get_device_pixel_ratio();
+		MainWindow_StyleVarsShadow();
+		MainWindow_StyleColorsShadow();
 	}
 
 	// React to changes in screen size
@@ -443,6 +455,8 @@ void MainWindow_StyleVarsShadow(ImGuiStyle* dst)
 		style->FramePadding = {15, 5};
 	}
 	style->ScrollbarSize = 15;
+	style->ScaleAllSizes(MainWindow::DPIScale);
+    ImGui::GetIO().FontGlobalScale = MainWindow::DPIScale;
 }
 
 void MainWindow_StyleColorsShadow(ImGuiStyle* dst)

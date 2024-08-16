@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <emscripten.h>
+#include <emscripten/val.h>
 #include "Windows/MainWindow.h"
 #include "Windows/Base/WindowManager.h"
 #include "Windows/TimingEditor.h"
@@ -388,12 +389,16 @@ int main(){
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");
     WindowManager::AddWindow<TextEditor>("Raw Text");
+    ImGui::SetWindowFocus("Timing");
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     // Vv For the video previewer. vV
     //videoPreview->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 20.0f));
-    timingEditor->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 20.0f : 20.0f));
-    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 20.0f : 20.0f);
+    ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 40.0f : 40.0f);
+    timingEditor->SetFont(timingFont);
+    timingFont->Scale = .5f;
+    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 40.0f : 40.0f);
+    MainWindow::Font->Scale = .5f;
     ImGui::GetIO().Fonts->Build();
     //ImGui::PushFont(roboto);
 

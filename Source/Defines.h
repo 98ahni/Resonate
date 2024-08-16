@@ -10,6 +10,9 @@
 #define SYLLABIFY_PATH(lang_code) "Syllabify/" lang_code ".txt"
 #define SYLLABIFY_PATHSTD(lang_code) ("Syllabify/" + lang_code + ".txt")
 
+// Graphics
+#define DPI_SCALED(pixel) (pixel * ImGui::GetIO().FontGlobalScale)
+
 // Emscripten
 #define VAR_TO_JS(var) (emscripten::val(var).as_handle())
 #define VEC_TO_JS(vec) (emscripten::val::array(vec).as_handle())

@@ -6,6 +6,7 @@
 #include <Serialization/Preferences.h>
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
+#include <Defines.h>
 
 TimingEditor::TimingEditor()
 {
@@ -27,7 +28,7 @@ void TimingEditor::OnImGuiDraw()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNavInputs | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
         if(myFont) ImGui::PushFont(myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
         {
@@ -58,7 +59,7 @@ void TimingEditor::OnImGuiDraw()
             }
             doc.PopColor();
             ImGui::NewLine();
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 3);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(3));
         }
         if(myFont) ImGui::PopFont();
         ImGui::PopStyleVar();
@@ -347,8 +348,8 @@ void TimingEditor::DrawTextMarker()
 {
     if(((int)(ImGui::GetTime() * 4)) % 2) return;
     ImVec2 endPos, startPos = endPos = ImGui::GetCursorScreenPos();
-    startPos.y -= 2;
-    endPos.y += 2 + ImGui::GetTextLineHeight();
+    startPos.y -= DPI_SCALED(2);
+    endPos.y += DPI_SCALED(2) + ImGui::GetTextLineHeight();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     drawList->AddLine(startPos, endPos, IM_COL32_WHITE, 1);
     if(myMarkedChar != 0)
@@ -356,7 +357,7 @@ void TimingEditor::DrawTextMarker()
         float offset = ImGui::CalcTextSize(Serialization::KaraokeDocument::Get().GetToken(myMarkedLine, myMarkedToken).myValue.substr(0, myMarkedChar).c_str()).x;
         startPos.x += offset;
         endPos.x += offset;
-        drawList->AddLine(startPos, endPos, IM_COL32(255, 200, 200, 200), 1);
+        drawList->AddLine(startPos, endPos, IM_COL32(255, 200, 200, 200), DPI_SCALED(1));
     }
     if(!myMarkHasMoved) return;
     myMarkHasMoved = false;

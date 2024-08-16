@@ -16,7 +16,7 @@ TextEditor::TextEditor()
 
 void TextEditor::OnImGuiDraw()
 {
-    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
+    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         if(ImGui::InputTextMultiline("##RawText", &myRawText, ImGui::GetContentRegionAvail()) && myHasTakenFocus)
         {

@@ -18,11 +18,12 @@ struct MainWindow
 	inline static int               SwapHeight = 0;
 	static inline bool				HasWebGPU = true;
 	
-	inline static ImFont*           Font = nullptr;
-	static inline std::string		Name = "";
-	inline static std::string		IconPath = "";
+	inline static double			DPIScale = 1;
+	static inline ImFont*           Font = nullptr;
+	inline static std::string		Name = "";
+	static inline std::string		IconPath = "";
 
-	static inline ImVec2			DockSizeOffset = {0, 0};		// Space to reserve in the x/y axis for other content
+	inline static ImVec2			DockSizeOffset = {0, 0};		// Space to reserve in the x/y axis for other content
 };
 
 void MainWindow_Init(const char* name, void** outWindow);
