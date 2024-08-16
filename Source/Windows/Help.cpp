@@ -3,6 +3,7 @@
 
 #include "Help.h"
 #include "MainWindow.h"
+#include <Defines.h>
 
 HelpWindow::HelpWindow()
 {
@@ -11,8 +12,8 @@ HelpWindow::HelpWindow()
 
 #define StartTreeNode(label) if(ImGui::TreeNode(label)){ImGui::PopFont()
 #define EndTreeNode ImGui::TreePop();ImGui::PushFont(MainWindow::Font);}
-#define BulletWrap(text) ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 10); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 7); ImGui::TextWrapped(text)
-#define Keybind(key, text) ImGui::Text(key); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 17); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 7); ImGui::TextWrapped(text)
+#define BulletWrap(text) ImGui::SetCursorPosX(ImGui::GetCursorPosX() - DPI_SCALED(10)); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + DPI_SCALED(7)); ImGui::TextWrapped(text)
+#define Keybind(key, text) ImGui::Text(key); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() - DPI_SCALED(17)); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + DPI_SCALED(7)); ImGui::TextWrapped(text)
 void HelpWindow::OnImGuiDraw()
 {
     ImGui::SetNextWindowSize({std::min(ImGui::GetContentRegionAvail().x * .85f, 500.f), ImGui::GetContentRegionAvail().y * .8f}, ImGuiCond_FirstUseEver);
@@ -112,12 +113,12 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Keyboard Controls");
-    Keybind("[Space]", "Set timing at text marker and advance. ");
-    Keybind("+[Ctrl]", "Add or remove a syllable split. ");
-    Keybind("[Enter]", "Insert or set a pause to time at text marker. ");
-    Keybind("Arrow keys", "Move text marker in specified direction one syllable at a time. ");
-    Keybind("+[Ctrl]", "Move text marker in specified direction one character at a time. ");
-    Keybind("[Shift]+Click", "Set Audio Playback progress to the time of the syllable clicked. ");
+    Keybind("[Space]       ", "Set timing at text marker and advance. ");
+    Keybind("[Ctrl]+[Space]", "Add or remove a syllable split. ");
+    Keybind("[Enter]       ", "Insert or set a pause to time at text marker. ");
+    Keybind("Arrow keys    ", "Move text marker in specified direction one syllable at a time. ");
+    Keybind("[Ctrl]+Arrows ", "Move text marker in specified direction one character at a time. ");
+    Keybind("[Shift]+Click ", "Set Audio Playback progress to the time of the syllable clicked. ");
     EndTreeNode
 
     ImGui::PopFont();

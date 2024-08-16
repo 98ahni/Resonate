@@ -185,17 +185,18 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     Text(aValue.data());
     ImGui::PopStyleColor();
     bool clicked = IsItemClicked(0);
+    float triangleSize = DPI_SCALED(5);
     if(aShowProgress)
     {
         ImDrawList* drawList = GetWindowDrawList();
         if(aValue.empty() || aValue == " ")
         {
-            drawList->AddTriangleFilled({size.x + timeStartPos.x - 1, timeStartPos.y + 1}, {size.x + timeStartPos.x - 5, timeStartPos.y + 5}, {size.x + timeStartPos.x - 1, timeStartPos.y + 5}, IM_COL32(255, 200, 255, 255));
+            drawList->AddTriangleFilled({size.x + timeStartPos.x - 1, timeStartPos.y + 1}, {size.x + timeStartPos.x - triangleSize, timeStartPos.y + triangleSize}, {size.x + timeStartPos.x - 1, timeStartPos.y + triangleSize}, IM_COL32(255, 200, 255, 255));
         }
         else
         {
-            drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + 5, timeStartPos.y + 5}, {timeStartPos.x, timeStartPos.y + 5}, IM_COL32_WHITE);
-            drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, 2);
+            drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + triangleSize, timeStartPos.y + triangleSize}, {timeStartPos.x, timeStartPos.y + triangleSize}, IM_COL32_WHITE);
+            drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, DPI_SCALED(2));
         }
     }
     return clicked;

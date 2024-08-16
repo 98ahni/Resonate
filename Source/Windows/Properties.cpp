@@ -9,6 +9,7 @@
 #include <StringTools.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <Extensions/TouchInput.h>
+#include <Defines.h>
 
 PropertiesWindow::PropertiesWindow()
 {
@@ -30,7 +31,7 @@ PropertiesWindow::PropertiesWindow()
 
 void PropertiesWindow::OnImGuiDraw()
 {
-    ImGui::SetNextWindowSize({450, 350}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({DPI_SCALED(450), DPI_SCALED(350)}, ImGuiCond_FirstUseEver);
     Gui_Begin();
     // Two tabs; Document and Local
     // "Document" contains the Echo headers and the singers used in the document.
@@ -96,12 +97,14 @@ void PropertiesWindow::OnImGuiDraw()
         ApplyEdit(colorEffect);
         myNewEffectName = "";
     }
+    ImGui::BeginDisabled();
     ImGui::SameLine();
     if(ImGui::Button("Image"))
     {}
     ImGui::SameLine();
     if(ImGui::Button("Raw"))
     {}
+    ImGui::EndDisabled();
     ImGui::EndChild();
     Gui_End();
 }
@@ -164,7 +167,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
     ImGui::PushFont(MainWindow::Font);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-10, -10));
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.5f, .35f));
-    if(ImGui::Button(((myCurrentTab == LocalTab ? "+##" : "x##") + anEffectAlias).data(), ImVec2(20, 20)))
+    if(ImGui::Button(((myCurrentTab == LocalTab ? "+##" : "x##") + anEffectAlias).data(), ImVec2(DPI_SCALED(20), DPI_SCALED(20))))
     {
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         if(myCurrentTab == LocalTab)

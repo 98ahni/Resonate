@@ -7,6 +7,7 @@
 #include "AudioPlayback.h"
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
+#include <Defines.h>
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadPreferences()
 {
@@ -33,25 +34,25 @@ void Settings::OnImGuiDraw()
     ImGui::SameLine();
     TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
     int latency = timing->GetLatencyOffset();
-    if(ImGui::Button("<<", {40, 0}))
+    if(ImGui::Button("<<", {DPI_SCALED(40), 0}))
     {
         latency -= 5;
     }
     ImGui::SameLine();
-    if(ImGui::Button("<", {40, 0}))
+    if(ImGui::Button("<", {DPI_SCALED(40), 0}))
     {
         latency -= 1;
     }
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(60);
+    ImGui::SetNextItemWidth(DPI_SCALED(60));
     ImGui::DragInt("##LatencyOffset", &latency);
     ImGui::SameLine();
-    if(ImGui::Button(">", {40, 0}))
+    if(ImGui::Button(">", {DPI_SCALED(40), 0}))
     {
         latency += 1;
     }
     ImGui::SameLine();
-    if(ImGui::Button(">>", {40, 0}))
+    if(ImGui::Button(">>", {DPI_SCALED(40), 0}))
     {
         latency += 5;
     }
