@@ -9,6 +9,23 @@
 #include <Extensions/imguiExt.h>
 #include <Defines.h>
 
+EM_JS(void, setup_latency_metronome, (), {
+	const audioData = FS.readFile('/Sound/Metronome.mp3');
+    global_metronome_blob = new Blob([audioData.buffer], {type: 'audio/mp3' });
+}
+var global_metronome_blob = {};
+var global_metronome_onended = ()=>{/*AudioPlayback*/global_audio_element.currentTime = 0; /*AudioPlayback*/global_audio_element.play();};
+);
+EM_JS(void, play_latency_metronome, (), {
+    /*AudioPlayback*/global_audio_element.srcObject = global_metronome_blob;
+    /*AudioPlayback*/global_audio_element.addEventListener('ended', global_metronome_onended);
+    global_metronome_onended();
+});
+EM_JS(void, stop_latency_metronome, (), {
+    /*AudioPlayback*/global_audio_element.removeEventListener('ended', global_metronome_onended);
+    // TODO: Reset AudioPlayback stuff.
+});
+
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadPreferences()
 {
     FileHandler::OpenDocument("/local/", ".Resonate");
@@ -28,38 +45,20 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveLayout()
 
 void Settings::OnImGuiDraw()
 {
+    if(ImGui::BeginPopupModal("", &myLatencyPopup))
+    {
+        DrawLatencyWidget();
+        float time = EM_ASM_DOUBLE(Emval.toValue(/*AudioPlayback*/get_audio_playback_progress()););
+        ImDrawList& drawList = *ImGui::GetWindowDrawList();
+        ImVec2 center = {};
+        float alphaMult = fl_mod(time, 50) / 50;
+        float radiusMult = (fl_mod(time, 50) + 50) / 100;
+        //drawList.AddCircleFilled(center, );
+        ImGui::EndPopup();
+    }
     Gui_Begin();
     // Latency compensation
-    ImGui::Text("Latency (cs)");
-    ImGui::SameLine();
-    TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-    int latency = timing->GetLatencyOffset();
-    if(ImGui::Button("<<", {DPI_SCALED(40), 0}))
-    {
-        latency -= 5;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("<", {DPI_SCALED(40), 0}))
-    {
-        latency -= 1;
-    }
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(DPI_SCALED(60));
-    ImGui::DragInt("##LatencyOffset", &latency);
-    ImGui::SameLine();
-    if(ImGui::Button(">", {DPI_SCALED(40), 0}))
-    {
-        latency += 1;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button(">>", {DPI_SCALED(40), 0}))
-    {
-        latency += 5;
-    }
-    if(latency != timing->GetLatencyOffset())
-    {
-        timing->SetLatencyOffset(latency);
-    }
+    DrawLatencyWidget();
     ImGui::SeparatorText("Audio Processor");
     if(ImGui::RadioButton("Default", AudioPlayback::GetEngine() == AudioPlayback::Default))
     {
@@ -129,3 +128,36 @@ void Settings::OnImGuiDraw()
     Gui_End();
 }
 
+void Settings::DrawLatencyWidget()
+{
+    ImGui::Text("Latency (cs)");
+    ImGui::SameLine();
+    TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
+    int latency = timing->GetLatencyOffset();
+    if(ImGui::Button("<<", {DPI_SCALED(40), 0}))
+    {
+        latency -= 5;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("<", {DPI_SCALED(40), 0}))
+    {
+        latency -= 1;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(DPI_SCALED(60));
+    ImGui::DragInt("##LatencyOffset", &latency);
+    ImGui::SameLine();
+    if(ImGui::Button(">", {DPI_SCALED(40), 0}))
+    {
+        latency += 1;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button(">>", {DPI_SCALED(40), 0}))
+    {
+        latency += 5;
+    }
+    if(latency != timing->GetLatencyOffset())
+    {
+        timing->SetLatencyOffset(latency);
+    }
+}
