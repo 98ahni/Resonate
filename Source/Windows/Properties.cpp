@@ -163,7 +163,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
     case Serialization::KaraokeEffect::Raw:
         break;
     }
-    ImGui::SetCursorPos(ImVec2(size.x - 30, cursorPos.y));
+    ImGui::SetCursorPos(ImVec2(size.x - DPI_SCALED(30), cursorPos.y));
     ImGui::PushFont(MainWindow::Font);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-10, -10));
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.5f, .35f));

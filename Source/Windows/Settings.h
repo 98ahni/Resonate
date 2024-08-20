@@ -10,4 +10,7 @@ public:
     void OnImGuiDraw();
 
 private:
+    void DrawLatencyWidget();
+
+    bool myLatencyPopup;
 };
