@@ -7,10 +7,13 @@
 class Settings : public EditorWindow
 {
 public:
+    Settings();
     void OnImGuiDraw();
 
 private:
     void DrawLatencyWidget();
 
     bool myLatencyPopup;
+    bool myLatencyPopupOpenLastFrame;
+    float myLatencyStartTime;
 };
