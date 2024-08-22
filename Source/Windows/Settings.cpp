@@ -11,23 +11,27 @@
 #include <Defines.h>
 
 EM_ASYNC_JS(void, setup_latency_metronome, (), {
-    if(global_metronome_source !== null) {return;}
+    if(global_metronome_buffer !== null) {return;}
 	const audioData = FS.readFile('/Sound/Metronome.mp3');
     const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
     global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{
-        global_metronome_source = /*AudioPlayback*/global_audio_context.createBufferSource();
-        global_metronome_source.buffer = buffer;
-        global_metronome_source.loop = true;
-        global_metronome_source.connect(/*AudioPlayback*/global_audio_context.destination);
+        global_metronome_buffer = buffer;
     });
 });
 EM_JS(void, play_latency_metronome, (), {
+    global_metronome_source = /*AudioPlayback*/global_audio_context.createBufferSource();
+    global_metronome_source.buffer = global_metronome_buffer;
+    global_metronome_source.loop = true;
+    global_metronome_source.connect(/*AudioPlayback*/global_audio_context.destination);
     global_metronome_source.start();
 }
+var global_metronome_buffer = null;
 var global_metronome_source = null;
 );
 EM_JS(void, stop_latency_metronome, (), {
     global_metronome_source.stop();
+    global_metronome_source.disconnect();
+    global_metronome_source = null;
     // TODO: Reset AudioPlayback stuff.
 });
 EM_JS(emscripten::EM_VAL, get_audio_context_time, (), {
@@ -65,12 +69,15 @@ void Settings::OnImGuiDraw()
     }
     if(ImGui::BeginPopupModal("Auto Latency", &myLatencyPopup))
     {
-        DrawLatencyWidget();
-        ImGui::Text("Hit [Space] or tap the circle when it's red.");
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        int latency = DrawLatencyWidget();
+        ImGui::Text("Hit [Space] or tap the circle when the bass hits.");
 
         // Visualization
-        float time = (VAR_FROM_JS(get_audio_context_time()).as<float>() - myLatencyStartTime) * 100;
+        float timeRaw, time = timeRaw = (VAR_FROM_JS(get_audio_context_time()).as<float>() - myLatencyStartTime) * 100;
+        time -= latency;
         time = fl_mod(time, 200);
+        timeRaw = fl_mod(timeRaw, 200);
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         float alphaMult = 1 - (fl_mod(time, 50) / 50);
         float radiusMult = (fl_mod(time, 50) + 150) / 200;
@@ -94,11 +101,27 @@ void Settings::OnImGuiDraw()
         drawList->AddCircleFilled(center, size * .4f * radiusMult, ImGui::ColorConvertFloat4ToU32(color));
         color.w = .9f * alphaMult;
         drawList->AddCircleFilled(center, size * .2f * radiusMult, ImGui::ColorConvertFloat4ToU32(color));
+
+        // Latency Detection
+        ImGui::SetCursorPos({(sizeX * .5f) - size, ((sizeY * .5f) + ImGui::GetCursorPosY()) - size});
+        if(ImGui::InvisibleButton("##MetronomeHit", {size * 2, size * 2}) || ImGui::IsKeyPressed(ImGuiKey_Space, false))
+        {
+            if(timeRaw < 150)
+            {
+                ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetLatencyOffset(timeRaw);
+            }
+            else
+            {
+                ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetLatencyOffset(timeRaw - 200);
+            }
+        }
+
         ImGui::EndPopup();
     }
     else if(myLatencyPopupOpenLastFrame)
     {
         stop_latency_metronome();
+        ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
     }
     // Latency compensation
     DrawLatencyWidget();
@@ -109,6 +132,7 @@ void Settings::OnImGuiDraw()
         ImGui::OpenPopup("Auto Latency");
         myLatencyPopup = true;
         myLatencyPopupOpenLastFrame = true;
+        ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(true);
     }
     ImGui::SeparatorText("Audio Processor");
     if(ImGui::RadioButton("Default", AudioPlayback::GetEngine() == AudioPlayback::Default))
@@ -152,10 +176,10 @@ void Settings::OnImGuiDraw()
     ImGui::Ext::CreateHTMLButton("ImportLayout", "click", "_LoadLayout");
     if(!IsOpen())
     {
-        ImGui::Ext::DestroyHTMLElement("ExportPreferences", 100);
-        ImGui::Ext::DestroyHTMLElement("ImportPreferences", 100);
-        ImGui::Ext::DestroyHTMLElement("ExportLayout", 100);
-        ImGui::Ext::DestroyHTMLElement("ImportLayout", 100);
+        ImGui::Ext::DestroyHTMLElement("ExportPreferences", 10);
+        ImGui::Ext::DestroyHTMLElement("ImportPreferences", 10);
+        ImGui::Ext::DestroyHTMLElement("ExportLayout", 10);
+        ImGui::Ext::DestroyHTMLElement("ImportLayout", 10);
     }
     ImGui::Spacing();
     // Clear data
@@ -179,7 +203,7 @@ void Settings::OnImGuiDraw()
     Gui_End();
 }
 
-void Settings::DrawLatencyWidget()
+int Settings::DrawLatencyWidget()
 {
     ImGui::Text("Latency (cs)");
     ImGui::SameLine();
@@ -211,4 +235,5 @@ void Settings::DrawLatencyWidget()
     {
         timing->SetLatencyOffset(latency);
     }
+    return latency;
 }

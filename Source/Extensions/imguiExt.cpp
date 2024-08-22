@@ -51,9 +51,11 @@ EM_JS(void, destroy_element, (emscripten::EM_VAL id), {
 });
 EM_ASYNC_JS(void, destroy_element_async, (emscripten::EM_VAL id, int delay_ms), {
     let input = document.getElementById(Emval.toValue(id));
-    if(input !== null){
-        input.remove();
-    }
+    setTimeout(()=>{
+        if(input !== null){
+            input.remove();
+        }
+    }, delay_ms);
 });
 EM_JS(void, add_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL callback), {
     window.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true);
