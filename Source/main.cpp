@@ -196,19 +196,8 @@ void loop(void* window){
             }
             ImGui::EndMenu();
         }
-        if(ImGui::BeginMenu("View"))
+        if(ImGui::BeginMenu("Effects"))
         {
-            if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr))
-            {
-                if(WindowManager::GetWindow("Touch Control") != nullptr)
-                {
-                    WindowManager::DestroyWindow(WindowManager::GetWindow("Touch Control"));
-                }
-                else
-                {
-                    WindowManager::AddWindow<TouchControl>("Touch Control");
-                }
-            }
             if(ImGui::MenuItem("Style Properties", 0, WindowManager::GetWindow("Properties") != nullptr))
             {
                 if(WindowManager::GetWindow("Properties") != nullptr)
@@ -220,21 +209,6 @@ void loop(void* window){
                     WindowManager::AddWindow<PropertiesWindow>("Properties");
                 }
             }
-            if(ImGui::MenuItem("Settings", 0, WindowManager::GetWindow("Settings") != nullptr))
-            {
-                if(WindowManager::GetWindow("Settings") != nullptr)
-                {
-                    WindowManager::DestroyWindow(WindowManager::GetWindow("Settings"));
-                }
-                else
-                {
-                    WindowManager::AddWindow<Settings>("Settings");
-                }
-            }
-            ImGui::EndMenu();
-        }
-        if(ImGui::BeginMenu("Effects"))
-        {
             ImGui::BeginDisabled();
             ImGui::SeparatorText("Line Effects");
             ImGui::EndDisabled();
@@ -303,8 +277,30 @@ void loop(void* window){
             }
             ImGui::EndMenu();
         }
-        if(!g_closeAboutTab && ImGui::BeginMenu("About"))
+        if(ImGui::BeginMenu("View"))
         {
+            if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr))
+            {
+                if(WindowManager::GetWindow("Touch Control") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Touch Control"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<TouchControl>("Touch Control");
+                }
+            }
+            if(ImGui::MenuItem("Settings", 0, WindowManager::GetWindow("Settings") != nullptr))
+            {
+                if(WindowManager::GetWindow("Settings") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Settings"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<Settings>("Settings");
+                }
+            }
             if(ImGui::MenuItem("Help", 0, WindowManager::GetWindow("Help") != nullptr))
             {
                 if(WindowManager::GetWindow("Help") != nullptr)
@@ -331,6 +327,7 @@ void loop(void* window){
             }
             ImGui::MenuItem("Report a Bug");
             ImGui::Ext::CreateHTMLButton("RepportBug", "click", "open_resonate_issues");
+#if _DEBUG
             if(ImGui::MenuItem("Print Prefs"))
             {
                 Serialization::PrintPrefs();
@@ -339,6 +336,7 @@ void loop(void* window){
             {
                 EM_ASM(location.reload());
             }
+#endif
             ImGui::EndMenu();
         }
         else

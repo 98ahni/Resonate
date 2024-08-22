@@ -11,7 +11,7 @@ public:
     void OnImGuiDraw();
 
 private:
-    void DrawLatencyWidget();
+    int DrawLatencyWidget();
 
     bool myLatencyPopup;
     bool myLatencyPopupOpenLastFrame;
