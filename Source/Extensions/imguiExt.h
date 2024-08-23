@@ -22,6 +22,9 @@ namespace ImGui{
         void AddWindowEvent(const char* anEvent, const char* aJSFunctionName);
         void RemoveWindowEvent(const char* anEvent, const char* aJSFunctionName);
 
+        void LoadImage(const char* anID, const char* anFSPath);
+        ImTextureID RenderImage(const char* anID, ImTextureID aTexture);
+
         void SetShortcutEvents();
 
         bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress);

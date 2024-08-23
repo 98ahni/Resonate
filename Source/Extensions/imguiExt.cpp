@@ -10,13 +10,18 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <Serialization/KaraokeData.h>
+#include <Windows/MainWindow.h>
 #include <Defines.h>
+#include <emscripten/html5_webgpu.h>
+#define GLFW_INCLUDE_ES32
+#include <GLES3/gl3.h>
 
 EM_JS(void, create_button, (emscripten::EM_VAL id, emscripten::EM_VAL event, emscripten::EM_VAL callback, int pos_x, int pos_y, int width, int height), {
-    let btn = document.getElementById(Emval.toValue(id));
+    let imid = Emval.toValue(id);
+    let btn = document.getElementById(imid);
     if(btn === null){
         btn = document.createElement('button');
-        btn.id = Emval.toValue(id);
+        btn.id = imid;
         document.body.insertBefore(btn, document.getElementById('canvas').nextSibling);
     }
     btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false);
@@ -28,10 +33,11 @@ EM_JS(void, create_button, (emscripten::EM_VAL id, emscripten::EM_VAL event, ems
     btn.style.opacity = 0.1;
 });
 EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscripten::EM_VAL event, emscripten::EM_VAL callback, int pos_x, int pos_y, int width, int height), {
-    let input = document.getElementById(Emval.toValue(id));
+    let imid = Emval.toValue(id);
+    let input = document.getElementById(imid);
     if(input === null){
         input = document.createElement('input');
-        input.id = Emval.toValue(id);
+        input.id = imid;
         document.body.insertBefore(input, document.getElementById('canvas').nextSibling);
     }
     input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true);
@@ -42,6 +48,40 @@ EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscr
     input.style.width = width + 'px';
     input.style.height = height + 'px';
     input.style.opacity = 0;
+});
+EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
+    return Emval.toHandle(new Promise(async(resolve)=>{
+    let imid = Emval.toValue(id);
+    let img = document.getElementById(imid);
+    if(img === null){
+        img = document.createElement('img');
+        img.id = imid;
+        document.body.insertBefore(img, document.getElementById('canvas'));
+    }
+	const imgData = FS.readFile(Emval.toValue(fs_path));
+    const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'});
+    img.src = URL.createObjectURL(imgBlob);
+    await img.decode();
+    resolve();}));
+});
+EM_JS(ImTextureID, render_image, (emscripten::EM_VAL id, ImTextureID texture), {
+    let imid = Emval.toValue(id);
+    let img = document.getElementById(imid);
+    if(img === null){
+        return Emval.toHandle(0);
+    }
+    let canvas = document.getElementById(imid + 'canvas');
+    if(canvas === null){
+        canvas = document.createElement('canvas');
+        canvas.id = imid + 'canvas';
+        document.body.insertBefore(canvas, document.getElementById('canvas'));
+        canvas.width = img.width;
+        canvas.height = img.height;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height);
 });
 EM_JS(void, destroy_element, (emscripten::EM_VAL id), {
     let input = document.getElementById(Emval.toValue(id));
@@ -63,6 +103,87 @@ EM_JS(void, add_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL call
 EM_JS(void, remove_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL callback), {
     window.removeEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true);
 });
+
+ImTextureID CreateTextureWebGPU(ImTextureID texture, void* textureBytes, unsigned int sizeX, unsigned int sizeY)
+{
+	ImTextureID Texture = texture;
+    if(texture == 0)
+    {
+	    WGPUTextureDescriptor textureDesc = {};
+	    textureDesc.nextInChain = nullptr;
+	    textureDesc.dimension = WGPUTextureDimension_2D;
+	    textureDesc.size = {sizeX, sizeY, 1};
+	    textureDesc.mipLevelCount = 1;
+	    textureDesc.sampleCount = 1;
+	    textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
+	    textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+	    textureDesc.viewFormatCount = 0;
+	    textureDesc.viewFormats = nullptr;
+	    Texture = wgpuDeviceCreateTexture(emscripten_webgpu_get_device(), &textureDesc);
+    }
+	WGPUImageCopyTexture destination = {};
+	destination.texture = (WGPUTexture)Texture;
+	destination.mipLevel = 0;
+	destination.origin = {0, 0, 0};
+	destination.aspect = WGPUTextureAspect_All;
+	WGPUTextureDataLayout source = {};
+	source.offset = 0;
+	source.bytesPerRow = 4 * sizeX;
+	source.rowsPerImage = sizeY;
+    WGPUExtent3D writeSize = {sizeX, sizeY, 1};
+	wgpuQueueWriteTexture(wgpuDeviceGetQueue(emscripten_webgpu_get_device()), &destination, textureBytes, sizeX * 4 * sizeY, &source, &writeSize);
+    if(texture == 0)
+    {
+	    WGPUTextureViewDescriptor textureViewDesc = {};
+	    textureViewDesc.format = WGPUTextureFormat_RGBA8Unorm;
+	    textureViewDesc.dimension = WGPUTextureViewDimension_2D;
+	    textureViewDesc.baseMipLevel = 0;
+	    textureViewDesc.mipLevelCount = 1;
+	    textureViewDesc.baseArrayLayer = 0;
+	    textureViewDesc.arrayLayerCount = 1;
+	    textureViewDesc.aspect = WGPUTextureAspect_All;
+	    return wgpuTextureCreateView((WGPUTexture)Texture, &textureViewDesc);
+    }
+    return Texture;
+}
+ImTextureID CreateTextureWebGL(ImTextureID texture, void* textureBytes, unsigned int sizeX, unsigned int sizeY)
+{
+	GLint last_texture;
+	GLuint outTexture = (intptr_t)texture;
+
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+    if(texture == 0)
+    {
+	    glGenTextures(1, &outTexture);
+    }
+	glBindTexture(GL_TEXTURE_2D, outTexture);
+    if(texture == 0)
+    {
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+#ifdef GL_UNPACK_ROW_LENGTH // Not on WebGL/ES
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    }
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, sizeX, sizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureBytes);
+
+	glBindTexture(GL_TEXTURE_2D, last_texture);
+
+	return (ImTextureID)(intptr_t)outTexture;
+}
+extern"C" EMSCRIPTEN_KEEPALIVE ImTextureID CreateTexture(ImTextureID texture, emscripten::EM_VAL byteArray, unsigned int sizeX, unsigned int sizeY)
+{
+    //std::vector<unsigned char> textureBytes = emscripten::vecFromJSArray<unsigned char>(VAR_FROM_JS(byteArray));
+    std::string textureBytes = VAR_FROM_JS(byteArray).as<std::string>();
+	if(MainWindow::HasWebGPU)
+	{
+		return CreateTextureWebGPU(texture, textureBytes.data(), sizeX, sizeY);
+	}
+	return CreateTextureWebGL(texture, textureBytes.data(), sizeX, sizeY);
+}
 
 void ImGui::Ext::CreateHTMLButton(const char *anID, const char *anEvent, const char *aJSFunctonName)
 {
@@ -104,6 +225,16 @@ void ImGui::Ext::AddWindowEvent(const char *anEvent, const char *aJSFunctionName
 void ImGui::Ext::RemoveWindowEvent(const char *anEvent, const char *aJSFunctionName)
 {
     remove_window_event(VAR_TO_JS(anEvent), VAR_TO_JS(aJSFunctionName));
+}
+
+void ImGui::Ext::LoadImage(const char *anID, const char *anFSPath)
+{
+    VAR_FROM_JS(load_image(VAR_TO_JS(anID), VAR_TO_JS(anFSPath))).await();
+}
+
+ImTextureID ImGui::Ext::RenderImage(const char *anID, ImTextureID aTexture)
+{
+    return render_image(VAR_TO_JS(anID), aTexture);
 }
 
 EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {

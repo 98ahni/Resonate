@@ -15,6 +15,7 @@
 #include "Windows/Properties.h"
 #include "Windows/Help.h"
 #include "Windows/License.h"
+#include "Windows/Preview.h"
 #include <webgl/webgl2.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -198,6 +199,17 @@ void loop(void* window){
         }
         if(ImGui::BeginMenu("Effects"))
         {
+            if(ImGui::MenuItem("Preview", 0, WindowManager::GetWindow("Preview") != nullptr))
+            {
+                if(WindowManager::GetWindow("Preview") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Preview"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<PreviewWindow>("Preview");
+                }
+            }
             if(ImGui::MenuItem("Style Properties", 0, WindowManager::GetWindow("Properties") != nullptr))
             {
                 if(WindowManager::GetWindow("Properties") != nullptr)
