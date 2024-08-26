@@ -55,6 +55,7 @@ namespace Serialization
         KaraokeToken& GetTimedTokenBefore(size_t aLine, size_t aToken);
         bool IsPauseToken(size_t aLine, size_t aToken);
         bool IsPauseToken(KaraokeToken& aToken);
+        uint GetFontSize();
         uint GetStartColor();
         uint GetEndColor();
         bool ParseEffectToken(KaraokeToken& aToken);

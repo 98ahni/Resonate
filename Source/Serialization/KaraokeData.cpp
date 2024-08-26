@@ -145,6 +145,10 @@ namespace Serialization
     {
         return (aToken.myValue.empty() || aToken.myValue == " ") && !IsNull(aToken);
     }
+    uint KaraokeDocument::GetFontSize()
+    {
+        return myFontSize;
+    }
     uint KaraokeDocument::GetStartColor()
     {
         return myHasOverrideColor ? myOverrideStartColor : myBaseStartColor;
