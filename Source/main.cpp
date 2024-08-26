@@ -403,11 +403,11 @@ int main(){
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     // Vv For the video previewer. vV
-    //videoPreview->SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", TouchInput_HasTouch() ? 24.0f : 20.0f));
-    ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 40.0f : 40.0f);
+    PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
+    ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
     timingEditor->SetFont(timingFont);
     timingFont->Scale = .5f;
-    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", TouchInput_HasTouch() ? 40.0f : 40.0f);
+    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
     MainWindow::Font->Scale = .5f;
     ImGui::GetIO().Fonts->Build();
     //ImGui::PushFont(roboto);

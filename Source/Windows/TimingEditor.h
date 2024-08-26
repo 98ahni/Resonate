@@ -7,6 +7,8 @@ struct ImFont;
 class TimingEditor : public EditorWindow
 {
 public:
+    static TimingEditor& Get();
+
     TimingEditor();
     void OnImGuiDraw();
     void SetFont(ImFont* aFont);
@@ -27,6 +29,8 @@ public:
 
 private:
     void DrawTextMarker();
+
+    static inline TimingEditor* ourInstance;
 
     ImFont* myFont;
     int myMarkedLine = 0;

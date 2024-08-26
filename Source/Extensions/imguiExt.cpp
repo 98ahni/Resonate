@@ -65,12 +65,12 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
     resolve();}));
 });
 EM_JS(ImTextureID, render_image, (emscripten::EM_VAL id, ImTextureID texture), {
-    let imid = Emval.toValue(id);
-    let img = document.getElementById(imid);
+    var imid = Emval.toValue(id);
+    var img = document.getElementById(imid);
     if(img === null){
         return Emval.toHandle(0);
     }
-    let canvas = document.getElementById(imid + 'canvas');
+    var canvas = document.getElementById(imid + 'canvas');
     if(canvas === null){
         canvas = document.createElement('canvas');
         canvas.id = imid + 'canvas';
@@ -78,10 +78,13 @@ EM_JS(ImTextureID, render_image, (emscripten::EM_VAL id, ImTextureID texture), {
         canvas.width = img.width;
         canvas.height = img.height;
     }
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
-    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    return _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height);
+    var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height);
+    ctx = null;
+    pixels = null;
+    return output;
 });
 EM_JS(void, destroy_element, (emscripten::EM_VAL id), {
     let input = document.getElementById(Emval.toValue(id));
@@ -106,21 +109,25 @@ EM_JS(void, remove_window_event, (emscripten::EM_VAL event, emscripten::EM_VAL c
 
 ImTextureID CreateTextureWebGPU(ImTextureID texture, void* textureBytes, unsigned int sizeX, unsigned int sizeY)
 {
-	ImTextureID Texture = texture;
-    if(texture == 0)
-    {
-	    WGPUTextureDescriptor textureDesc = {};
-	    textureDesc.nextInChain = nullptr;
-	    textureDesc.dimension = WGPUTextureDimension_2D;
-	    textureDesc.size = {sizeX, sizeY, 1};
-	    textureDesc.mipLevelCount = 1;
-	    textureDesc.sampleCount = 1;
-	    textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
-	    textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
-	    textureDesc.viewFormatCount = 0;
-	    textureDesc.viewFormats = nullptr;
-	    Texture = wgpuDeviceCreateTexture(emscripten_webgpu_get_device(), &textureDesc);
-    }
+    //if(texture)
+    //{
+    //    wgpuTextureViewRelease((WGPUTextureView)texture);
+    //}
+    ImTextureID output = texture;
+
+	ImTextureID Texture;
+	WGPUTextureDescriptor textureDesc = {};
+	textureDesc.nextInChain = nullptr;
+	textureDesc.dimension = WGPUTextureDimension_2D;
+	textureDesc.size = {sizeX, sizeY, 1};
+	textureDesc.mipLevelCount = 1;
+	textureDesc.sampleCount = 1;
+	textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
+	textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+	textureDesc.viewFormatCount = 0;
+	textureDesc.viewFormats = nullptr;
+	Texture = wgpuDeviceCreateTexture(MainWindow::Device, &textureDesc);
+    
 	WGPUImageCopyTexture destination = {};
 	destination.texture = (WGPUTexture)Texture;
 	destination.mipLevel = 0;
@@ -131,8 +138,10 @@ ImTextureID CreateTextureWebGPU(ImTextureID texture, void* textureBytes, unsigne
 	source.bytesPerRow = 4 * sizeX;
 	source.rowsPerImage = sizeY;
     WGPUExtent3D writeSize = {sizeX, sizeY, 1};
-	wgpuQueueWriteTexture(wgpuDeviceGetQueue(emscripten_webgpu_get_device()), &destination, textureBytes, sizeX * 4 * sizeY, &source, &writeSize);
-    if(texture == 0)
+    WGPUQueue deviceQueue =  wgpuDeviceGetQueue(MainWindow::Device);
+	wgpuQueueWriteTexture(deviceQueue, &destination, textureBytes, sizeX * 4 * sizeY, &source, &writeSize);
+    
+    if(!texture)
     {
 	    WGPUTextureViewDescriptor textureViewDesc = {};
 	    textureViewDesc.format = WGPUTextureFormat_RGBA8Unorm;
@@ -142,14 +151,18 @@ ImTextureID CreateTextureWebGPU(ImTextureID texture, void* textureBytes, unsigne
 	    textureViewDesc.baseArrayLayer = 0;
 	    textureViewDesc.arrayLayerCount = 1;
 	    textureViewDesc.aspect = WGPUTextureAspect_All;
-	    return wgpuTextureCreateView((WGPUTexture)Texture, &textureViewDesc);
+        output = wgpuTextureCreateView((WGPUTexture)Texture, &textureViewDesc);
     }
-    return Texture;
+
+    wgpuTextureRelease((WGPUTexture)Texture);
+    wgpuQueueRelease(deviceQueue);
+
+    return output;
 }
 ImTextureID CreateTextureWebGL(ImTextureID texture, void* textureBytes, unsigned int sizeX, unsigned int sizeY)
 {
 	GLint last_texture;
-	GLuint outTexture = (intptr_t)texture;
+	GLuint outTexture = (GLuint)(intptr_t)texture;
 
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
     if(texture == 0)
@@ -232,9 +245,10 @@ void ImGui::Ext::LoadImage(const char *anID, const char *anFSPath)
     VAR_FROM_JS(load_image(VAR_TO_JS(anID), VAR_TO_JS(anFSPath))).await();
 }
 
-ImTextureID ImGui::Ext::RenderImage(const char *anID, ImTextureID aTexture)
+bool ImGui::Ext::RenderImage(const char *anID, ImTextureID& aTexture)
 {
-    return render_image(VAR_TO_JS(anID), aTexture);
+    aTexture = render_image(VAR_TO_JS(anID), aTexture);
+    return aTexture != 0;
 }
 
 EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
@@ -297,7 +311,7 @@ void ImGui::Ext::SetShortcutEvents()
     AddWindowEvent("paste", "_GetClipboardContent");
 }
 
-bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress)
+bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha)
 {
     ImVec2 size = CalcTextSize(aValue.data());
     ImVec2 pos = GetCursorScreenPos();
@@ -308,12 +322,12 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     if(aCurrentTime < start)
     {
         uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol) | 0xFF000000);
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000));
     }
     else
     {
         uint endCol = Serialization::KaraokeDocument::Get().GetEndColor();
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol) | 0xFF000000);
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000));
     }
     Text(aValue.data());
     ImGui::PopStyleColor();

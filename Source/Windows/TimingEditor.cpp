@@ -8,8 +8,14 @@
 #include "AudioPlayback.h"
 #include <Defines.h>
 
+TimingEditor& TimingEditor::Get()
+{
+    return *ourInstance;
+}
+
 TimingEditor::TimingEditor()
 {
+    ourInstance = this;
     myMarkedLine = 0;
     myMarkedToken = 0;
     myMarkedChar = 0;

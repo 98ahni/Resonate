@@ -23,11 +23,11 @@ namespace ImGui{
         void RemoveWindowEvent(const char* anEvent, const char* aJSFunctionName);
 
         void LoadImage(const char* anID, const char* anFSPath);
-        ImTextureID RenderImage(const char* anID, ImTextureID aTexture);
+        bool RenderImage(const char* anID, ImTextureID& aTexture);
 
         void SetShortcutEvents();
 
-        bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress);
+        bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha = false);
         void SetColor(unsigned int aCol);
         void ClearColor();
 
