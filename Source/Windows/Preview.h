@@ -7,21 +7,30 @@
 typedef void* ImTextureID;
 class PreviewWindow : public EditorWindow
 {
+    struct Lane
+    {
+        int myLine = -1;
+        int myStartToken = -1;
+        int myEndToken = -1;
+        float myWidth = 0;
+    };
 public:
     PreviewWindow();
     void OnImGuiDraw() override;
     static void SetFont(ImFont* aFont);
 
 private:
-    int CalculateLanesNeeded(float aWidth);
+    int AssembleLanes(float aWidth);
     bool FillBackLanes(int aLaneCount);
     bool TryDisplayLanes();
+    bool RemoveOldLanes(uint someCurrentTime);
 
     ImTextureID myTexture;
     int myNextDisplayLineIndex;
     int myNextAddLineIndex;
-    int myLanes[7];
-    int myBackLanes[7];
+    Lane myLanes[7];
+    Lane myBackLanes[7];
+    Lane myAssemblyLanes[7];
 
     static inline ImFont* ourFont;
 };

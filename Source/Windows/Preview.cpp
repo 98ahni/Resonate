@@ -8,13 +8,6 @@ PreviewWindow::PreviewWindow()
 {
     ImGui::Ext::LoadImage("##testImage", "ResonateIconLarger.png");
     myTexture = 0;
-    myLanes[0] = myBackLanes[0] = -1;
-    myLanes[1] = myBackLanes[1] = -1;
-    myLanes[2] = myBackLanes[2] = -1;
-    myLanes[3] = myBackLanes[3] = -1;
-    myLanes[4] = myBackLanes[4] = -1;
-    myLanes[5] = myBackLanes[5] = -1;
-    myLanes[6] = myBackLanes[6] = -1;
 }
 
 void PreviewWindow::OnImGuiDraw()
@@ -33,29 +26,48 @@ void PreviewWindow::OnImGuiDraw()
     float textScale = doc.GetFontSize() / 50;
     textScale *= (ImGui::GetTextLineHeightWithSpacing() * 6) / contentSize.y;
     ourFont->Scale = textScale;
+    uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
     // ^^ Setup
+
+    // I think it's only lane spacing and counting left!
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
     for(int lane = 0; lane < 7; lane++)
     {
-        for(int token = 0; token < doc.GetLine(myLanes[lane]).size(); token++)
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(3));
+        for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {
-            uint start = doc.GetLine(myLanes[lane])[token].myHasStart ? doc.GetLine(myLanes[lane])[token].myStartTime : 0;
-            uint end = doc.GetTokenAfter(myLanes[lane], token).myHasStart ? doc.GetTokenAfter(myLanes[lane], token).myStartTime : start;
-            if(doc.GetToken(myLanes[lane], token).myValue.contains('<'))
+            if(!doc.GetToken(myLanes[lane].myLine, token).myHasStart)
             {
-                doc.ParseEffectToken(doc.GetToken(myLanes[lane], token));
+                continue;
             }
-            if(ImGui::Ext::TimedSyllable(doc.GetLine(myLanes[lane])[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset(), false, true))
+            uint start = doc.GetToken(myLanes[lane].myLine, token).myStartTime;
+            uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
+            //if(doc.GetToken(myLanes[lane].myLine, token).myValue.contains('<'))
+            if(doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)))
+            {
+            }
+            else if(ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, true))
             {
             }
             ImGui::SameLine();
         }
-        doc.PopColor();
-        ImGui::NewLine();
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(3));
+        if(lane == 7 || myLanes[lane].myLine != myLanes[lane + 1].myLine)
+        {
+            doc.PopColor();
+        }
     }
     ImGui::PopStyleVar();
+
+    if(RemoveOldLanes(playbackProgress))
+    {
+        while(TryDisplayLanes())
+        {
+            while (FillBackLanes(7))
+            {
+            }
+        }
+    }
 
     // vv Reset
     ourFont->Scale = 1;
@@ -68,23 +80,62 @@ void PreviewWindow::SetFont(ImFont *aFont)
     ourFont = aFont;
 }
 
-int PreviewWindow::CalculateLanesNeeded(float aWidth)
+int PreviewWindow::AssembleLanes(float aWidth)
 {
+    if(myAssemblyLanes[0].myLine == myNextAddLineIndex)
+    {
+        for(int lane = 0; lane < 7; lane++)
+        {
+            if(myAssemblyLanes[lane].myLine != myNextAddLineIndex)
+            {
+                return lane;
+            }
+        }
+    }
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    float textWidth = ImGui::CalcTextSize(doc.SerializeLineAsText(doc.GetLine(myNextDisplayLineIndex)).data()).x;
-    return (int)(textWidth / (aWidth * ourFont->Scale)) + 1;
+    int nextStartToken = 0;
+    int lastSpaceToken = -1;
+    for(int lane = 0; lane < 7; lane++)
+    {
+        if(doc.GetLine(myNextAddLineIndex).size() <= nextStartToken)
+        {
+            return lane;
+        }
+        myAssemblyLanes[lane].myLine = myNextAddLineIndex;
+        myAssemblyLanes[lane].myStartToken = nextStartToken;
+        float currentTextWidth = 0;
+        do
+        {
+            if(doc.GetLine(myNextAddLineIndex).size() <= nextStartToken)
+            {
+                break;
+            }
+            currentTextWidth += ImGui::CalcTextSize(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.data()).x;
+            if(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.ends_with(" "))
+            {
+                myAssemblyLanes[lane].myWidth = currentTextWidth;
+                lastSpaceToken = nextStartToken;
+            }
+            nextStartToken++;
+        } while(currentTextWidth < aWidth || lastSpaceToken == -1);
+        myAssemblyLanes[lane].myEndToken = lastSpaceToken == -1 ? nextStartToken : lastSpaceToken;
+        nextStartToken = lastSpaceToken;
+        lastSpaceToken = -1;
+    }
+    return 7;
 }
 
 bool PreviewWindow::FillBackLanes(int aLaneCount)
 {
-    int nextLineNeeds;
+    float width;
+    int nextLineNeeds = AssembleLanes(width);
     int foundPlace;
     for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
     {
         foundPlace = i - nextLineNeeds;
         for(int j = 0; j < nextLineNeeds; j++)
         {
-            if(myBackLanes[i - j] != -1)
+            if(myBackLanes[i - j].myLine != -1)
             {
                 foundPlace = -1;
             }
@@ -98,7 +149,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
             foundPlace = i;
             for(int j = 0; j < nextLineNeeds; j++)
             {
-                if(myBackLanes[i + j] != -1)
+                if(myBackLanes[i + j].myLine != -1)
                 {
                     foundPlace = -1;
                 }
@@ -108,9 +159,9 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     }
     if(foundPlace != -1)
     {
-        for(int i = foundPlace; i < foundPlace + nextLineNeeds; i++)
+        for(int i = 0; i < nextLineNeeds; i++)
         {
-            myBackLanes[i] = myNextAddLineIndex;
+            myBackLanes[i + foundPlace] = myAssemblyLanes[i];
         }
         myNextAddLineIndex++;
         return true;
@@ -125,21 +176,36 @@ bool PreviewWindow::TryDisplayLanes()
     bool displayedNewLines = false;
     for(int i = 0; i < 7; i++)
     {
-        if(checkingLine != myBackLanes[i])
+        if(checkingLine != myBackLanes[i].myLine)
         {
             for(int j = currentStartLane; currentStartLane != -1 && j < i; j++)
             {
                 myLanes[j] = myBackLanes[j];
-                myBackLanes[j] = -1;
+                myBackLanes[j].myLine = -1;
                 displayedNewLines = true;
             }
-            checkingLine = myBackLanes[i];
+            checkingLine = myBackLanes[i].myLine;
             currentStartLane = i;
         }
-        if(myLanes[i] != -1)
+        if(myLanes[i].myLine != -1)
         {
             currentStartLane = -1;
         }
     }
     return displayedNewLines;
+}
+
+bool PreviewWindow::RemoveOldLanes(uint someCurrentTime)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    bool output = false;
+    for(int lane = 0; lane < 7; lane++)
+    {
+        if(doc.GetLine(myLanes[lane].myLine).back().myStartTime < someCurrentTime)
+        {
+            myLanes[lane].myLine = -1;
+            output = true;
+        }
+    }
+    return output;
 }
