@@ -78,7 +78,7 @@ EM_JS(ImTextureID, render_image, (emscripten::EM_VAL id, ImTextureID texture), {
         canvas.width = img.width;
         canvas.height = img.height;
     }
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d', {willReadFrequently:true});
     ctx.drawImage(img, 0, 0);
     var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
     var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height);

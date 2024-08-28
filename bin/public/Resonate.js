@@ -999,20 +999,20 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3937726: () => { alert("FileHandler::OpenDocument not implemented!") },  
- 3937778: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
- 3937935: ($0) => { init_gapi_with_key($0); },  
- 3937961: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3938084: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3938186: () => { return Date.now(); },  
- 3938207: () => { location.reload() },  
- 3938225: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3938288: () => { return global_audio_element.paused ? 1 : 0; },  
- 3938332: () => { return global_audio_element.paused ? 1 : 0; },  
- 3938376: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3938426: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3938682: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3938951: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3938025: () => { alert("FileHandler::OpenDocument not implemented!") },  
+ 3938077: () => { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })) },  
+ 3938234: ($0) => { init_gapi_with_key($0); },  
+ 3938260: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3938383: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3938485: () => { return Date.now(); },  
+ 3938506: () => { location.reload() },  
+ 3938524: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3938587: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3938631: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3938675: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3938725: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3938981: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3939250: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path) { const docPath = Emval.toValue(path); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -1032,7 +1032,7 @@ function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let imid = Emval.toValue(id); let btn = document.getElementById(imid); if(btn === null){ btn = document.createElement('button'); btn.id = imid; document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0.1; }
 function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let imid = Emval.toValue(id); let input = document.getElementById(imid); if(input === null){ input = document.createElement('input'); input.id = imid; document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
 function load_image(id,fs_path) { return Emval.toHandle(new Promise(async(resolve)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); if(img === null){ img = document.createElement('img'); img.id = imid; document.body.insertBefore(img, document.getElementById('canvas')); } const imgData = FS.readFile(Emval.toValue(fs_path)); const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'}); img.src = URL.createObjectURL(imgBlob); await img.decode(); resolve();})); }
-function render_image(id,texture) { var imid = Emval.toValue(id); var img = document.getElementById(imid); if(img === null){ return Emval.toHandle(0); } var canvas = document.getElementById(imid + 'canvas'); if(canvas === null){ canvas = document.createElement('canvas'); canvas.id = imid + 'canvas'; document.body.insertBefore(canvas, document.getElementById('canvas')); canvas.width = img.width; canvas.height = img.height; } var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0); var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height); var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height); ctx = null; pixels = null; return output; }
+function render_image(id,texture) { var imid = Emval.toValue(id); var img = document.getElementById(imid); if(img === null){ return Emval.toHandle(0); } var canvas = document.getElementById(imid + 'canvas'); if(canvas === null){ canvas = document.createElement('canvas'); canvas.id = imid + 'canvas'; document.body.insertBefore(canvas, document.getElementById('canvas')); canvas.width = img.width; canvas.height = img.height; } var ctx = canvas.getContext('2d', {willReadFrequently:true}); ctx.drawImage(img, 0, 0); var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height); var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height); ctx = null; pixels = null; return output; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
 function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(Emval.toValue(id)); setTimeout(()=>{ if(input !== null){ input.remove(); } }, delay_ms); }); }
 function add_window_event(event,callback) { window.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }
@@ -11537,9 +11537,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3883228;
-var ___start_em_js = Module['___start_em_js'] = 3917664;
-var ___stop_em_js = Module['___stop_em_js'] = 3937726;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3883500;
+var ___start_em_js = Module['___start_em_js'] = 3917936;
+var ___stop_em_js = Module['___stop_em_js'] = 3938025;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

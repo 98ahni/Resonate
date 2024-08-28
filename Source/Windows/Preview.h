@@ -2,9 +2,10 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "Base/EditorWindow.h"
-#include <Serialization/KaraokeData.h>
 
 typedef void* ImTextureID;
+typedef unsigned int uint;
+struct ImFont;
 class PreviewWindow : public EditorWindow
 {
     struct Lane
@@ -21,12 +22,11 @@ public:
 
 private:
     int AssembleLanes(float aWidth);
-    bool FillBackLanes(int aLaneCount);
+    bool FillBackLanes(int aLaneCount, float aScaledWidth);
     bool TryDisplayLanes();
     bool RemoveOldLanes(uint someCurrentTime);
 
     ImTextureID myTexture;
-    int myNextDisplayLineIndex;
     int myNextAddLineIndex;
     Lane myLanes[7];
     Lane myBackLanes[7];
