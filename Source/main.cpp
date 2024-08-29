@@ -49,6 +49,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
     if(folderPath == "") return;
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);
+    PreviewWindow::AddBackgroundElement(folderPath);
+    FileHandler::SyncLocalFS();
     g_closeFileTab = true;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
@@ -57,6 +59,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
     //std::string docPath = AudioPlayback::GetPath();       // Test audio file
     FileHandler::DownloadDocument(docPath.c_str());
     Serialization::KaraokeDocument::Get().UnsetIsDirty();
+    FileHandler::SyncLocalFS();
     g_closeFileTab = true;
 }
 
@@ -86,11 +89,17 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL 
     {
         AudioPlayback::SetPlaybackFile(path.string());
     }
+    else if(path.extension() == ".mp4" || path.extension() == ".png" || path.extension() == ".jpg")
+    {
+        PreviewWindow::AddBackgroundElement(path.string());
+    }
+    FileHandler::SyncLocalFS();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
 {
     Serialization::KaraokeDocument::Get().AutoSave();
     AudioPlayback::SaveLocalBackup();
+    FileHandler::SyncLocalFS();
 }
 
 EM_JS(void, open_mooncat_guidelines, (), {
@@ -108,6 +117,7 @@ void loop(void* window){
     if(doc.GetIsAutoDirty())
     {
         doc.AutoSave();
+        FileHandler::SyncLocalFS();
     }
 
     if(ImGui::BeginMainMenuBar())
@@ -143,6 +153,7 @@ void loop(void* window){
                 {
                     GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
                     Serialization::KaraokeDocument::Get().UnsetIsDirty();
+                    FileHandler::SyncLocalFS();
                 }
                 ImGui::EndMenu();
             }
@@ -396,10 +407,12 @@ int main(){
     ImGui::Ext::SetShortcutEvents();
     
     WindowManager::Init();
+    WindowManager::AddWindow<TextEditor>("Raw Text");
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");
-    WindowManager::AddWindow<TextEditor>("Raw Text");
     ImGui::SetWindowFocus("Timing");
+
+    PreviewWindow::AddBackgroundElement("/local/");
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     // Vv For the video previewer. vV

@@ -289,7 +289,7 @@ void AudioPlayback::SaveLocalBackup()
     if(!ourInstance->myPath.contains("local"))
     {
         std::filesystem::copy(ourInstance->myPath, "/local", std::filesystem::copy_options::overwrite_existing);
-        FileHandler::SyncLocalFS();
+        //FileHandler::SyncLocalFS();
     }
 }
 

@@ -343,6 +343,7 @@ void TimingEditor::SetInputUnsafe(bool anUnsafe)
 void TimingEditor::SetLatencyOffset(int someCentiSeconds)
 {
     myLatencyOffset = someCentiSeconds;
+    Serialization::Preferences::SetInt("Timing/Latency", myLatencyOffset);
 }
 
 int TimingEditor::GetLatencyOffset()

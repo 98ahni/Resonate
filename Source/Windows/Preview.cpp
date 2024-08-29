@@ -1,4 +1,6 @@
 #include "Preview.h"
+#include <filesystem>
+#include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
 #include <Serialization/KaraokeData.h>
 #include <Defines.h>
@@ -8,18 +10,47 @@
 
 PreviewWindow::PreviewWindow()
 {
-    ImGui::Ext::LoadImage("##testImage", "ResonateIconLarger.png");
-    myTexture = 0;
-    myNextAddLineIndex = 0;
-    while (FillBackLanes(5, 1000))
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    myHasVideo = false;
+    std::string chosenBackground = "";
+    for(std::string& path : ourBackgroundPaths)
     {
-    }
-    while(TryDisplayLanes())
-    {
-        while (FillBackLanes(5, 1000))
+        std::filesystem::path fpath = path;
+        if(fpath.extension() == ".mp4")
         {
+            chosenBackground = path;
+            myHasVideo = true;
+            break;
+        }
+        if(doc.GetName() == fpath.filename().string())
+        {
+            chosenBackground = path;
         }
     }
+    if(chosenBackground == "")
+    {
+        if(ourBackgroundPaths.size() != 0)
+        {
+            chosenBackground = ourBackgroundPaths[rand() % ourBackgroundPaths.size()];
+        }
+        else
+        {
+            chosenBackground = "ResonateIconLarger.png";
+        }
+    }
+    if(myHasVideo)
+    {
+        ImGui::Ext::LoadVideo("##PreviewBackground", chosenBackground.data());
+    }
+    else
+    {
+        ImGui::Ext::LoadImage("##PreviewBackground", chosenBackground.data());
+    }
+    myTexture = 0;
+    myPlaybackProgressLastFrame = 0;
+    myNextAddLineIndex = 0;
+    myShouldDebugDraw = false;
+    Resetprogress();
 }
 
 void PreviewWindow::OnImGuiDraw()
@@ -28,8 +59,13 @@ void PreviewWindow::OnImGuiDraw()
     ImVec2 windowSize = ImGui::GetWindowContentRegionMax();
     ImVec2 contentOffset = ImGui::GetWindowContentRegionMin();
     ImVec2 contentSize = {windowSize.x - contentOffset.x, windowSize.y - contentOffset.y};
-    if(ImGui::Ext::RenderImage("##testImage", myTexture))
+    if(ImGui::Ext::RenderTexture("##PreviewBackground", myTexture))
     {
+        if(myHasVideo)
+        {
+            //ImGui::Ext::PlayVideo("##PreviewBackground");
+            //ImGui::Ext::SetVideoProgress("##PreviewBackground", myPlaybackProgressLastFrame);
+        }
         ImGui::Image(myTexture, contentSize);
     }
 
@@ -40,6 +76,11 @@ void PreviewWindow::OnImGuiDraw()
     textScale *= contentSize.y / ((50 + ImGui::GetStyle().ItemSpacing.y) * 6);
     ourFont->Scale = textScale == 0 ? .001f : textScale;
     uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
+    if(playbackProgress < myPlaybackProgressLastFrame)
+    {
+        Resetprogress();
+    }
+    myPlaybackProgressLastFrame = playbackProgress;
     // ^^ Setup
 
 	float laneHeight = ImGui::GetTextLineHeightWithSpacing();
@@ -47,9 +88,10 @@ void PreviewWindow::OnImGuiDraw()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
     for(int lane = 0; lane < 7; lane++)
     {
-        // TODO: Check if lane is two seconds from showing
+        if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
         ImGui::SetCursorPosY((laneHeight * lane) + ImGui::GetStyle().ItemSpacing.y);
-        ImGui::SetCursorPosX((contentSize.x - (myLanes[lane].myWidth * textScale)) * .5f);
+        float cursorStartX = (contentSize.x - (myLanes[lane].myWidth * textScale)) * .5f;
+        ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {
             if(!doc.GetToken(myLanes[lane].myLine, token).myHasStart)
@@ -65,6 +107,7 @@ void PreviewWindow::OnImGuiDraw()
                 ImGui::SameLine();
             }
         }
+        //myLanes[lane].myWidth = ImGui::GetCursorPosX() - cursorStartX;
         if(lane >= lanesShown) {break;}
         ImGui::NewLine();
         if(lane == 7 || myLanes[lane].myLine != myLanes[lane + 1].myLine)
@@ -74,11 +117,11 @@ void PreviewWindow::OnImGuiDraw()
     }
     ImGui::PopStyleVar();
 
-    if(RemoveOldLanes(playbackProgress))
+    if(RemoveOldLanes(playbackProgress, 50))
     {
         while(TryDisplayLanes())
         {
-            while (FillBackLanes(lanesShown, contentSize.x))
+            while (FillBackLanes(lanesShown, 600 * (50 / doc.GetFontSize())/*DPI_UNSCALED(contentSize.x) * textScale*/))
             {
             }
         }
@@ -86,6 +129,21 @@ void PreviewWindow::OnImGuiDraw()
 
     // vv Reset
     ImGui::PopFont();
+
+    if(ImGui::IsKeyPressed(ImGuiKey_0, false))
+    {
+        myShouldDebugDraw = !myShouldDebugDraw;
+    }
+    if(myShouldDebugDraw)
+    {
+        ImGui::SetCursorPos({20, 50});
+        ImGui::Text("# | Display\t| Back \t| Next");
+        for(int lane = 0; lane < 7; lane++)
+        {
+            ImGui::Text("%i | %i\t\t| %i\t\t| %i", lane + 1, myLanes[lane].myLine, myBackLanes[lane].myLine, myAssemblyLanes[lane].myLine);
+        }
+    }
+
     Gui_End();
 }
 
@@ -94,9 +152,44 @@ void PreviewWindow::SetFont(ImFont *aFont)
     ourFont = aFont;
 }
 
+void PreviewWindow::AddBackgroundElement(std::string aBGPath)
+{
+    printf("Loading %s.\n", aBGPath.c_str());
+    if(!std::filesystem::exists(aBGPath))
+    {
+        printf("%s does not exist!\n", aBGPath.c_str());
+        return;
+    }
+    if(std::filesystem::is_directory(aBGPath))
+    {
+        for (auto &path : std::filesystem::directory_iterator(aBGPath))
+        {
+            if (path.path().extension() == ".mp4" || path.path().extension() == ".png" | path.path().extension() == ".jpg")
+            {
+                AddBackgroundElement(path.path().string());
+            }
+        }
+        return;
+    }
+    ourBackgroundPaths.push_back(aBGPath);
+    SaveBackgroundElementsToLocal();
+}
+
+void PreviewWindow::ClearBackgroundElements()
+{
+    for(std::string& path : ourBackgroundPaths)
+    {
+        std::error_code ferr;
+        std::filesystem::remove("/local/" + std::filesystem::path(path).filename().string(), ferr);
+    }
+    //FileHandler::SyncLocalFS();
+    ourBackgroundPaths.clear();
+}
+
 int PreviewWindow::AssembleLanes(float aWidth)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+	if(doc.GetData().size() <= myNextAddLineIndex) {return -1;}
 	if(doc.GetLine(myNextAddLineIndex).size() == 0) {return 0;}
 	if(!doc.GetLine(myNextAddLineIndex).back().myHasStart) {return 0;}
     if(myAssemblyLanes[0].myLine == myNextAddLineIndex)
@@ -130,18 +223,24 @@ int PreviewWindow::AssembleLanes(float aWidth)
                 lastSpaceToken = -1;
                 break;
             }
+            if(doc.IsEffectToken(doc.GetToken(myNextAddLineIndex, nextStartToken)))
+            {
+                nextStartToken++;
+                continue;
+            }
             ImGui::PushFont(MainWindow::Font);
-            currentTextWidth += ImGui::CalcTextSize(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.data()).x * 2.4f;
-            ImGui::PopFont();
+            // Multipying by 2.5 on the below line is to go from the Main font (40 / 2) to the preview display font of 50.
+            currentTextWidth += ImGui::CalcTextSize(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.data()).x * 2.5f;
             if(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.ends_with(" "))
             {
-                myAssemblyLanes[lane].myWidth = currentTextWidth;
+                myAssemblyLanes[lane].myWidth = currentTextWidth - ImGui::CalcTextSize(" ").x * 2.5f;
                 lastSpaceToken = nextStartToken;
             }
+            ImGui::PopFont();
             nextStartToken++;
         } while(currentTextWidth < aWidth || lastSpaceToken == -1);
-        myAssemblyLanes[lane].myEndToken = lastSpaceToken == -1 ? nextStartToken : lastSpaceToken;
         nextStartToken = lastSpaceToken == -1 ? nextStartToken : (lastSpaceToken + 1);
+        myAssemblyLanes[lane].myEndToken = nextStartToken;
         lastSpaceToken = -1;
         printf("Lane %i has size %f\n", lane, myAssemblyLanes[lane].myWidth);
     }
@@ -153,10 +252,14 @@ int PreviewWindow::AssembleLanes(float aWidth)
 bool PreviewWindow::FillBackLanes(int aLaneCount, float aScaledWidth)
 {
     int nextLineNeeds = AssembleLanes(aScaledWidth);
-	if(nextLineNeeds == 0)
+	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
     {
         myNextAddLineIndex++;
         return true;
+    }
+	if(nextLineNeeds == -1) // -1 means stop trying
+    {
+        return false;
     }
     int foundPlace = -1;
     for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
@@ -164,7 +267,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount, float aScaledWidth)
         foundPlace = i - nextLineNeeds;
         for(int j = 0; j < nextLineNeeds; j++)
         {
-            if(myBackLanes[foundPlace - j].myLine != -1)
+            if(myBackLanes[foundPlace + j].myLine != -1)
             {
                 foundPlace = -1;
             }
@@ -173,7 +276,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount, float aScaledWidth)
     }
     if(foundPlace == -1)
     {
-        for(int i = (aLaneCount / 2) - (nextLineNeeds / 2); i < aLaneCount; i++)
+        for(int i = (aLaneCount / 2) - (nextLineNeeds / 2); i <= aLaneCount - nextLineNeeds; i++)
         {
             foundPlace = i;
             for(int j = 0; j < nextLineNeeds; j++)
@@ -208,9 +311,9 @@ bool PreviewWindow::TryDisplayLanes()
     {
         if(checkingLine != myBackLanes[lane].myLine)
         {
-            for(int j = currentStartLane; currentStartLane != -1 && j < lane; j++)
+            for(int j = currentStartLane; currentStartLane != -1 && checkingLine != -1 && j < lane; j++)
             {
-                printf("Moving line %i to display lane %i\n", myBackLanes[j].myLine, lane);
+                printf("Moving line %i to display lane %i\n", myBackLanes[j].myLine, j);
                 myLanes[j] = myBackLanes[j];
                 myBackLanes[j].myLine = -1;
                 displayedNewLines = true;
@@ -226,14 +329,28 @@ bool PreviewWindow::TryDisplayLanes()
     return displayedNewLines;
 }
 
-bool PreviewWindow::RemoveOldLanes(uint someCurrentTime)
+bool PreviewWindow::CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    if(doc.GetToken(myLanes[aLane].myLine, 0).myHasStart)
+    {
+        return doc.GetToken(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
+    }
+    else
+    {
+        return doc.GetTimedTokenAfter(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
+    }
+    return false;
+}
+
+bool PreviewWindow::RemoveOldLanes(uint someCurrentTime, uint aDelay)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     bool output = false;
     for(int lane = 0; lane < 7; lane++)
     {
 		if(myLanes[lane].myLine == -1 || doc.IsNull(doc.GetLine(myLanes[lane].myLine))) {continue;}
-        if(doc.GetLine(myLanes[lane].myLine).back().myStartTime < someCurrentTime)
+        if(doc.GetLine(myLanes[lane].myLine).back().myStartTime + aDelay < someCurrentTime)
         {
             printf("Line %i is removed from lane %i\n", myLanes[lane].myLine, lane);
             myLanes[lane].myLine = -1;
@@ -241,4 +358,38 @@ bool PreviewWindow::RemoveOldLanes(uint someCurrentTime)
         }
     }
     return output;
+}
+
+void PreviewWindow::Resetprogress()
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
+    myNextAddLineIndex = 0;
+    for(int lane = 0; lane < 7; lane++)
+    {
+        myLanes[lane].myLine = -1;
+        myBackLanes[lane].myLine = -1;
+        myAssemblyLanes[lane].myLine = -1;
+    }
+    while (FillBackLanes(lanesShown, 600 * (50 / doc.GetFontSize())))
+    {
+    }
+    while(TryDisplayLanes())
+    {
+        while (FillBackLanes(lanesShown, 600 * (50 / doc.GetFontSize())))
+        {
+        }
+    }
+}
+
+void PreviewWindow::SaveBackgroundElementsToLocal()
+{
+    for(std::string& path : ourBackgroundPaths)
+    {
+        if(!path.contains("local"))
+        {
+            std::filesystem::copy(path, "/local", std::filesystem::copy_options::overwrite_existing);
+        }
+    }
+    //FileHandler::SyncLocalFS();
 }

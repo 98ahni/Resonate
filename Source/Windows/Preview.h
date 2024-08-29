@@ -19,18 +19,27 @@ public:
     PreviewWindow();
     void OnImGuiDraw() override;
     static void SetFont(ImFont* aFont);
+    static void AddBackgroundElement(std::string aBGPath);
+    static void ClearBackgroundElements();
 
 private:
     int AssembleLanes(float aWidth);
     bool FillBackLanes(int aLaneCount, float aScaledWidth);
     bool TryDisplayLanes();
-    bool RemoveOldLanes(uint someCurrentTime);
+    bool CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay);
+    bool RemoveOldLanes(uint someCurrentTime, uint aDelay);
+    void Resetprogress();
 
     ImTextureID myTexture;
     int myNextAddLineIndex;
+    uint myPlaybackProgressLastFrame;
     Lane myLanes[7];
     Lane myBackLanes[7];
     Lane myAssemblyLanes[7];
+    bool myHasVideo;
+    bool myShouldDebugDraw;
 
+    static void SaveBackgroundElementsToLocal();
     static inline ImFont* ourFont;
+    inline static std::vector<std::string> ourBackgroundPaths;
 };

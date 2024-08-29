@@ -157,6 +157,11 @@ namespace Serialization
     {
         return myHasOverrideColor ? myOverrideEndColor : myBaseEndColor;
     }
+    bool KaraokeDocument::IsEffectToken(KaraokeToken &aToken)
+    {
+        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        return tags.size() != 0;
+    }
     bool KaraokeDocument::ParseEffectToken(KaraokeToken &aToken)
     {
         std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
@@ -315,7 +320,7 @@ namespace Serialization
             std::error_code ferr;
             std::filesystem::remove("/local/" + myName, ferr);
             std::filesystem::copy(aPath, "/local", std::filesystem::copy_options::overwrite_existing);
-            FileHandler::SyncLocalFS();
+            //FileHandler::SyncLocalFS();
         }
         myPath = aPath;
         myFileID = aFileID;
@@ -512,7 +517,7 @@ namespace Serialization
         docFile << Serialize();
         printf("Auto saved to '/local/%s'.\n", pathName.filename().string().data());
         docFile.close();
-        FileHandler::SyncLocalFS();
+        //FileHandler::SyncLocalFS();
         myIsAutoDirty = false;
         return myPath;
     }
