@@ -58,6 +58,7 @@ namespace Serialization
         uint GetFontSize();
         uint GetStartColor();
         uint GetEndColor();
+        bool IsEffectToken(KaraokeToken& aToken);
         bool ParseEffectToken(KaraokeToken& aToken);
         void SetColor(uint aStartColor);
         void SetColor(uint aStartColor, uint anEndColor);

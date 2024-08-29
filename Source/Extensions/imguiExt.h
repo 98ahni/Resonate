@@ -22,8 +22,12 @@ namespace ImGui{
         void AddWindowEvent(const char* anEvent, const char* aJSFunctionName);
         void RemoveWindowEvent(const char* anEvent, const char* aJSFunctionName);
 
+        void LoadVideo(const char* anID, const char* anFSPath);
+        void PlayVideo(const char* anID);
+        void PauseVideo(const char* anID);
+        void SetVideoProgress(const char* anID, uint aProgress);
         void LoadImage(const char* anID, const char* anFSPath);
-        bool RenderImage(const char* anID, ImTextureID& aTexture);
+        bool RenderTexture(const char* anID, ImTextureID& aTexture);
 
         void SetShortcutEvents();
 

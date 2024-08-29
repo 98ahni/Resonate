@@ -49,6 +49,58 @@ EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscr
     input.style.height = height + 'px';
     input.style.opacity = 0;
 });
+EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
+    return Emval.toHandle(new Promise(async(resolve)=>{
+    var imid = Emval.toValue(id);
+    var vid = document.getElementById(imid);
+    if(vid === null){
+        vid = document.createElement('video');
+        vid.id = imid;
+        document.body.insertBefore(vid, document.getElementById('canvas'));
+    }
+	const vidData = FS.readFile(Emval.toValue(fs_path));
+    const vidBlob = new Blob([vidData.buffer], {type: 'video/mp4'});
+    //const vidSource = new (window.ManagedMediaSource || window.MediaSource)();
+    vid.src = URL.createObjectURL(vidBlob);
+    vid.style.position = 'fixed';
+    vid.style.width = 100 + 'px';
+    vid.style.height = 100 + 'px';
+    vid.disablePictureInPicture = true;
+    vid.defaultMuted = true;
+    //vidSource.addEventListener("sourceopen", async ()=>{
+    //    const sourceBuff = vidSource.addSourceBuffer("video/mp4; codecs=\"avc1.4d002a\"");
+    //    const arr = await vidBlob.arrayBuffer();
+    //    sourceBuff.appendBuffer(arr);
+    //    vid.play();
+    //});
+    vid.load();
+    vid.onloadeddata = ()=>{vid.play();resolve();};
+    }));
+});
+EM_JS(void, play_video, (emscripten::EM_VAL id), {
+    let imid = Emval.toValue(id);
+    let vid = document.getElementById(imid);
+    if(vid === null){
+        return;
+    }
+    vid.play();
+});
+EM_JS(void, pause_video, (emscripten::EM_VAL id), {
+    let imid = Emval.toValue(id);
+    let vid = document.getElementById(imid);
+    if(vid === null){
+        return;
+    }
+    vid.pause();
+});
+EM_JS(void, set_video_playback_progress, (emscripten::EM_VAL id, double seconds), {
+    let imid = Emval.toValue(id);
+    let vid = document.getElementById(imid);
+    if(vid === null){
+        return;
+    }
+    vid.currentTime = seconds;
+});
 EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
     return Emval.toHandle(new Promise(async(resolve)=>{
     let imid = Emval.toValue(id);
@@ -62,6 +114,9 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
     const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'});
     img.src = URL.createObjectURL(imgBlob);
     await img.decode();
+    img.style.position = 'fixed';
+    img.style.width = 1 + 'px';
+    img.style.height = 1 + 'px';
     resolve();}));
 });
 EM_JS(ImTextureID, render_image, (emscripten::EM_VAL id, ImTextureID texture), {
@@ -75,8 +130,17 @@ EM_JS(ImTextureID, render_image, (emscripten::EM_VAL id, ImTextureID texture), {
         canvas = document.createElement('canvas');
         canvas.id = imid + 'canvas';
         document.body.insertBefore(canvas, document.getElementById('canvas'));
-        canvas.width = img.width;
-        canvas.height = img.height;
+        if(img.nodeName == 'IMG'){
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+        }
+        else if(img.nodeName == 'VIDEO'){
+            canvas.width = img.videoWidth;
+            canvas.height = img.videoHeight;
+        }
+        canvas.style.position = 'fixed';
+        canvas.style.width = 1 + 'px';
+        canvas.style.height = 1 + 'px';
     }
     var ctx = canvas.getContext('2d', {willReadFrequently:true});
     ctx.drawImage(img, 0, 0);
@@ -240,12 +304,32 @@ void ImGui::Ext::RemoveWindowEvent(const char *anEvent, const char *aJSFunctionN
     remove_window_event(VAR_TO_JS(anEvent), VAR_TO_JS(aJSFunctionName));
 }
 
+void ImGui::Ext::LoadVideo(const char *anID, const char *anFSPath)
+{
+    VAR_FROM_JS(load_video(VAR_TO_JS(anID), VAR_TO_JS(anFSPath))).await();
+}
+
+void ImGui::Ext::PlayVideo(const char *anID)
+{
+    play_video(VAR_TO_JS(anID));
+}
+
+void ImGui::Ext::PauseVideo(const char *anID)
+{
+    pause_video(VAR_TO_JS(anID));
+}
+
+void ImGui::Ext::SetVideoProgress(const char *anID, uint aProgress)
+{
+    set_video_playback_progress(VAR_TO_JS(anID), (double)(aProgress) * .01);
+}
+
 void ImGui::Ext::LoadImage(const char *anID, const char *anFSPath)
 {
     VAR_FROM_JS(load_image(VAR_TO_JS(anID), VAR_TO_JS(anFSPath))).await();
 }
 
-bool ImGui::Ext::RenderImage(const char *anID, ImTextureID& aTexture)
+bool ImGui::Ext::RenderTexture(const char *anID, ImTextureID& aTexture)
 {
     aTexture = render_image(VAR_TO_JS(anID), aTexture);
     return aTexture != 0;
