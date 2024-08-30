@@ -24,9 +24,12 @@ public:
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
     static int GetPlaybackSpeed();
+    static bool GetIsPlaying();
     static bool GetIsWaitingToPlay(bool aShouldReset = false);
     static void SaveLocalBackup();
     static std::string GetPath();
+    static void AddEventListener(std::string anEvent, std::string aJSFunctonName);
+    static void RemoveEventListener(std::string anEvent, std::string aJSFunctonName);
 
 private:            // Is defined as public in AudioPlayback.cpp
     static inline AudioPlayback* ourInstance;
