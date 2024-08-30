@@ -12,6 +12,11 @@
 #define IM_LEFT_LABEL(widget, label, ...) ::ImGui::Text(label); ImGui::SameLine(); widget("##" label, __VA_ARGS__)
 
 typedef unsigned int uint;
+struct ImExtTexture
+{
+    ImTextureID myID;
+    ImTextureID myHandle;
+};
 namespace ImGui{
     namespace Ext{
         void CreateHTMLButton(const char* anID, const char* anEvent, const char* aJSFunctonName);
@@ -26,8 +31,9 @@ namespace ImGui{
         void PlayVideo(const char* anID);
         void PauseVideo(const char* anID);
         void SetVideoProgress(const char* anID, uint aProgress);
+        void SetVideoSpeed(const char* anID, int aSpeed);
         void LoadImage(const char* anID, const char* anFSPath);
-        bool RenderTexture(const char* anID, ImTextureID& aTexture);
+        bool RenderTexture(const char* anID, ImExtTexture& aTexture);
 
         void SetShortcutEvents();
 

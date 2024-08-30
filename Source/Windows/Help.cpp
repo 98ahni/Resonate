@@ -75,6 +75,14 @@ void HelpWindow::OnImGuiDraw()
     "A named effect will appear as its name in the Timing editor but when exporting will be translated to a command readable by ECHO.");
     EndTreeNode
 
+    StartTreeNode("Previewing");
+    ImGui::TextWrapped("In the Effects menu is the option to play a preview of your work. "
+    "The playback is controlled by the Audio window so that it stays in sync with any changes made. "
+    "This view is meant to check composition and sizing and will always play in the correct aspect ratio of 16:9. "
+    "(At this stage it's far from accurate to how ECHO will play the file.)"
+    "\nSupported file formats are *.jpg, *.png and *.mp4.");
+    EndTreeNode
+
     StartTreeNode("Settings");
     ImGui::TextWrapped("In View > Settings you can set an offset to counter headphone delay, save and load internal data or restore the app to default.");
     EndTreeNode

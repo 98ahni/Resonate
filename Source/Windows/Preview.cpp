@@ -1,4 +1,5 @@
 #include "Preview.h"
+#include <emscripten.h>
 #include <filesystem>
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
@@ -7,6 +8,24 @@
 #include "MainWindow.h"
 #include "AudioPlayback.h"
 #include "TimingEditor.h"
+
+extern"C" EMSCRIPTEN_KEEPALIVE void jsPlayPreviewVideo()
+{
+    ImGui::Ext::SetVideoSpeed("##PreviewBackground", AudioPlayback::GetPlaybackSpeed());
+    ImGui::Ext::PlayVideo("##PreviewBackground");
+}
+extern"C" EMSCRIPTEN_KEEPALIVE void jsPausePreviewVideo()
+{
+    ImGui::Ext::PauseVideo("##PreviewBackground");
+}
+extern"C" EMSCRIPTEN_KEEPALIVE void jsSetPreviewVideoProgress()
+{
+    ImGui::Ext::SetVideoProgress("##PreviewBackground", AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset());
+    if(AudioPlayback::GetIsPlaying())
+    {
+        ImGui::Ext::PlayVideo("##PreviewBackground");
+    }
+}
 
 PreviewWindow::PreviewWindow()
 {
@@ -41,12 +60,16 @@ PreviewWindow::PreviewWindow()
     if(myHasVideo)
     {
         ImGui::Ext::LoadVideo("##PreviewBackground", chosenBackground.data());
+        AudioPlayback::AddEventListener("play", "_jsPlayPreviewVideo");
+        AudioPlayback::AddEventListener("pause", "_jsPausePreviewVideo");
+        AudioPlayback::AddEventListener("seeked", "_jsSetPreviewVideoProgress");
+        jsSetPreviewVideoProgress();
     }
     else
     {
         ImGui::Ext::LoadImage("##PreviewBackground", chosenBackground.data());
     }
-    myTexture = 0;
+    myTexture = {};
     myPlaybackProgressLastFrame = 0;
     myNextAddLineIndex = 0;
     myShouldDebugDraw = false;
@@ -59,14 +82,27 @@ void PreviewWindow::OnImGuiDraw()
     ImVec2 windowSize = ImGui::GetWindowContentRegionMax();
     ImVec2 contentOffset = ImGui::GetWindowContentRegionMin();
     ImVec2 contentSize = {windowSize.x - contentOffset.x, windowSize.y - contentOffset.y};
-    if(ImGui::Ext::RenderTexture("##PreviewBackground", myTexture))
+    ImVec2 aspect = {0.5625f, 1.777777f};
+    if(contentSize.x < contentSize.y * aspect.y)
+    {
+        contentSize.y = contentSize.x * aspect.x;
+        ImGui::SetCursorPosY((windowSize.y - contentSize.y) * .5f);
+        contentOffset = {0, (windowSize.y - contentSize.y) * .5f};
+    }
+    else
+    {
+        contentSize.x = contentSize.y * aspect.y;
+        ImGui::SetCursorPosX((windowSize.x - contentSize.x) * .5f);
+        contentOffset = {(windowSize.x - contentSize.x) * .5f, 0};
+    }
+    if(ImGui::Ext::RenderTexture("##PreviewBackground", (ImExtTexture&)myTexture))
     {
         if(myHasVideo)
         {
             //ImGui::Ext::PlayVideo("##PreviewBackground");
             //ImGui::Ext::SetVideoProgress("##PreviewBackground", myPlaybackProgressLastFrame);
         }
-        ImGui::Image(myTexture, contentSize);
+        ImGui::Image(((ImExtTexture&)myTexture).myID, contentSize);
     }
 
     ImGui::PushFont(ourFont);
@@ -74,7 +110,7 @@ void PreviewWindow::OnImGuiDraw()
     int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
     float textScale = doc.GetFontSize() / 50;
     textScale *= contentSize.y / ((50 + ImGui::GetStyle().ItemSpacing.y) * 6);
-    ourFont->Scale = textScale == 0 ? .001f : textScale;
+    ourFont->Scale = (textScale < .001f ? .001f : textScale);
     uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
     if(playbackProgress < myPlaybackProgressLastFrame)
     {
@@ -89,8 +125,8 @@ void PreviewWindow::OnImGuiDraw()
     for(int lane = 0; lane < 7; lane++)
     {
         if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
-        ImGui::SetCursorPosY((laneHeight * lane) + ImGui::GetStyle().ItemSpacing.y);
-        float cursorStartX = (contentSize.x - (myLanes[lane].myWidth * textScale)) * .5f;
+        ImGui::SetCursorPosY((laneHeight * lane) + ImGui::GetStyle().ItemSpacing.y + contentOffset.y);
+        float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * textScale)) * .5f) + contentOffset.x;
         ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {

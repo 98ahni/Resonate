@@ -277,6 +277,11 @@ int AudioPlayback::GetPlaybackSpeed()
     return ourInstance->mySpeed;
 }
 
+bool AudioPlayback::GetIsPlaying()
+{
+    return ourInstance->myIsPlaying;
+}
+
 bool AudioPlayback::GetIsWaitingToPlay(bool aShouldReset)
 {
     bool output = ourInstance->myWaitingToPlay;
@@ -296,6 +301,16 @@ void AudioPlayback::SaveLocalBackup()
 std::string AudioPlayback::GetPath()
 {
     return ourInstance->myPath;
+}
+
+void AudioPlayback::AddEventListener(std::string anEvent, std::string aJSFunctonName)
+{
+    EM_ASM({global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true);}, VAR_TO_JS(anEvent), VAR_TO_JS(aJSFunctonName));
+}
+
+void AudioPlayback::RemoveEventListener(std::string anEvent, std::string aJSFunctonName)
+{
+    EM_ASM({global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true);}, VAR_TO_JS(anEvent), VAR_TO_JS(aJSFunctonName));
 }
 
 extern"C" EMSCRIPTEN_KEEPALIVE void jsUpdateAudioBuffer(emscripten::EM_VAL buffer_index)

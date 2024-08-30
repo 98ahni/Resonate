@@ -8,6 +8,12 @@ typedef unsigned int uint;
 struct ImFont;
 class PreviewWindow : public EditorWindow
 {
+    struct TextureProxy
+    {
+    private:
+        ImTextureID _id = 0;
+        ImTextureID _handle = 0;
+    };
     struct Lane
     {
         int myLine = -1;
@@ -30,7 +36,7 @@ private:
     bool RemoveOldLanes(uint someCurrentTime, uint aDelay);
     void Resetprogress();
 
-    ImTextureID myTexture;
+    TextureProxy myTexture;
     int myNextAddLineIndex;
     uint myPlaybackProgressLastFrame;
     Lane myLanes[7];
