@@ -73,14 +73,61 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
     }));
 });
 
-EM_JS(void, download_document, (emscripten::EM_VAL path), {
+EM_ASYNC_JS(emscripten::EM_VAL, open_document, (emscripten::EM_VAL save_folder, emscripten::EM_VAL mime_type, emscripten::EM_VAL mode), {
+    return Emval.toHandle(new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = Emval.toValue(mime_type);
+
+        input.addEventListener(
+            'cancel', () => {
+                resolve("");
+        });
+
+        input.addEventListener(
+            'change', () => {
+                let files = Array.from(input.files);
+                let promisedFiles = [];
+                let exDir = Emval.toValue(save_folder);
+                if(!FS.analyzePath(exDir).exists)
+                {
+                    FS.mkdir(exDir);
+                }
+                new Promise((resolveLoad) => {
+                    console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name);
+                    let reader = new FileReader();
+                    reader.onload = (event) => {
+                        const uint8_view = new Uint8Array(event.target.result);
+                        FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view);
+                        resolveLoad();
+                    };
+                    reader.readAsArrayBuffer(files[0]);
+                }).then(() => {
+                    resolve(exDir + '/' + files[0].name);
+                });
+                input.remove();
+            });
+        if ('showPicker' in HTMLInputElement.prototype)
+        {
+            input.showPicker();
+        }
+        else
+        {
+            input.click();
+        }
+    }));
+});
+
+EM_JS(void, download_document, (emscripten::EM_VAL path, emscripten::EM_VAL mime_type), {
 	const docPath = Emval.toValue(path);
+	const mime = Emval.toValue(mime_type);
     const docData = FS.readFile(docPath);
 	const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'});
 	const docURL = URL.createObjectURL(docBlob);
 
 	const link = document.createElement('a');
 	link.href = docURL;
+    link.type = mime;
 	link.download = docPath.split('/').pop();
 	document.body.appendChild(link);
     link.click();
@@ -110,19 +157,18 @@ EM_JS(void, clear_local_storage, (),
 std::string FileHandler::OpenFolder(const char* aMode)
 {
     std::string output = VAR_FROM_JS(open_directory(VAR_TO_JS(aMode))).await().as<std::string>();
-    printf(("It gets this far!" + output + "\n").c_str());
     return output + "/";
 }
 
 std::string FileHandler::OpenDocument(const char *aSaveFolder, const char *aFileType, const char *aMode)
 {
-    EM_ASM(alert("FileHandler::OpenDocument not implemented!"));
-    return std::string();
+    std::string output = VAR_FROM_JS(open_document(VAR_TO_JS(aSaveFolder), VAR_TO_JS(aFileType), VAR_TO_JS(aMode))).await().as<std::string>();
+    return output;
 }
 
-void FileHandler::DownloadDocument(const char *aPath)
+void FileHandler::DownloadDocument(const char *aPath, const char *aFileType)
 {
-    download_document(VAR_TO_JS(aPath));
+    download_document(VAR_TO_JS(aPath), VAR_TO_JS(aFileType));
 }
 
 void FileHandler::SyncLocalFS()

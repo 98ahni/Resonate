@@ -7,11 +7,11 @@
 #include <Defines.h>
 
 EM_JS(void, load_preferences_json, (), {
-    if(!FS.analyzePath('/local/.Resonate').exists)
+    if(!FS.analyzePath('/local/Prefs.Resonate').exists)
     {
-        FS.writeFile('/local/.Resonate', '{}');
+        FS.writeFile('/local/Prefs.Resonate', '{}');
     }
-    global_preferences = JSON.parse(FS.readFile('/local/.Resonate', { encoding: 'utf8' }));
+    global_preferences = JSON.parse(FS.readFile('/local/Prefs.Resonate', { encoding: 'utf8' }));
 }
 var global_preferences = {};
 );
@@ -21,7 +21,7 @@ EM_JS(void, print_preferences_json, (), {
 
 EM_ASYNC_JS(void, set_preference_value, (emscripten::EM_VAL key, emscripten::EM_VAL value), {
     global_preferences[Emval.toValue(key)] = Emval.toValue(value);
-    FS.writeFile('/local/.Resonate', JSON.stringify(global_preferences));
+    FS.writeFile('/local/Prefs.Resonate', JSON.stringify(global_preferences));
     await new Promise((resolve)=>{FS.syncfs(false, function (err) {
         if(err){
             alert('Unable to sync IndexDB!\n' + err);

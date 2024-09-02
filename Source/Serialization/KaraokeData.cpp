@@ -105,6 +105,10 @@ namespace Serialization
     }
     KaraokeToken &KaraokeDocument::GetTimedTokenAfter(size_t aLine, size_t aToken)
     {
+        if(aLine >= myTokens.size())
+        {
+            return ourNullToken;
+        }
         KaraokeToken& token = GetTokenAfter(aLine, aToken);
         if(IsNull(token))
         {
@@ -122,6 +126,10 @@ namespace Serialization
     }
     KaraokeToken &KaraokeDocument::GetTimedTokenBefore(size_t aLine, size_t aToken)
     {
+        if(aLine >= myTokens.size())
+        {
+            return ourNullToken;
+        }
         KaraokeToken& token = GetTokenBefore(aLine, aToken);
         if(IsNull(token))
         {
@@ -159,12 +167,13 @@ namespace Serialization
     }
     bool KaraokeDocument::IsEffectToken(KaraokeToken &aToken)
     {
-        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= -]+>"), true);
         return tags.size() != 0;
     }
     bool KaraokeDocument::ParseEffectToken(KaraokeToken &aToken)
     {
-        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        if(IsNull(aToken)){return false;}
+        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= -]+>"), true);
         if(tags.size() == 0)
         {
             return false;
@@ -198,6 +207,10 @@ namespace Serialization
                 if(colors.size() > 2) SetColor(FromHex(colors[1]), FromHex(colors[2]));
                 if(colors.size() > 1) SetColor(FromHex(colors[1]));
                 output = true;
+            }
+            else if(lowTag.starts_with("<line"))
+            {
+                // Comming soon
             }
             else if(lowTag.starts_with("<no effect>"))
             {

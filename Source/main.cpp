@@ -395,9 +395,6 @@ int main(){
     MainWindow_Init("Resonate", &_window);
     MainWindow_StyleVarsShadow();
     MainWindow_StyleColorsShadow();
-#if defined(GOOGLE_API_SECRET)
-    printf("Secrets work\n");
-#endif
     Serialization::Syllabify_Init();
     Serialization::LoadPrefs();
     Serialization::KaraokeDocument::Get().Load("/local", (
@@ -406,6 +403,13 @@ int main(){
 
     ImGui::Ext::SetShortcutEvents();
     
+    ImGui::GetIO().IniFilename = "/local/Layout.Resonate";
+    if(!std::filesystem::exists(ImGui::GetIO().IniFilename))
+    {
+        std::filesystem::copy_file("/imgui.ini", "/local/Layout.Resonate");
+        FileHandler::SyncLocalFS();
+    }
+
     WindowManager::Init();
     WindowManager::AddWindow<TextEditor>("Raw Text");
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
@@ -415,7 +419,6 @@ int main(){
     PreviewWindow::AddBackgroundElement("/local/");
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
-    // Vv For the video previewer. vV
     PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
     ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
     timingEditor->SetFont(timingFont);

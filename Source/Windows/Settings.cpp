@@ -2,8 +2,10 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "Settings.h"
+#include <filesystem>
 #include <emscripten.h>
 #include <emscripten/val.h>
+#include <Serialization/Preferences.h>
 #include "TimingEditor.h"
 #include "AudioPlayback.h"
 #include <Extensions/FileHandler.h>
@@ -40,19 +42,23 @@ EM_JS(emscripten::EM_VAL, get_audio_context_time, (), {
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadPreferences()
 {
-    FileHandler::OpenDocument("/local/", ".Resonate");
+    std::filesystem::copy(FileHandler::OpenDocument("/temp", ".Resonate"), "/local/Prefs.Resonate", std::filesystem::copy_options::overwrite_existing);
+    FileHandler::SyncLocalFS();
+    Serialization::LoadPrefs();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void SavePreferences()
 {
-    FileHandler::DownloadDocument("/local/.Resonate");
+    FileHandler::DownloadDocument("/local/Prefs.Resonate", ".Resonate");
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadLayout()
 {
-    FileHandler::OpenDocument(".", ".ini");         // Needs changing as it's currently just a preloaded file in /Assets/
+    std::filesystem::copy_file(FileHandler::OpenDocument("/temp", ".Resonate"), "/local/Layout.Resonate", std::filesystem::copy_options::overwrite_existing);
+    FileHandler::SyncLocalFS();
+    ImGui::LoadIniSettingsFromDisk("/local/Layout.Resonate");
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void SaveLayout()
 {
-    FileHandler::DownloadDocument("/imgui.ini");    // Needs changing as it's currently just a preloaded file in /Assets/
+    FileHandler::DownloadDocument("/local/Layout.Resonate", ".Resonate");
 }
 
 Settings::Settings()

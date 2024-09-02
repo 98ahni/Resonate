@@ -31,6 +31,7 @@ public:
 private:
     int AssembleLanes(float aWidth);
     bool FillBackLanes(int aLaneCount, float aScaledWidth);
+    int FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds);
     bool TryDisplayLanes();
     bool CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay);
     bool RemoveOldLanes(uint someCurrentTime, uint aDelay);
