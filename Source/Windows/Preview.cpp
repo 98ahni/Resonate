@@ -1,6 +1,7 @@
 #include "Preview.h"
 #include <emscripten.h>
 #include <filesystem>
+#include <StringTools.h>
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
 #include <Serialization/KaraokeData.h>
@@ -130,10 +131,10 @@ void PreviewWindow::OnImGuiDraw()
         ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {
-            if(!doc.GetToken(myLanes[lane].myLine, token).myHasStart)
-            {
-                continue;
-            }
+            //if(!doc.GetToken(myLanes[lane].myLine, token).myHasStart)
+            //{
+            //    continue;
+            //}
             uint start = doc.GetToken(myLanes[lane].myLine, token).myStartTime;
             uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
             //if(doc.GetToken(myLanes[lane].myLine, token).myValue.contains('<'))
@@ -297,18 +298,30 @@ bool PreviewWindow::FillBackLanes(int aLaneCount, float aScaledWidth)
     {
         return false;
     }
-    int foundPlace = -1;
-    for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
+    int foundPlace = FillBackLanesSetLine(aLaneCount, nextLineNeeds);
+    if(foundPlace == -3) // invalid
     {
-        foundPlace = i - nextLineNeeds;
-        for(int j = 0; j < nextLineNeeds; j++)
+        myNextAddLineIndex++;
+        return true;
+    }
+    if(foundPlace == -2) // set <line> not yet available
+    {
+        return false;
+    }
+    if(foundPlace == -1)
+    {
+        for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
         {
-            if(myBackLanes[foundPlace + j].myLine != -1)
+            foundPlace = i - nextLineNeeds;
+            for(int j = 0; j < nextLineNeeds; j++)
             {
-                foundPlace = -1;
+                if(myBackLanes[foundPlace + j].myLine != -1)
+                {
+                    foundPlace = -1;
+                }
             }
+            if(foundPlace != -1) {break;}
         }
-        if(foundPlace != -1) {break;}
     }
     if(foundPlace == -1)
     {
@@ -336,6 +349,42 @@ bool PreviewWindow::FillBackLanes(int aLaneCount, float aScaledWidth)
         return true;
     }
     return false;
+}
+
+// return value of -1 means <line> is not set, -2 means lanes not available and -3 means invalid index
+int PreviewWindow::FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    if(doc.GetToken(myNextAddLineIndex, 0).myValue.starts_with("<line"))
+    {
+        int foundPlace = -2;
+        int lane = std::stoi(StringTools::Split(doc.GetToken(myNextAddLineIndex, 0).myValue, std::regex("[-\\d]+"), true)[0]);
+        if(lane == 0 || lane <= -aLaneCount || lane >= aLaneCount)
+        {
+            return -3;
+        }
+        if(lane < 0)
+        {
+            foundPlace = (aLaneCount + lane) - (aNextLineNeeds - 1);
+        }
+        else if(lane > 0)
+        {
+            foundPlace = lane - 1;
+        }
+        if(foundPlace < 0 || aLaneCount < foundPlace + aNextLineNeeds)
+        {
+            return -3;
+        }
+        for(int j = 0; j < aNextLineNeeds && foundPlace != -2; j++)
+        {
+            if(myBackLanes[foundPlace + j].myLine != -1)
+            {
+                foundPlace = -2;
+            }
+        }
+        return foundPlace;
+    }
+    return -1;
 }
 
 bool PreviewWindow::TryDisplayLanes()
