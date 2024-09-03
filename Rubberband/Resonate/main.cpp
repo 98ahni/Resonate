@@ -76,7 +76,18 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
     hasStarted = false;
     for(int i = 0; i < channelNum; i++)
     {
-        channelArrays.push_back(emscripten::vecFromJSArray<float>(VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i)))));
+        emscripten::val floatArrayObject = VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i)));
+        unsigned int length = floatArrayObject["length"].as<unsigned int>();
+        std::vector<float> floatArray;
+        floatArray.resize(length);
+        auto memory = emscripten::val::module_property("HEAPU8")["buffer"];
+        auto memoryView = floatArrayObject["constructor"].new_(memory, reinterpret_cast<uintptr_t>(floatArray.data()), length);
+        memoryView.call<void>("set", floatArrayObject);
+        channelArrays.push_back(floatArray);
+        //std::string arr = VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i))).as<std::string>();
+        //channelArrays.push_back(std::vector<float>());
+        //channelArrays.back().assign((float*)arr.data(), ((float*)arr.data()) + arr.size() / 4);
+        //channelArrays.push_back(emscripten::vecFromJSArray<float>(VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i)))));
         channelStarts.push_back(channelArrays[channelArrays.size() - 1].data());
         numSamples = std::min(numSamples, channelArrays[channelArrays.size() - 1].size());
     }
