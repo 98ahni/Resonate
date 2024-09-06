@@ -352,7 +352,12 @@ bool ImGui::Ext::RenderTexture(const char *anID, ImExtTexture& aTexture)
     aTexture = render_image(VAR_TO_JS(anID), aTexture);
     return aTexture.myID != 0;
 }
-
+#define GetClipboardAction() ((ClipboardAction)(int)ImGui::GetIO().ClipboardUserData)
+#define SetClipboardAction(value) ImGui::GetIO().ClipboardUserData = (void*)(int)(value)
+enum ClipboardAction
+{
+    none, paste, copy, cut
+};
 EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
 	//const output = await new Promise((resolve)=>{navigator.clipboard.readText().then((text)=>{resolve(text);});});
 	var output = '';
@@ -361,7 +366,6 @@ EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
 		if (item.types.includes("text/plain")) {
     		let blob = await item.getType("text/plain");
     		output = await blob.text();
-			console.log(output);
 			//return Emval.toHandle(output);
 		}
 	}
@@ -370,11 +374,16 @@ EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
 extern"C" EMSCRIPTEN_KEEPALIVE void GetClipboardContent()
 {
 	static std::string output = "";
-	output = VAR_FROM_JS(get_clipboard_content()).as<std::string>().c_str();
-	printf("Pasting '%s'\n", output.data());
     if(ImGui::GetIO().WantTextInput)
     {
-        ImGui::GetIO().AddInputCharactersUTF8(output.data());
+	    output = VAR_FROM_JS(get_clipboard_content()).as<std::string>().c_str();
+        ImGui::GetCurrentContext()->ClipboardHandlerData.clear();
+        ImGui::GetCurrentContext()->ClipboardHandlerData.reserve(output.size());
+        for(int i = 0; i < output.size(); i++)
+        {
+            ImGui::GetCurrentContext()->ClipboardHandlerData.push_back(output[i]);
+        }
+        SetClipboardAction(paste);
     }
 }
 
@@ -386,16 +395,18 @@ EM_ASYNC_JS(void, set_clipboard_content, (emscripten::EM_VAL content), {
 });
 void SetClipboardContent(bool aShouldCut)
 {
-    ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
-    if(ImGui::GetIO().WantTextInput && state)
-    {
-        const char* content = std::string(state->TextA.Data).substr(state->GetSelectionStart(), state->GetSelectionEnd()).data();
-	    set_clipboard_content(VAR_TO_JS(content));
-        if(aShouldCut)
-        {
-            state->ClearSelection();
-        }
-    }
+    SetClipboardAction(aShouldCut ? ClipboardAction::cut : ClipboardAction::copy);
+    //ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
+    //if(ImGui::GetIO().WantTextInput && state)
+    //{
+    //    std::string content = std::string(state->TextA.Data).substr(state->GetSelectionStart(), state->GetSelectionEnd());
+    //    printf("copying: %s\n", content.data());
+	//    set_clipboard_content(VAR_TO_JS(content.c_str()));
+    //    if(aShouldCut)
+    //    {
+    //        state->ClearSelection();
+    //    }
+    //}
 }
 extern"C" EMSCRIPTEN_KEEPALIVE void CopyClipboardContent()
 {
@@ -408,9 +419,47 @@ extern"C" EMSCRIPTEN_KEEPALIVE void CutClipboardContent()
 
 void ImGui::Ext::SetShortcutEvents()
 {
+    ImGui::GetIO().SetClipboardTextFn = nullptr;
+    ImGui::GetIO().GetClipboardTextFn = nullptr;
     AddWindowEvent("copy", "_CopyClipboardContent");
     AddWindowEvent("cut", "_CutClipboardContent");
     AddWindowEvent("paste", "_GetClipboardContent");
+    ImGuiContextHook copyPaste;
+    copyPaste.Type = ImGuiContextHookType_NewFramePre;
+    copyPaste.Callback = [](ImGuiContext *ctx, ImGuiContextHook *hook){
+        if(GetClipboardAction() == ClipboardAction::paste && ImGui::GetCurrentContext()->ClipboardHandlerData.size() != 0)
+        {
+	        printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
+            ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
+            ImGui::GetIO().AddInputCharactersUTF8(ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
+            ImGui::GetCurrentContext()->ClipboardHandlerData.clear();
+            ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
+            if(state)
+            {
+                state->Edited = true;
+                state->Flags &= ImGuiInputTextFlags_CallbackEdit;
+            }
+            SetClipboardAction(none);
+        }
+        else if((GetClipboardAction() == ClipboardAction::copy || GetClipboardAction() == ClipboardAction::cut))
+        {
+            ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
+            if(ImGui::GetIO().WantTextInput && state && state->HasSelection())
+            {
+                std::string content = "";
+                content.resize(state->TextA.size());
+                std::memcpy(content.data(), state->TextA.Data + state->GetSelectionStart(), state->GetSelectionEnd() - state->GetSelectionStart());
+                printf("copying: '%s' from '%s' | valid: %s\n", content.data(), state->TextA.Data, state->TextAIsValid ? "true" : "false");
+	            set_clipboard_content(VAR_TO_JS(content.c_str()));
+                if(GetClipboardAction() == ClipboardAction::cut)
+                {
+                    state->ClearSelection();
+                }
+            }
+            SetClipboardAction(none);
+        }
+    };
+    ImGui::AddContextHook(ImGui::GetCurrentContext(), &copyPaste);
 }
 
 bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha)

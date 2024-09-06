@@ -274,9 +274,7 @@ void MainWindow_Init(const char* name, void** outWindow)
 	{
 		ImGui_ImplGlfw_InstallCallbacks(window);
 	}
-	// Moved to imguiExt.cpp
-	//io.GetClipboardTextFn = &GetClipboardContent;
-	//io.SetClipboardTextFn = &SetClipboardContent;
+	
 }
 
 void MainWindow_NewFrame(void* window)
