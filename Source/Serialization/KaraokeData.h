@@ -68,6 +68,7 @@ namespace Serialization
         void MoveLineUp(size_t aLineToMove);
         void DuplicateLine(size_t aLine);
         void RemoveLine(size_t aLine);
+        void ShiftTimings(int aTimeShift);
         const KaraokeAliasMap& GetEffectAliases();
 
         void Clear();

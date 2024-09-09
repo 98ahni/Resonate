@@ -18,9 +18,12 @@ private:
         LocalTab
     };
 
+    void ShiftTimingsPopupDraw();
     void DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect* anEffect);
     void ApplyEdit(Serialization::KaraokeEffect* anEffect);
 
+    bool myShiftTimingsPopupOpen;
+    int myShiftTimingsValue;
     TabIndex myCurrentTab;
     std::string myEditingEffect;
     std::string myNewEffectName;
