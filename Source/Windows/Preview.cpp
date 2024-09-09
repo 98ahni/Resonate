@@ -416,6 +416,7 @@ bool PreviewWindow::TryDisplayLanes()
 
 bool PreviewWindow::CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay)
 {
+    if(myLanes[aLane].myLine == -1) {return false;}
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     if(doc.GetToken(myLanes[aLane].myLine, 0).myHasStart)
     {
