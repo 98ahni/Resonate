@@ -421,6 +421,9 @@ void ImGui::Ext::SetShortcutEvents()
 {
     ImGui::GetIO().SetClipboardTextFn = nullptr;
     ImGui::GetIO().GetClipboardTextFn = nullptr;
+    ImGui::GetIO().GetClipboardTextFn = [](void* data)->const char*{
+            return ImGui::GetCurrentContext()->ClipboardHandlerData.Data;
+        };
     AddWindowEvent("copy", "_CopyClipboardContent");
     AddWindowEvent("cut", "_CutClipboardContent");
     AddWindowEvent("paste", "_GetClipboardContent");
@@ -432,13 +435,13 @@ void ImGui::Ext::SetShortcutEvents()
 	        printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
             ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
             ImGui::GetIO().AddInputCharactersUTF8(ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
-            ImGui::GetCurrentContext()->ClipboardHandlerData.clear();
             ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
             if(state)
             {
                 state->Edited = true;
                 state->Flags &= ImGuiInputTextFlags_CallbackEdit;
             }
+            //ImGui::GetCurrentContext()->ClipboardHandlerData.clear();
             SetClipboardAction(none);
         }
         else if((GetClipboardAction() == ClipboardAction::copy || GetClipboardAction() == ClipboardAction::cut))
@@ -577,6 +580,45 @@ bool ImGui::Ext::ToggleSwitch(const char *aLabel, bool *aValue)
 
     IMGUI_TEST_ENGINE_ITEM_INFO(id, aLabel, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (*aValue ? ImGuiItemStatusFlags_Checked : 0));
     return pressed;
+}
+
+bool ImGui::Ext::StepInt(const char *aLabel, int& aValue, int aSmallStep, int aLargeStep)
+{
+    bool output = false;
+    ImGui::Text(aLabel);
+    ImGui::SameLine();
+    ImGui::PushID(aLabel);
+    if(ImGui::Button("<<", {DPI_SCALED(40), 0}))
+    {
+        output = true;
+        aValue -= aLargeStep;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("<", {DPI_SCALED(40), 0}))
+    {
+        output = true;
+        aValue -= aSmallStep;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(DPI_SCALED(60));
+    if(ImGui::DragInt("##StepInt", &aValue))
+    {
+        output = true;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button(">", {DPI_SCALED(40), 0}))
+    {
+        output = true;
+        aValue += aSmallStep;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button(">>", {DPI_SCALED(40), 0}))
+    {
+        output = true;
+        aValue += aLargeStep;
+    }
+    ImGui::PopID();
+    return output;
 }
 
 bool ImGui::Ext::TabMenu(ImVector<std::string> someLabels, int *aValue)

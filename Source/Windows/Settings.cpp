@@ -211,33 +211,9 @@ void Settings::OnImGuiDraw()
 
 int Settings::DrawLatencyWidget()
 {
-    ImGui::Text("Latency (cs)");
-    ImGui::SameLine();
     TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
     int latency = timing->GetLatencyOffset();
-    if(ImGui::Button("<<", {DPI_SCALED(40), 0}))
-    {
-        latency -= 5;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("<", {DPI_SCALED(40), 0}))
-    {
-        latency -= 1;
-    }
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(DPI_SCALED(60));
-    ImGui::DragInt("##LatencyOffset", &latency);
-    ImGui::SameLine();
-    if(ImGui::Button(">", {DPI_SCALED(40), 0}))
-    {
-        latency += 1;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button(">>", {DPI_SCALED(40), 0}))
-    {
-        latency += 5;
-    }
-    if(latency != timing->GetLatencyOffset())
+    if(ImGui::Ext::StepInt("Latency (cs)", latency, 1, 5))
     {
         timing->SetLatencyOffset(latency);
     }
