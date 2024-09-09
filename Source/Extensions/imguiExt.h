@@ -42,6 +42,7 @@ namespace ImGui{
         void ClearColor();
 
         bool ToggleSwitch(const char* aLabel, bool* aValue);
+        bool StepInt(const char *aLabel, int& aValue, int aSmallStep, int aLargeStep);
         bool TabMenu(ImVector<std::string> someLabels, int* aValue);
     }
 }
