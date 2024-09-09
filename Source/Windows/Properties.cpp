@@ -27,12 +27,14 @@ PropertiesWindow::PropertiesWindow()
     }
     myCurrentTab = DocumentTab;
     myEditingEffect = "";
+    myShiftTimingsPopupOpen = false;
 }
 
 void PropertiesWindow::OnImGuiDraw()
 {
     ImGui::SetNextWindowSize({DPI_SCALED(450), DPI_SCALED(350)}, ImGuiCond_FirstUseEver);
     Gui_Begin();
+    ShiftTimingsPopupDraw();
     // Two tabs; Document and Local
     // "Document" contains the Echo headers and the singers used in the document.
     // "Local" contains a list of singers saved to the /.Resonate file.
@@ -72,6 +74,12 @@ void PropertiesWindow::OnImGuiDraw()
         ImGui::Text("Font Size"); ImGui::SameLine(); if(ImGui::DragInt("##FontSize", (int*)&doc.myFontSize)){doc.MakeDirty();}
         ImGui::TextDisabled("ECHO will show %i lines.", doc.myFontSize <= 43 ? 7 : doc.myFontSize <= 50 ? 6 : 5);
         if(ImGui::Ext::ToggleSwitch("Use Direct Text", nullptr)){doc.MakeDirty();}
+        if(ImGui::Button("Shift Timings"))
+        {
+            ImGui::OpenPopup("Shift Timings");
+            myShiftTimingsValue = 0;
+            myShiftTimingsPopupOpen = true;
+        }
     }
     auto& aliases = myCurrentTab == LocalTab ? myLocalEffectAliases : doc.myEffectAliases;
     for(auto&[alias, effect] : aliases)
@@ -109,7 +117,46 @@ void PropertiesWindow::OnImGuiDraw()
     Gui_End();
 }
 
-void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect* anEffect)
+void PropertiesWindow::ShiftTimingsPopupDraw()
+{
+    if(ImGui::BeginPopupModal("Shift Timings", &myShiftTimingsPopupOpen))
+    {
+        //ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        if(ImGui::Ext::StepInt("Offset (cs)", myShiftTimingsValue, 1, 10))
+        {
+            Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+            Serialization::KaraokeToken& token = doc.GetToken(0, 0);
+            if(doc.IsNull(token) || !token.myHasStart)
+            {
+                token = doc.GetTimedTokenAfter(0, 0);
+            }
+            if(((int)token.myStartTime) < -myShiftTimingsValue)
+            {
+                myShiftTimingsValue = -(int)token.myStartTime;
+            }
+        }
+        ImGui::Dummy({0, DPI_SCALED(5)});
+        ImGui::Text("If the syllables light up too early, enter a positive offset.");
+        ImGui::Text("If the syllables light up after the audio, enter a negative offset.");
+        ImGui::Dummy({0, DPI_SCALED(10)});
+        if(ImGui::Button("Shift"))
+        {
+            Serialization::KaraokeDocument::Get().ShiftTimings(myShiftTimingsValue);
+            Serialization::KaraokeDocument::Get().MakeDirty();
+            myShiftTimingsValue = 0;
+            myShiftTimingsPopupOpen = false;
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Cancel"))
+        {
+            myShiftTimingsValue = 0;
+            myShiftTimingsPopupOpen = false;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect *anEffect)
 {
     // Name, Value, [Preview], EditBtn, [SaveBtn], DeleteBtn
     bool editingThis = myEditingEffect == anEffectAlias;

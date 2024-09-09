@@ -274,6 +274,20 @@ namespace Serialization
         myTokens.erase(myTokens.begin() + aLine);
     }
 
+    void KaraokeDocument::ShiftTimings(int aTimeShift)
+    {
+        for(KaraokeLine& line : myTokens)
+        {
+            for(KaraokeToken& token : line)
+            {
+                if(token.myHasStart)
+                {
+                    token.myStartTime += ((int)token.myStartTime) < -aTimeShift ? -(int)token.myStartTime : aTimeShift;
+                }
+            }
+        }
+    }
+
     const KaraokeAliasMap& KaraokeDocument::GetEffectAliases()
     {
         return myEffectAliases;
