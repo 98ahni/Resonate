@@ -36,6 +36,35 @@ EM_ASYNC_JS(emscripten::EM_VAL, init_file_system, (), {
 	}));
 });
 
+EM_JS(MainWindow_Platform, get_runtime_platform, (), {
+	const userAgent = window.navigator.userAgent;
+  	const platform = window.navigator?.userAgentData?.platform || window.navigator.platform;
+  	const macosPlatforms = ["Macintosh", "MacIntel", "MacPPC", "Mac68K"];
+  	const windowsPlatforms = ["Win32", "Win64", "Windows", "WinCE"];
+  	const iosPlatforms = ["iPhone", "iPad", "iPod"];
+
+  	if (macosPlatforms.indexOf(platform) !== -1) {
+    	return MAINWINDOW_PLATFORM_MAC;
+  	} else if (iosPlatforms.indexOf(platform) !== -1) {
+    	return MAINWINDOW_PLATFORM_IOS;
+  	} else if (windowsPlatforms.indexOf(platform) !== -1) {
+    	return MAINWINDOW_PLATFORM_WINDOWS;
+  	} else if (/Android/.test(userAgent)) {
+    	return MAINWINDOW_PLATFORM_ANDROID;
+  	} else if (/Linux/.test(platform)) {
+    	return MAINWINDOW_PLATFORM_LINUX;
+  	}
+	return MAINWINDOW_PLATFORM_UNSPECIFIED;
+}
+const MAINWINDOW_PLATFORM_UNSPECIFIED = 0;
+const MAINWINDOW_PLATFORM_WINDOWS = 1;
+const MAINWINDOW_PLATFORM_MAC = 2;
+const MAINWINDOW_PLATFORM_IOS = 4;
+const MAINWINDOW_PLATFORM_ANDROID = 8;
+const MAINWINDOW_PLATFORM_LINUX = 16;
+const MAINWINDOW_PLATFORM_APPLE = 6;
+);
+
 EM_JS(bool, get_has_web_gpu, (), { 
   return navigator.gpu !== undefined;
 	});
@@ -216,6 +245,8 @@ void MainWindow_Init(const char* name, void** outWindow)
 	}
 	glfwShowWindow(window);
 
+	MainWindow::RuntimePlatform = get_runtime_platform();
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -223,6 +254,7 @@ void MainWindow_Init(const char* name, void** outWindow)
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;		// Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;		// Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;			// Enable Docking
+	io.ConfigMacOSXBehaviors = MainWindow_IsPlatform(MainWindow_Apple);
 
 	// For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
 	// You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
@@ -406,6 +438,11 @@ void MainWindow_RenderFrame()
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
+}
+
+bool MainWindow_IsPlatform(MainWindow_Platform platform)
+{
+    return MainWindow::RuntimePlatform & platform;
 }
 
 void MainWindow_SetName(std::string name)
