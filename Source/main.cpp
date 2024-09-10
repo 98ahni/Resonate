@@ -71,7 +71,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::E
 extern "C" EMSCRIPTEN_KEEPALIVE void LogInToGoogle()
 {
     float expiration = Serialization::Preferences::HasKey("Google/ExpirationDate") ? Serialization::Preferences::GetDouble("Google/ExpirationDate") : 0;
-    GoogleDrive::RequestToken(EM_ASM_DOUBLE({return Date.now();}) >= expiration, "GoogleTokenExpirationCallback");
+    GoogleDrive::RequestToken(EM_ASM_DOUBLE({return Date.now();}) >= expiration, "_GoogleTokenExpirationCallback");
     //GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
     g_closeFileTab = true;
 }
