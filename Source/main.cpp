@@ -137,8 +137,11 @@ void loop(void* window){
             {
                 if(!g_hasGoogleAcc)
                 {
-                    ImGui::MenuItem("Log In With Google");
-                    ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
+                    if(ImGui::MenuItem("Log In With Google"))
+                    {
+                        LogInToGoogle();
+                    }
+                    //ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
                 }
                 else
                 {
