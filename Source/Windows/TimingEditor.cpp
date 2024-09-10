@@ -38,6 +38,11 @@ void TimingEditor::OnImGuiDraw()
         if(myFont) ImGui::PushFont(myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
         {
+            if(false)
+            {
+                // This is for displaying the image tag
+                continue;
+            }
             for(int token = 0; token < doc.GetLine(line).size(); token++)
             {
                 if(!myDisableInput && myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
@@ -47,7 +52,11 @@ void TimingEditor::OnImGuiDraw()
                 {
                     doc.ParseEffectToken(doc.GetToken(line, token));
                 }
-                if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - myLatencyOffset, doc.GetLine(line)[token].myHasStart))
+                if(doc.GetToken(line, token).myValue.starts_with("<line"))
+                {
+                    // Draw <line> widget
+                }
+                else if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - myLatencyOffset, doc.GetLine(line)[token].myHasStart))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey_ModShift))
                     {
