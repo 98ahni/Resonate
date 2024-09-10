@@ -419,9 +419,25 @@ extern"C" EMSCRIPTEN_KEEPALIVE void CutClipboardContent()
 
 void ImGui::Ext::SetShortcutEvents()
 {
-    ImGui::GetIO().SetClipboardTextFn = nullptr;
-    ImGui::GetIO().GetClipboardTextFn = nullptr;
+    SetClipboardAction(none);
+    ImGui::GetIO().SetClipboardTextFn = [](void* data, const char* text){
+            //ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
+            //if(ImGui::GetIO().WantTextInput && state && state->HasSelection())
+            //{
+            //    std::string content = "";
+            //    content.resize(state->TextA.size());
+            //    int start = (state->GetSelectionStart() < state->GetSelectionEnd() ? state->GetSelectionStart() : state->GetSelectionEnd());
+            //    int end = (state->GetSelectionStart() > state->GetSelectionEnd() ? state->GetSelectionStart() : state->GetSelectionEnd());
+            //    std::memcpy(content.data(), state->TextA.Data + start, end - start);
+            //    printf("copying: '%s' | valid: %s\n", content.data(), state->TextAIsValid ? "true" : "false");
+	        //    set_clipboard_content(VAR_TO_JS(content.c_str()));
+            //}
+            SetClipboardAction(none);
+        };
     ImGui::GetIO().GetClipboardTextFn = [](void* data)->const char*{
+	        printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
+            ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
+            SetClipboardAction(none);
             return ImGui::GetCurrentContext()->ClipboardHandlerData.Data;
         };
     AddWindowEvent("copy", "_CopyClipboardContent");
@@ -432,17 +448,17 @@ void ImGui::Ext::SetShortcutEvents()
     copyPaste.Callback = [](ImGuiContext *ctx, ImGuiContextHook *hook){
         if(GetClipboardAction() == ClipboardAction::paste && ImGui::GetCurrentContext()->ClipboardHandlerData.size() != 0)
         {
-	        printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
-            ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
-            ImGui::GetIO().AddInputCharactersUTF8(ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
-            ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
-            if(state)
-            {
-                state->Edited = true;
-                state->Flags &= ImGuiInputTextFlags_CallbackEdit;
-            }
-            //ImGui::GetCurrentContext()->ClipboardHandlerData.clear();
-            SetClipboardAction(none);
+	        //printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
+            //ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
+            //ImGui::GetIO().AddInputCharactersUTF8(ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
+            //ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
+            //if(state)
+            //{
+            //    state->Edited = true;
+            //    state->Flags &= ImGuiInputTextFlags_CallbackEdit;
+            //}
+            ////ImGui::GetCurrentContext()->ClipboardHandlerData.clear();
+            //SetClipboardAction(none);
         }
         else if((GetClipboardAction() == ClipboardAction::copy || GetClipboardAction() == ClipboardAction::cut))
         {
@@ -451,15 +467,17 @@ void ImGui::Ext::SetShortcutEvents()
             {
                 std::string content = "";
                 content.resize(state->TextA.size());
-                std::memcpy(content.data(), state->TextA.Data + state->GetSelectionStart(), state->GetSelectionEnd() - state->GetSelectionStart());
-                printf("copying: '%s' from '%s' | valid: %s\n", content.data(), state->TextA.Data, state->TextAIsValid ? "true" : "false");
+                int start = (state->GetSelectionStart() < state->GetSelectionEnd() ? state->GetSelectionStart() : state->GetSelectionEnd());
+                int end = (state->GetSelectionStart() > state->GetSelectionEnd() ? state->GetSelectionStart() : state->GetSelectionEnd());
+                std::memcpy(content.data(), state->TextA.Data + start, end - start);
 	            set_clipboard_content(VAR_TO_JS(content.c_str()));
-                if(GetClipboardAction() == ClipboardAction::cut)
-                {
-                    state->ClearSelection();
-                }
+                printf("copying: '%s' | valid: %s\n", content.data(), state->TextAIsValid ? "true" : "false");
+                //if(GetClipboardAction() == ClipboardAction::cut)
+                //{
+                //    state->ClearSelection();
+                //}
             }
-            SetClipboardAction(none);
+            //SetClipboardAction(none);
         }
     };
     ImGui::AddContextHook(ImGui::GetCurrentContext(), &copyPaste);
