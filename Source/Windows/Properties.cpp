@@ -212,7 +212,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
     }
     ImGui::SetCursorPos(ImVec2(size.x - DPI_SCALED(30), cursorPos.y));
     ImGui::PushFont(MainWindow::Font);
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-10, -10));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(DPI_SCALED(-10), DPI_SCALED(-10)));
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.5f, .35f));
     if(ImGui::Button(((myCurrentTab == LocalTab ? "+##" : "x##") + anEffectAlias).data(), ImVec2(DPI_SCALED(20), DPI_SCALED(20))))
     {
