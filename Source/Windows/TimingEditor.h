@@ -29,6 +29,7 @@ public:
 
 private:
     void DrawTextMarker();
+    void DrawLineTagWidget(int aLine, int aToken);
 
     static inline TimingEditor* ourInstance;
 
