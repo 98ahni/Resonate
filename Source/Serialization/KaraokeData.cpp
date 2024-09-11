@@ -210,7 +210,8 @@ namespace Serialization
             }
             else if(lowTag.starts_with("<line"))
             {
-                // Comming soon
+                // Always handled by the calling function
+                output = true;
             }
             else if(lowTag.starts_with("<no effect>"))
             {
@@ -411,8 +412,8 @@ namespace Serialization
             return;
         }
         myTokens.push_back(std::vector<KaraokeToken>());
-        ReplaceEffectsInLine(aLine);
-        std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])?(.(?!(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])))*.?"), true);
+        ReplaceEffectsInLine(aLine);                                             // Match tag once OR          time code       0 to 1 times|any|stop when tag OR  time code       |     any amount of times
+        std::vector<std::string> rawTokens = StringTools::Split(aLine, std::regex("(((\\<.\\>){1})|(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\])){0,1}(.(?!((\\<)|(\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]))))*.?"), true);
         for(int i = 0; i < rawTokens.size(); i++)
         {
             std::vector<std::string> timeStamp = StringTools::Split(rawTokens[i], std::regex("\\[[0-9]{2}:[0-9]{2}:[0-9]{2}\\]"), true);

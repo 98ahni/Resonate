@@ -7,6 +7,7 @@
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
 #include <Defines.h>
+#include <StringTools.h>
 
 TimingEditor& TimingEditor::Get()
 {
@@ -54,7 +55,7 @@ void TimingEditor::OnImGuiDraw()
                 }
                 if(doc.GetToken(line, token).myValue.starts_with("<line"))
                 {
-                    // Draw <line> widget
+                    DrawLineTagWidget(line, token);
                 }
                 else if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - myLatencyOffset, doc.GetLine(line)[token].myHasStart))
                 {
@@ -395,4 +396,63 @@ void TimingEditor::DrawTextMarker()
     {
         ImGui::SetScrollHereY(1);
     }
+}
+
+void TimingEditor::DrawLineTagWidget(int aLine, int aToken)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    float cursorY = ImGui::GetCursorPosY() + DPI_SCALED(5);
+    ImGui::SetCursorPosY(cursorY);
+    ImGui::Text("<line#");
+    ImGui::SameLine();
+    int lane = std::stoi(StringTools::Split(doc.GetToken(aLine, aToken).myValue, std::regex("[-\\d]+"), true)[0]);
+    bool isNegative = lane < 0;
+    bool changed = false;
+    ImGui::SetNextItemWidth(DPI_SCALED(20));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), 0});
+    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
+    if(ImGui::DragInt(("##" + std::to_string(aLine)).data(), &lane, 1, 2))
+    {
+        changed = true;
+    }
+    ImGui::PopStyleVar();
+    ImGui::SameLine();
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(DPI_SCALED(-10), DPI_SCALED(-20)));
+    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.55f, .47f));
+    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
+    ImGui::BeginGroup();
+    float height = DPI_SCALED(ImGui::GetTextLineHeightWithSpacing()) * .5f;
+    if(ImGui::Button("+", {height, height}))
+    {
+        lane++;
+        changed = true;
+    }
+    if(ImGui::Button("-", {height, height}))
+    {
+        lane--;
+        changed = true;
+    }
+    ImGui::EndGroup();
+    ImGui::PopStyleVar(3);
+    if(changed)
+    {
+        int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
+        if(lane <= -lanesShown)
+        {
+            lane = lanesShown - 1;
+        }
+        if(lane >= lanesShown)
+        {
+            lane = -(lanesShown - 1);
+        }
+        if(lane == 0)
+        {
+            lane = isNegative ? 1 : -1;
+        }
+        doc.GetToken(aLine, aToken).myValue = "<line#" + std::to_string(lane) + ">";
+        doc.MakeDirty();
+    }
+    ImGui::SameLine();
+    ImGui::Text(">");
 }

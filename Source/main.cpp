@@ -238,19 +238,35 @@ void loop(void* window){
             ImGui::BeginDisabled();
             ImGui::SeparatorText("Line Effects");
             ImGui::EndDisabled();
+            TimingEditor& timing = TimingEditor::Get();
+            bool hasLineTag = doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("<line");
+            bool hasNoEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<no effect>");
             if(ImGui::BeginMenu("Image", false))
             {
                 // This menu should be active if there are any images in the project.
                 ImGui::EndMenu();
             }
-            if(ImGui::MenuItem("No Effect", "<no effect>"))
+            if(ImGui::MenuItem("No Effect", "<no effect>", hasNoEffectTag))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.GetLine(timing->GetMarkedLine()).insert(doc.GetLine(timing->GetMarkedLine()).begin(), {"<no effect>", false, 0});
+                if(hasNoEffectTag)
+                {
+                    doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0));
+                }
+                else
+                {
+                    doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0), {"<no effect>", false, 0});
+                }
             }
-            if(ImGui::MenuItem("Display Line", "<line#>", nullptr, false))
+            if(ImGui::MenuItem("Display Line", "<line#>", hasLineTag))
             {
-                // This should display buttons in the Timing Editor for changing the value.
+                if(hasLineTag)
+                {
+                    doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin());
+                }
+                else
+                {
+                    doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin(), {"<line#1>", false, 0});
+                }
             }
             ImGui::BeginDisabled();
             ImGui::SeparatorText("Text Effects");
