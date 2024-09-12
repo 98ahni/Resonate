@@ -6,6 +6,7 @@
 #include <Serialization/Preferences.h>
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
+#include "Preview.h"
 #include <Defines.h>
 #include <StringTools.h>
 
@@ -39,14 +40,19 @@ void TimingEditor::OnImGuiDraw()
         if(myFont) ImGui::PushFont(myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
         {
-            if(false)
-            {
-                // This is for displaying the image tag
-                continue;
-            }
             for(int token = 0; token < doc.GetLine(line).size(); token++)
             {
                 if(!myDisableInput && myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
+                if(doc.GetToken(line, 0).myValue.starts_with("image "))
+                {
+                    Serialization::KaraokeLine& nextLine = doc.GetValidLineAfter(line);
+                    if(nextLine.size() == 1 && doc.IsPauseToken(nextLine[0]))
+                    {
+                        line++;
+                    }
+                    ImGui::SameLine();
+                    break;
+                }
                 uint start = doc.GetLine(line)[token].myHasStart ? doc.GetLine(line)[token].myStartTime : 0;
                 uint end = doc.GetTokenAfter(line, token).myHasStart ? doc.GetTokenAfter(line, token).myStartTime : start;
                 if(doc.GetToken(line, token).myValue.contains('<'))
@@ -335,7 +341,7 @@ void TimingEditor::CheckMarkerIsSafe(bool aIsMovingRight)
     {
         if(aIsMovingRight)
         {
-            myMarkedToken != doc.GetLine(myMarkedLine).size() - 1 ? MoveMarkerRight() : MoveMarkerLeft();
+            myMarkedToken != doc.GetLine(myMarkedLine).size() - 1 || (doc.GetLine(myMarkedLine).size() == 1 && (myMarkedLine < doc.GetData().size() - 1)) ? MoveMarkerRight() : MoveMarkerLeft();
         }
         else
         {
@@ -396,6 +402,28 @@ void TimingEditor::DrawTextMarker()
     {
         ImGui::SetScrollHereY(1);
     }
+}
+
+void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    std::string timeStr = StringTools::Split(doc.GetToken(aLine, 0).myValue, " ")[1];
+    std::string imgPath = doc.GetToken(aLine, 0).myValue.substr(("image " + timeStr + " ").size());
+    ImExtTexture texture = PreviewWindow::GetBackgroundImage(imgPath);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + DPI_SCALED(5));
+    ImVec2 drawPos = ImGui::GetCursorPos();
+    ImGui::SetCursorPosY(drawPos.y + DPI_SCALED(19));
+    if(!myDisableInput && myMarkedLine == aLine && myMarkedToken == aToken) DrawTextMarker();
+    uint imgTime = doc.GetTimedTokenAfter(aLine, 0).myStartTime;
+    ImGui::Ext::TimedSyllable("<               >", imgTime, imgTime + (uint)(std::stof(timeStr) * 100), AudioPlayback::GetPlaybackProgress() - myLatencyOffset, true);
+    ImGui::SetCursorPos(drawPos);
+    ImGui::SetCursorPosX(DPI_SCALED(15));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), DPI_SCALED(4)});
+    if(texture.myID != 0 && ImGui::ImageButton("##fjdkls", texture.myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()}))
+    {
+        // Open popup
+    }
+    ImGui::PopStyleVar();
 }
 
 void TimingEditor::DrawLineTagWidget(int aLine, int aToken)
