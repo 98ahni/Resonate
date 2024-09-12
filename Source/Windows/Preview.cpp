@@ -33,7 +33,7 @@ PreviewWindow::PreviewWindow()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     myHasVideo = false;
     std::string chosenBackground = "";
-    for(std::string& path : ourBackgroundPaths)
+    for(auto& [path, tex] : ourBackgrounds)
     {
         std::filesystem::path fpath = path;
         if(fpath.extension() == ".mp4")
@@ -49,7 +49,7 @@ PreviewWindow::PreviewWindow()
     }
     if(chosenBackground == "")
     {
-        if(ourBackgroundPaths.size() != 0)
+        if(ourBackgrounds.size() != 0)
         {
             chosenBackground = ourBackgroundPaths[rand() % ourBackgroundPaths.size()];
         }
@@ -70,7 +70,7 @@ PreviewWindow::PreviewWindow()
     {
         ImGui::Ext::LoadImage("##PreviewBackground", chosenBackground.data());
     }
-    myTexture = {};
+    myTexturePath = chosenBackground;
     myPlaybackProgressLastFrame = 0;
     myNextAddLineIndex = 0;
     myShouldDebugDraw = false;
@@ -96,14 +96,14 @@ void PreviewWindow::OnImGuiDraw()
         ImGui::SetCursorPosX((windowSize.x - contentSize.x) * .5f);
         contentOffset = {(windowSize.x - contentSize.x) * .5f, 0};
     }
-    if(ImGui::Ext::RenderTexture("##PreviewBackground", (ImExtTexture&)myTexture))
+    if(ImGui::Ext::RenderTexture("##PreviewBackground", ourBackgrounds[myTexturePath]))
     {
         if(myHasVideo)
         {
             //ImGui::Ext::PlayVideo("##PreviewBackground");
             //ImGui::Ext::SetVideoProgress("##PreviewBackground", myPlaybackProgressLastFrame);
         }
-        ImGui::Image(((ImExtTexture&)myTexture).myID, contentSize);
+        ImGui::Image(ourBackgrounds[myTexturePath].myID, contentSize);
     }
 
     ImGui::PushFont(ourFont);
@@ -209,7 +209,24 @@ void PreviewWindow::AddBackgroundElement(std::string aBGPath)
         return;
     }
     ourBackgroundPaths.push_back(aBGPath);
+    ourBackgrounds[aBGPath] = {0};
     SaveBackgroundElementsToLocal();
+}
+
+ImExtTexture PreviewWindow::GetBackgroundImage(std::string aBGPath)
+{
+    if(!ourBackgrounds.contains(aBGPath) || ourBackgrounds[aBGPath].myID == 0)
+    {
+        ImGui::Ext::LoadImage(("##" + aBGPath).data(), aBGPath.data());
+        ourBackgrounds[aBGPath] = {};
+        ImGui::Ext::RenderTexture(("##" + aBGPath).data(), ourBackgrounds[aBGPath]);
+    }
+    return ourBackgrounds[aBGPath];
+}
+
+const std::vector<std::string>& PreviewWindow::GetBackgroundElementPaths()
+{
+    return ourBackgroundPaths;
 }
 
 void PreviewWindow::ClearBackgroundElements()
@@ -220,6 +237,7 @@ void PreviewWindow::ClearBackgroundElements()
         std::filesystem::remove("/local/" + std::filesystem::path(path).filename().string(), ferr);
     }
     //FileHandler::SyncLocalFS();
+    ourBackgrounds.clear();
     ourBackgroundPaths.clear();
 }
 
@@ -470,7 +488,7 @@ void PreviewWindow::Resetprogress()
 
 void PreviewWindow::SaveBackgroundElementsToLocal()
 {
-    for(std::string& path : ourBackgroundPaths)
+    for(auto& [path, tex] : ourBackgrounds)
     {
         if(!path.contains("local"))
         {

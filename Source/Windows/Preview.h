@@ -2,18 +2,13 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "Base/EditorWindow.h"
+#include <Extensions/imguiExtTexture.h>
+#include <unordered_map>
 
-typedef void* ImTextureID;
 typedef unsigned int uint;
 struct ImFont;
 class PreviewWindow : public EditorWindow
 {
-    struct TextureProxy
-    {
-    private:
-        ImTextureID _id = 0;
-        ImTextureID _handle = 0;
-    };
     struct Lane
     {
         int myLine = -1;
@@ -26,6 +21,8 @@ public:
     void OnImGuiDraw() override;
     static void SetFont(ImFont* aFont);
     static void AddBackgroundElement(std::string aBGPath);
+    static ImExtTexture GetBackgroundImage(std::string aBGPath);
+    static const std::vector<std::string>& GetBackgroundElementPaths();
     static void ClearBackgroundElements();
 
 private:
@@ -37,7 +34,7 @@ private:
     bool RemoveOldLanes(uint someCurrentTime, uint aDelay);
     void Resetprogress();
 
-    TextureProxy myTexture;
+    std::string myTexturePath;
     int myNextAddLineIndex;
     uint myPlaybackProgressLastFrame;
     Lane myLanes[7];
@@ -49,4 +46,5 @@ private:
     static void SaveBackgroundElementsToLocal();
     static inline ImFont* ourFont;
     inline static std::vector<std::string> ourBackgroundPaths;
+    static inline std::unordered_map<std::string, ImExtTexture> ourBackgrounds;
 };

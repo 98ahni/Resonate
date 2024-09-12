@@ -241,9 +241,39 @@ void loop(void* window){
             TimingEditor& timing = TimingEditor::Get();
             bool hasLineTag = doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("<line");
             bool hasNoEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<no effect>");
-            if(ImGui::BeginMenu("Image", false))
+            if(ImGui::BeginMenu("Image", PreviewWindow::GetBackgroundElementPaths().size() != 0))
             {
-                // This menu should be active if there are any images in the project.
+                int imgCount = PreviewWindow::GetBackgroundElementPaths().size();
+                for(int i = 0; i < imgCount; i++)
+                {
+                    if(ImGui::MenuItem(PreviewWindow::GetBackgroundElementPaths()[i].data()))
+                    {
+                        uint imgTime = doc.GetThisOrNextTimedToken(timing.GetMarkedLine(), timing.GetMarkedToken()).myStartTime;
+                        for(int line = timing.GetMarkedLine(); line < doc.GetData().size(); line++)
+                        {
+                            Serialization::KaraokeToken& compToken = doc.GetThisOrNextTimedToken(line, 0);
+                            if(doc.IsNull(compToken)) {break;}
+                            if(compToken.myStartTime >= imgTime)
+                            {
+                                if(doc.GetValidLineBefore(line)[0].myValue.starts_with("image "))
+                                {
+                                    line--;
+                                }
+                                Serialization::KaraokeToken newToken = {};
+                                newToken.myValue = "";
+                                newToken.myHasStart = true;
+                                newToken.myStartTime = imgTime;
+                                doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                                newToken.myValue = "image 0.2 " + PreviewWindow::GetBackgroundElementPaths()[i];
+                                newToken.myHasStart = false;
+                                newToken.myStartTime = 0;
+                                doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                                doc.MakeDirty();
+                                break;
+                            }
+                        }
+                    }
+                }
                 ImGui::EndMenu();
             }
             if(ImGui::MenuItem("No Effect", "<no effect>", hasNoEffectTag))
@@ -275,9 +305,8 @@ void loop(void* window){
             {
                 if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data()))
                 {
-                    TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                    Serialization::KaraokeToken& token = doc.GetToken(timing->GetMarkedLine(), timing->GetMarkedToken());
-                    doc.GetLine(timing->GetMarkedLine()).insert(doc.GetLine(timing->GetMarkedLine()).begin() + timing->GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
+                    Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
+                    doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
                 }
             }
             ImGui::EndMenu();
