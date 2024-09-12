@@ -145,6 +145,28 @@ namespace Serialization
         }
         return GetTimedTokenBefore(aLine - 1, 0);
     }
+    KaraokeToken &KaraokeDocument::GetThisOrNextTimedToken(size_t aLine, size_t aToken)
+    {
+        if(GetToken(aLine, aToken).myHasStart)
+        {
+            return GetToken(aLine, aToken);
+        }
+        else
+        {
+            return GetTimedTokenAfter(aLine, aToken);
+        }
+    }
+    KaraokeToken &KaraokeDocument::GetThisOrPreviousTimedToken(size_t aLine, size_t aToken)
+    {
+        if(GetToken(aLine, aToken).myHasStart)
+        {
+            return GetToken(aLine, aToken);
+        }
+        else
+        {
+            return GetTimedTokenBefore(aLine, aToken);
+        }
+    }
     bool KaraokeDocument::IsPauseToken(size_t aLine, size_t aToken)
     {
         return IsPauseToken(GetToken(aLine, aToken));
