@@ -104,9 +104,11 @@ let hasUnlinkedFiles = false;
 
 if(REBUILD_Rubberband || (!SKIP_RubberbandCompile && lastCompileTime < fs.statSync(projectPath + 'Rubberband/Resonate/main.cpp').mtimeMs))
 {
+    console.log('Compiling Rubberband');
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/single/RubberBandSingle.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/Rubberband.o\"', {env: process.env})));//
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/Resonate/main.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/RubberbandMain.o\"', {env: process.env})));//
     //hasUnlinkedFiles = true;
+    console.log('Linking Rubberband');
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'bin/intermediate/RubberbandMain.o' + '\" \"' + projectPath + 'bin/intermediate/Rubberband.o' + '\" -o \"' + projectPath + 'bin/public/plugins/RubberBand.js\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lidbfs.js -sWASM=0 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=10MB', {env: process.env})));
 }
 //objectFiles.push(projectPath + 'bin/intermediate/Rubberband.o');
@@ -115,6 +117,7 @@ imguiFiles.forEach(file => {
     {
         if(REBUILD_Imgui || (!SKIP_ImguiCompile && lastCompileTime < fs.statSync(projectPath + 'imgui/' + file).mtimeMs))
         {
+            console.log('Compiling "' + projectPath + 'imgui/' + file + '"');
             console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'imgui/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -D\"NO_FREETYPE\" -c ' + (RELEASE_Build ? '-O2' : '-g -O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;
         }
@@ -126,6 +129,7 @@ sourceFiles.forEach(file => {
     {
         if(REBUILD_Source || (!SKIP_SourceCompile && lastCompileTime < fs.statSync(projectPath + 'Source/' + file).mtimeMs))
         {
+            console.log('Compiling "' + projectPath + 'Source/' + file + '"');
             console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Source/' + file + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"' + API_SECRETS.join('\" -D\"') + '\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Source/\" -I\"' + projectPath + 'imgui/\" -I\"' + projectPath + 'imgui/backends/\" -I\"' + projectPath + 'Rubberband/rubberband/\" ' + (RELEASE_Build ? '' : '-g') + ' -D\"NO_FREETYPE\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/' + path.basename(file, path.extname(file)) + '.o\"', {env: process.env})));//
             hasUnlinkedFiles = true;
         }
@@ -134,8 +138,11 @@ sourceFiles.forEach(file => {
 });
 if((!SKIP_Linking && hasUnlinkedFiles) || FORCE_Linking)
 {
+    console.log('Linking Resonate');
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
 }
+
+console.log('Done!');
 
 // run the `ls` command using exec
 //exec('emcc \"/workspaces/Resonate/Source/main.cpp\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++-header -I\"/workspaces/Resonate/\" -I\"/workspaces/Resonate/imgui/\" -I\"/workspaces/Resonate/imgui/backends/\" -g -x c++ -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -O0 -std=c++20 -o /workspaces/Resonate/bin/Resonate.html --bind -O0 --shell-file \"/workspaces/Resonate/.vscode/imgui_shell.html\" -g3', (err, output) => {
