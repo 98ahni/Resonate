@@ -5,6 +5,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include "imguiExt.h"
+#include "imguiExtTexture.h"
 #include <emscripten.h>
 #include <emscripten/val.h>
 #include <imgui.h>
