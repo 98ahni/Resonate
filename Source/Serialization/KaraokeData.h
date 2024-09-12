@@ -53,6 +53,8 @@ namespace Serialization
         KaraokeToken& GetTokenBefore(size_t aLine, size_t aToken);
         KaraokeToken& GetTimedTokenAfter(size_t aLine, size_t aToken);
         KaraokeToken& GetTimedTokenBefore(size_t aLine, size_t aToken);
+        KaraokeToken& GetThisOrNextTimedToken(size_t aLine, size_t aToken);
+        KaraokeToken& GetThisOrPreviousTimedToken(size_t aLine, size_t aToken);
         bool IsPauseToken(size_t aLine, size_t aToken);
         bool IsPauseToken(KaraokeToken& aToken);
         uint GetFontSize();
