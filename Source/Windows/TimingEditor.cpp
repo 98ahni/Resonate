@@ -36,6 +36,7 @@ void TimingEditor::OnImGuiDraw()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNavInputs | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
+        DrawImagePopup();
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
         if(myFont) ImGui::PushFont(myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
@@ -45,6 +46,7 @@ void TimingEditor::OnImGuiDraw()
                 if(!myDisableInput && myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
                 if(doc.GetToken(line, 0).myValue.starts_with("image "))
                 {
+                    DrawImageTagWidget(line, token);
                     Serialization::KaraokeLine& nextLine = doc.GetValidLineAfter(line);
                     if(nextLine.size() == 1 && doc.IsPauseToken(nextLine[0]))
                     {
@@ -404,12 +406,100 @@ void TimingEditor::DrawTextMarker()
     }
 }
 
+void TimingEditor::DrawImagePopup()
+{
+    if(ImGui::BeginPopupModal("Edit Image", &myIsImagePopupOpen))
+    {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+        SetInputUnsafe(true);
+        ImGui::BeginChild("##choose image", {0, DPI_SCALED(200)}, ImGuiChildFlags_Border);
+        for(const std::string& path : PreviewWindow::GetBackgroundElementPaths())
+        {
+            ImGui::BeginChild(("##" + path).data(), {0, 0}, ImGuiChildFlags_AutoResizeY | (myImagePopupSelectedPath == path ? ImGuiChildFlags_Border : 0));
+            ImGui::Image(PreviewWindow::GetBackgroundTexture(path).myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()});
+            ImGui::SameLine();
+            ImGui::Text(path.data());
+            ImGui::EndChild();
+            if(ImGui::IsItemClicked())
+            {
+                myImagePopupSelectedPath = path;
+            }
+        }
+        ImGui::EndChild();
+        ImGui::Ext::StepInt("Shift Start Time (cs)", myImagePopupFadeStartShift, 1, 10);
+        ImGui::Ext::StepInt("Fade Duration (cs)", myImagePopupFadeDuration, 1, 10);
+        ImGui::PushStyleColor(ImGuiCol_Button, 0xFFFF0F2F);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, 0xFFFF1F5F);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xFFFF0F4F);
+        if(ImGui::Button("Remove"))
+        {
+            myIsImagePopupOpen = false;
+            doc.RemoveLine(myImagePopupEditLine);
+            if(doc.GetLine(myImagePopupEditLine).size() == 1 && doc.IsPauseToken(myImagePopupEditLine, 0))
+            {
+                doc.RemoveLine(myImagePopupEditLine);
+            }
+            doc.MakeDirty();
+        }
+        ImGui::SameLine();
+        ImGui::PopStyleColor(3);
+        if(ImGui::Button("Apply"))
+        {
+            myIsImagePopupOpen = false;
+            uint imgTime = 0;
+            if(doc.GetLine(myImagePopupEditLine + 1).size() == 1 && doc.IsPauseToken(myImagePopupEditLine + 1, 0))
+            {
+                imgTime = doc.GetToken(myImagePopupEditLine + 1, 0).myStartTime;
+            }
+            else
+            {
+                imgTime = doc.GetThisOrNextTimedToken(myImagePopupEditLine + 1, 0).myStartTime;
+                imgTime = imgTime < 200 ? 0 : (imgTime - 200);
+            }
+            doc.RemoveLine(myImagePopupEditLine);
+            if(doc.GetLine(myImagePopupEditLine).size() == 1 && doc.IsPauseToken(myImagePopupEditLine, 0))
+            {
+                doc.RemoveLine(myImagePopupEditLine);
+            }
+            imgTime = (int)imgTime < -myImagePopupFadeStartShift ? 0 : (imgTime + myImagePopupFadeStartShift);
+            for(int line = 0; line < doc.GetData().size(); line++)
+            {
+                Serialization::KaraokeToken& compToken = doc.GetThisOrNextTimedToken(line, 0);
+                if(doc.IsNull(compToken)) {break;}
+                if(compToken.myStartTime >= imgTime)
+                {
+                    if(doc.GetValidLineBefore(line)[0].myValue.starts_with("image "))
+                    {
+                        line--;
+                    }
+                    Serialization::KaraokeToken newToken = {};
+                    newToken.myValue = "";
+                    newToken.myHasStart = true;
+                    newToken.myStartTime = imgTime;
+                    doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                    newToken.myValue = "image " + std::to_string(((float)myImagePopupFadeDuration * .01f)) + " " + myImagePopupSelectedPath;
+                    newToken.myHasStart = false;
+                    newToken.myStartTime = 0;
+                    doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                    doc.MakeDirty();
+                    break;
+                }
+            }
+        }
+        ImGui::EndPopup();
+        if(!myIsImagePopupOpen)
+        {
+            SetInputUnsafe(false);
+        }
+    }
+}
+
 void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     std::string timeStr = StringTools::Split(doc.GetToken(aLine, 0).myValue, " ")[1];
     std::string imgPath = doc.GetToken(aLine, 0).myValue.substr(("image " + timeStr + " ").size());
-    ImExtTexture texture = PreviewWindow::GetBackgroundImage(imgPath);
+    ImExtTexture texture = PreviewWindow::GetBackgroundTexture(imgPath);
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + DPI_SCALED(5));
     ImVec2 drawPos = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(drawPos.y + DPI_SCALED(19));
@@ -421,7 +511,12 @@ void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), DPI_SCALED(4)});
     if(texture.myID != 0 && ImGui::ImageButton("##fjdkls", texture.myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()}))
     {
-        // Open popup
+        myImagePopupEditLine = aLine;
+        myImagePopupSelectedPath = imgPath;
+        myImagePopupFadeStartShift = 0;
+        myImagePopupFadeDuration = (int)(std::stof(timeStr) * 100);
+        myIsImagePopupOpen = true;
+        ImGui::OpenPopup("Edit Image");
     }
     ImGui::PopStyleVar();
 }

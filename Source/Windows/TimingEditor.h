@@ -29,6 +29,7 @@ public:
 
 private:
     void DrawTextMarker();
+    void DrawImagePopup();
     void DrawImageTagWidget(int aLine, int aToken);
     void DrawLineTagWidget(int aLine, int aToken);
 
@@ -42,4 +43,10 @@ private:
     bool myInputIsUnsafe = false;
     bool myDisableInput = false;
     int myLatencyOffset = 0;
+
+    bool myIsImagePopupOpen = false;
+    int myImagePopupEditLine = 0;
+    std::string myImagePopupSelectedPath;
+    int myImagePopupFadeStartShift = 0;
+    int myImagePopupFadeDuration = 0;
 };
