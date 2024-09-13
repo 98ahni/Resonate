@@ -117,6 +117,7 @@ namespace Serialization
         double myLastEditTime = 0;
 
         KaraokeData myTokens;
+        bool myUseDirectText = false;
         uint myFontSize = 50;
         bool myHasBaseStartColor = false;
         uint myBaseStartColor = 0x0038F97C;

@@ -318,6 +318,7 @@ namespace Serialization
 
     void KaraokeDocument::Clear()
     {
+        myUseDirectText = false;
         myFontSize = 50;
         myHasBaseStartColor = false;
         myBaseStartColor = 0x0038F97C;
@@ -401,6 +402,11 @@ namespace Serialization
     }
     void KaraokeDocument::ParseLine(std::string aLine)
     {
+        if(aLine.starts_with("include spec10 - MKCdirekt.txt"))
+        {
+            myUseDirectText = true;
+            return;
+        }
         if(aLine.starts_with("font"))
         {
             myFontSize = std::stoi(aLine.substr(5));
@@ -486,6 +492,10 @@ namespace Serialization
     {
         std::string headers;
         std::string output;
+        if(myUseDirectText)
+        {
+            headers += "include spec10 - MKCdirekt.txt\n";
+        }
         if(myFontSize != 50)
         {
             headers += (std::stringstream() << "font " << myFontSize << "\n").str();
