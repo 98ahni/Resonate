@@ -60,7 +60,7 @@ PreviewWindow::PreviewWindow()
     }
     if(myHasVideo)
     {
-        ImGui::Ext::LoadVideo("##PreviewBackground", chosenBackground.data());
+        ImGui::Ext::LoadVideo("##PreviewBackground", ("/local/" + chosenBackground).data());
         AudioPlayback::AddEventListener("play", "_jsPlayPreviewVideo");
         AudioPlayback::AddEventListener("pause", "_jsPausePreviewVideo");
         AudioPlayback::AddEventListener("seeked", "_jsSetPreviewVideoProgress");
@@ -68,9 +68,10 @@ PreviewWindow::PreviewWindow()
     }
     else
     {
-        ImGui::Ext::LoadImage("##PreviewBackground", chosenBackground.data());
+        ImGui::Ext::LoadImage("##PreviewBackground", ("/local/" + chosenBackground).data());
     }
     myTexturePath = chosenBackground;
+    myBackgroundQueue = std::deque<ImageFade>();
     myPlaybackProgressLastFrame = 0;
     myNextAddLineIndex = 0;
     myShouldDebugDraw = false;
@@ -88,31 +89,26 @@ void PreviewWindow::OnImGuiDraw()
     {
         contentSize.y = contentSize.x * aspect.x;
         ImGui::SetCursorPosY((windowSize.y - contentSize.y) * .5f);
-        contentOffset = {0, (windowSize.y - contentSize.y) * .5f};
+        contentOffset = ImGui::GetCursorPos();
     }
     else
     {
         contentSize.x = contentSize.y * aspect.y;
         ImGui::SetCursorPosX((windowSize.x - contentSize.x) * .5f);
-        contentOffset = {(windowSize.x - contentSize.x) * .5f, 0};
-    }
-    if(ImGui::Ext::RenderTexture("##PreviewBackground", ourBackgrounds[myTexturePath]))
-    {
-        if(myHasVideo)
-        {
-            //ImGui::Ext::PlayVideo("##PreviewBackground");
-            //ImGui::Ext::SetVideoProgress("##PreviewBackground", myPlaybackProgressLastFrame);
-        }
-        ImGui::Image(ourBackgrounds[myTexturePath].myID, contentSize);
+        contentOffset = ImGui::GetCursorPos();
     }
 
     ImGui::PushFont(ourFont);
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
-    float textScale = doc.GetFontSize() / 50;
+    float textScale = (float)doc.GetFontSize() / 50.f;
     textScale *= contentSize.y / ((50 + ImGui::GetStyle().ItemSpacing.y) * 6);
     ourFont->Scale = DPI_UNSCALED((textScale < .001f ? .001f : textScale));
     uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
+    if(AudioPlayback::GetPlaybackProgress() < TimingEditor::Get().GetLatencyOffset())
+    {
+        playbackProgress = 0;
+    }
     if(playbackProgress < myPlaybackProgressLastFrame)
     {
         Resetprogress();
@@ -120,8 +116,27 @@ void PreviewWindow::OnImGuiDraw()
     myPlaybackProgressLastFrame = playbackProgress;
     // ^^ Setup
 
-	float laneHeight = ImGui::GetTextLineHeightWithSpacing();
+    ImGui::SetCursorPos(contentOffset);
+    if(myBackgroundQueue.size() != 0 && playbackProgress > myBackgroundQueue.front().myEndTime)
+    {
+        myTexturePath = myBackgroundQueue.front().myImagePath;
+        ImGui::Ext::LoadImage("##PreviewBackground", ("/local/" + myTexturePath).data());
+        myBackgroundQueue.pop_front();
+    }
+    if(ImGui::Ext::RenderTexture("##PreviewBackground", ourBackgrounds[myTexturePath]))
+    {
+        ImGui::Image(ourBackgrounds[myTexturePath].myID, contentSize);
+    }
+    if(myBackgroundQueue.size() != 0)
+    {
+        ImGui::SetCursorPos(contentOffset);
+        float start = myBackgroundQueue.front().myStartTime;
+        float end = myBackgroundQueue.front().myEndTime;
+        float alpha = remap(clamp(playbackProgress, start, end), start, end, 0.f, 1.f);
+        ImGui::Image(GetBackgroundTexture(myBackgroundQueue.front().myImagePath).myID, contentSize, {0, 0}, {1, 1}, {1, 1, 1, alpha});
+    }
 
+	float laneHeight = ImGui::GetTextLineHeightWithSpacing();
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
     for(int lane = 0; lane < 7; lane++)
     {
@@ -131,20 +146,14 @@ void PreviewWindow::OnImGuiDraw()
         ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {
-            //if(!doc.GetToken(myLanes[lane].myLine, token).myHasStart)
-            //{
-            //    continue;
-            //}
             uint start = doc.GetToken(myLanes[lane].myLine, token).myStartTime;
             uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
-            //if(doc.GetToken(myLanes[lane].myLine, token).myValue.contains('<'))
             if(!doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)))
             {
                 ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, true);
                 ImGui::SameLine();
             }
         }
-        //myLanes[lane].myWidth = ImGui::GetCursorPosX() - cursorStartX;
         if(lane >= lanesShown) {break;}
         ImGui::NewLine();
         if(lane == 7 || myLanes[lane].myLine != myLanes[lane + 1].myLine)
@@ -179,6 +188,13 @@ void PreviewWindow::OnImGuiDraw()
         {
             ImGui::Text("%i | %i\t\t| %i\t\t| %i", lane + 1, myLanes[lane].myLine, myBackLanes[lane].myLine, myAssemblyLanes[lane].myLine);
         }
+        if(myBackgroundQueue.size() != 0)
+        {
+            ImGui::Text("");
+            float start = myBackgroundQueue.front().myStartTime;
+            float end = myBackgroundQueue.front().myEndTime;
+            ImGui::Text("Next fade: s: %i | e: %i | a: %f", myBackgroundQueue.front().myStartTime, myBackgroundQueue.front().myEndTime, remap(clamp(playbackProgress, start, end), start, end, 0.f, 1.f));
+        }
     }
 
     Gui_End();
@@ -208,17 +224,26 @@ void PreviewWindow::AddBackgroundElement(std::string aBGPath)
         }
         return;
     }
+    if(!aBGPath.contains("local"))
+    {
+        std::filesystem::copy(aBGPath, "/local", std::filesystem::copy_options::overwrite_existing);
+    }
+    aBGPath = std::filesystem::path(aBGPath).filename().string();
     ourBackgroundPaths.push_back(aBGPath);
     ourBackgrounds[aBGPath] = {0};
-    SaveBackgroundElementsToLocal();
+    //SaveBackgroundElementsToLocal();
 }
 
-ImExtTexture PreviewWindow::GetBackgroundImage(std::string aBGPath)
+ImExtTexture PreviewWindow::GetBackgroundTexture(std::string aBGPath, bool aShouldReRender)
 {
     if(!ourBackgrounds.contains(aBGPath) || ourBackgrounds[aBGPath].myID == 0)
     {
-        ImGui::Ext::LoadImage(("##" + aBGPath).data(), aBGPath.data());
+        ImGui::Ext::LoadImage(("##" + aBGPath).data(), ("/local/" + aBGPath).data());
         ourBackgrounds[aBGPath] = {};
+        ImGui::Ext::RenderTexture(("##" + aBGPath).data(), ourBackgrounds[aBGPath]);
+    }
+    else if(aShouldReRender)
+    {
         ImGui::Ext::RenderTexture(("##" + aBGPath).data(), ourBackgrounds[aBGPath]);
     }
     return ourBackgrounds[aBGPath];
@@ -235,10 +260,21 @@ void PreviewWindow::ClearBackgroundElements()
     {
         std::error_code ferr;
         std::filesystem::remove("/local/" + std::filesystem::path(path).filename().string(), ferr);
+        ImGui::Ext::DeleteTexture(("##" + path).data(), ourBackgrounds[path]);
     }
     //FileHandler::SyncLocalFS();
     ourBackgrounds.clear();
     ourBackgroundPaths.clear();
+}
+
+void PreviewWindow::QueueImageFade()
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    std::string timeStr = StringTools::Split(doc.GetToken(myNextAddLineIndex, 0).myValue, " ")[1];
+    std::string imgPath = doc.GetToken(myNextAddLineIndex, 0).myValue.substr(("image " + timeStr + " ").size());
+    uint startTime = doc.GetTimedTokenAfter(myNextAddLineIndex, 0).myStartTime;
+    myBackgroundQueue.push_back({imgPath, startTime, startTime + (uint)(std::stof(timeStr) * 100)});
+    //myBackgroundQueue.push_back({"", 0, 0});
 }
 
 int PreviewWindow::AssembleLanes(float aWidth)
@@ -246,6 +282,7 @@ int PreviewWindow::AssembleLanes(float aWidth)
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
 	if(doc.GetData().size() <= myNextAddLineIndex) {return -1;}
 	if(doc.GetLine(myNextAddLineIndex).size() == 0) {return 0;}
+    if(doc.GetToken(myNextAddLineIndex, 0).myValue.starts_with("image ")) {QueueImageFade(); return 0;}
 	if(!doc.GetLine(myNextAddLineIndex).back().myHasStart) {return 0;}
     if(myAssemblyLanes[0].myLine == myNextAddLineIndex)
     {

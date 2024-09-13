@@ -353,6 +353,31 @@ bool ImGui::Ext::RenderTexture(const char *anID, ImExtTexture& aTexture)
     aTexture = render_image(VAR_TO_JS(anID), aTexture);
     return aTexture.myID != 0;
 }
+bool ImGui::Ext::DeleteTexture(const char *anID, ImExtTexture &aTexture)
+{
+    if(aTexture.myID == 0)
+    {
+        return false;
+    }
+	if(MainWindow::HasWebGPU)
+    {
+        if(aTexture.myID)
+        {
+            wgpuTextureViewRelease((WGPUTextureView)aTexture.myID);
+        }
+        if(aTexture.myHandle)
+        {
+            wgpuTextureRelease((WGPUTexture)aTexture.myHandle);
+        }
+    }
+    else
+    {
+        glDeleteTextures(1, (GLuint*)(intptr_t*)&aTexture.myID);
+    }
+    DestroyHTMLElement((std::string(anID) + "canvas").c_str());
+    DestroyHTMLElement(anID);
+    return true;
+}
 #define GetClipboardAction() ((ClipboardAction)(int)ImGui::GetIO().ClipboardUserData)
 #define SetClipboardAction(value) ImGui::GetIO().ClipboardUserData = (void*)(int)(value)
 enum ClipboardAction
@@ -491,7 +516,7 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     float start = aStartTime;
     float end = anEndTime;
     ImVec2 timeStartPos = {pos.x, pos.y + (size.y * 1.1f)};
-    ImVec2 timeEndPos = {remap(clamp(aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.1f)};
+    ImVec2 timeEndPos = {remap(clamp((float)aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.1f)};
     if(aCurrentTime < start)
     {
         uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();

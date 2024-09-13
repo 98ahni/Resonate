@@ -4,6 +4,7 @@
 #include "Base/EditorWindow.h"
 #include <Extensions/imguiExtTexture.h>
 #include <unordered_map>
+#include <deque>
 
 typedef unsigned int uint;
 struct ImFont;
@@ -16,16 +17,23 @@ class PreviewWindow : public EditorWindow
         int myEndToken = -1;
         float myWidth = 0;
     };
+    struct ImageFade
+    {
+        std::string myImagePath;
+        uint myStartTime;
+        uint myEndTime;
+    };
 public:
     PreviewWindow();
     void OnImGuiDraw() override;
     static void SetFont(ImFont* aFont);
     static void AddBackgroundElement(std::string aBGPath);
-    static ImExtTexture GetBackgroundImage(std::string aBGPath);
+    static ImExtTexture GetBackgroundTexture(std::string aBGPath, bool aShouldReRender = false);
     static const std::vector<std::string>& GetBackgroundElementPaths();
     static void ClearBackgroundElements();
 
 private:
+    void QueueImageFade();
     int AssembleLanes(float aWidth);
     bool FillBackLanes(int aLaneCount, float aScaledWidth);
     int FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds);
@@ -37,6 +45,7 @@ private:
     std::string myTexturePath;
     int myNextAddLineIndex;
     uint myPlaybackProgressLastFrame;
+    std::deque<ImageFade> myBackgroundQueue;
     Lane myLanes[7];
     Lane myBackLanes[7];
     Lane myAssemblyLanes[7];

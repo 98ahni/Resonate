@@ -41,6 +41,7 @@ bool g_hasGoogleAcc = false;
 bool g_fileTabOpenedThisFrame = true; // Only use in File tab!
 bool g_closeFileTab = false;
 bool g_closeAboutTab = false;
+bool g_shouldDeleteOnLoad = false;
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
@@ -49,6 +50,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
     if(folderPath == "") return;
     Serialization::KaraokeDocument::Get().Load(folderPath);
     AudioPlayback::SetPlaybackFile(folderPath);
+    PreviewWindow::ClearBackgroundElements();
     PreviewWindow::AddBackgroundElement(folderPath);
     FileHandler::SyncLocalFS();
     g_closeFileTab = true;
@@ -77,6 +79,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LogInToGoogle()
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL aFSPath, emscripten::EM_VAL aFileID)
 {
+    if(g_shouldDeleteOnLoad)
+    {
+        PreviewWindow::ClearBackgroundElements();
+        g_shouldDeleteOnLoad = false;
+    }
     std::filesystem::path path = VAR_FROM_JS(aFSPath).as<std::string>();
     std::string id = VAR_FROM_JS(aFileID).as<std::string>();
     printf("Loaded project '%s' with file id: %s\n", path.string().data(), id.data());
@@ -97,6 +104,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL 
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
 {
+    g_shouldDeleteOnLoad = false;
     Serialization::KaraokeDocument::Get().AutoSave();
     AudioPlayback::SaveLocalBackup();
     FileHandler::SyncLocalFS();
@@ -150,6 +158,7 @@ void loop(void* window){
                 ImGui::Separator();
                 if(ImGui::MenuItem("Open Project", 0, false, g_hasGoogleAcc))
                 {
+                    g_shouldDeleteOnLoad = true;
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
                 }
                 if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
@@ -239,9 +248,17 @@ void loop(void* window){
             ImGui::SeparatorText("Line Effects");
             ImGui::EndDisabled();
             TimingEditor& timing = TimingEditor::Get();
-            bool hasLineTag = doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("<line");
-            bool hasNoEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<no effect>");
-            if(ImGui::BeginMenu("Image", PreviewWindow::GetBackgroundElementPaths().size() != 0))
+            bool hasLineTag = false;
+            bool hasNoEffectTag = false;
+            if(doc.GetLine(timing.GetMarkedLine()).size() > 0)
+            {
+                hasLineTag = doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("<line");
+            }
+            if(doc.GetLine(timing.GetMarkedLine()).size() > (hasLineTag ? 1 : 0))
+            {
+                hasNoEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<no effect>");
+            }
+            if(ImGui::BeginMenu("Image", PreviewWindow::GetBackgroundElementPaths().size() > 1))
             {
                 int imgCount = PreviewWindow::GetBackgroundElementPaths().size();
                 for(int i = 0; i < imgCount; i++)

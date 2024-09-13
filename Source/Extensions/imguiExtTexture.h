@@ -16,5 +16,6 @@ namespace ImGui{
         void SetVideoSpeed(const char* anID, int aSpeed);
         void LoadImage(const char* anID, const char* anFSPath);
         bool RenderTexture(const char* anID, ImExtTexture& aTexture);
+        bool DeleteTexture(const char* anID, ImExtTexture& aTexture);
     }
 }
