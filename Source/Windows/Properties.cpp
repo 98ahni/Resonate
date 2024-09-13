@@ -73,7 +73,7 @@ void PropertiesWindow::OnImGuiDraw()
         ImGui::SeparatorText("Text");
         ImGui::Text("Font Size"); ImGui::SameLine(); if(ImGui::DragInt("##FontSize", (int*)&doc.myFontSize)){doc.MakeDirty();}
         ImGui::TextDisabled("ECHO will show %i lines.", doc.myFontSize <= 43 ? 7 : doc.myFontSize <= 50 ? 6 : 5);
-        if(ImGui::Ext::ToggleSwitch("Use Direct Text", nullptr)){doc.MakeDirty();}
+        if(ImGui::Ext::ToggleSwitch("Use Direct Text", &(doc.myUseDirectText))){doc.MakeDirty();}
         if(ImGui::Button("Shift Timings"))
         {
             ImGui::OpenPopup("Shift Timings");
