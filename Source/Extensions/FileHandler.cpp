@@ -134,6 +134,18 @@ EM_JS(void, download_document, (emscripten::EM_VAL path, emscripten::EM_VAL mime
 	document.body.removeChild(link);
 });
 
+EM_ASYNC_JS(emscripten::EM_VAL, wait_for_sync_fs, (),
+{
+    return Emval.toHandle(new Promise((resolve)=>{
+        FS.syncfs(false, function (err) {
+            if(err){
+                alert('Unable to sync IndexDB!\n' + err);
+            }
+            resolve(Emval.toHandle(true));
+        }); 
+    }));
+});
+
 EM_JS(void, set_local_value, (emscripten::EM_VAL key, emscripten::EM_VAL value_to_store),
 {
     localStorage.setItem(Emval.toValue(key), Emval.toValue(value_to_store));
@@ -173,16 +185,17 @@ void FileHandler::DownloadDocument(const char *aPath, const char *aFileType)
 
 void FileHandler::SyncLocalFS()
 {
-    VAR_FROM_JS((emscripten::EM_VAL)EM_ASM_INT({
-        return Emval.toHandle(new Promise((resolve)=>{
-            FS.syncfs(false, function (err) {
-                if(err){
-                    alert('Unable to sync IndexDB!\n' + err);
-                }
-                resolve();
-            }); 
-        }))
-    })).await();
+    //bool completed = VAR_FROM_JS(wait_for_sync_fs()).await().as<bool>();
+    //VAR_FROM_JS((emscripten::EM_VAL)EM_ASM_INT({
+    //    return Emval.toHandle(new Promise((resolve)=>{
+    //        FS.syncfs(false, function (err) {
+    //            if(err){
+    //                alert('Unable to sync IndexDB!\n' + err);
+    //            }
+    //            resolve();
+    //        }); 
+    //    }));
+    //})).await();
 }
 
 void FileHandler::SetLocalValue(std::string aName, std::string aValue)
