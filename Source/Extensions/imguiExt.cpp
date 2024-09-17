@@ -68,6 +68,7 @@ EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL
     vid.style.height = 90 + 'px';
     //vid.autoplay="autoplay";
     vid.disablePictureInPicture = true;
+    vid.volume = 0;
     vid.defaultMuted = true;
     //vidSource.addEventListener("sourceopen", async ()=>{
     //    const sourceBuff = vidSource.addSourceBuffer("video/mp4; codecs=\"avc1.4d002a\"");

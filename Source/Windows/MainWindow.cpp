@@ -25,7 +25,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, init_file_system, (), {
 	{
 		FS.mount(MEMFS, { root: '.' }, '.');
 		FS.mkdir('/local');
-		FS.mount(IDBFS, {autoPersist: true}, '/local');
+		FS.mount(IDBFS, {}, '/local');
     	FS.syncfs(true, function (err) {
 			if(err)
 			{

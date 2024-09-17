@@ -412,18 +412,28 @@ void TimingEditor::DrawImagePopup()
     {
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         SetInputUnsafe(true);
+        if(PreviewWindow::GetHasVideo()) {ImGui::BeginDisabled();}
         ImGui::BeginChild("##choose image", {0, DPI_SCALED(200)}, ImGuiChildFlags_Border);
-        for(const std::string& path : PreviewWindow::GetBackgroundElementPaths())
+        if(PreviewWindow::GetHasVideo())
         {
-            ImGui::BeginChild(("##" + path).data(), {0, 0}, ImGuiChildFlags_AutoResizeY | (myImagePopupSelectedPath == path ? ImGuiChildFlags_Border : 0));
-            ImGui::Image(PreviewWindow::GetBackgroundTexture(path).myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()});
-            ImGui::SameLine();
-            ImGui::Text(path.data());
-            ImGui::EndChild();
-            if(ImGui::IsItemClicked())
+            ImGui::TextWrapped("\n\nImages are not available when a video is present in the project.\n");
+        }
+        else
+        {
+            ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            for(const std::string& path : PreviewWindow::GetBackgroundElementPaths())
             {
-                myImagePopupSelectedPath = path;
+                ImGui::BeginChild(("##" + path).data(), {0, 0}, ImGuiChildFlags_AutoResizeY | (myImagePopupSelectedPath == path ? ImGuiChildFlags_Border : 0));
+                ImGui::Image(PreviewWindow::GetBackgroundTexture(path).myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()});
+                ImGui::SameLine();
+                ImGui::Text(path.data());
+                ImGui::EndChild();
+                if(ImGui::IsItemClicked())
+                {
+                    myImagePopupSelectedPath = path;
+                }
             }
+            ImGui::PopStyleColor();
         }
         ImGui::EndChild();
         ImGui::Ext::StepInt("Shift Start Time (cs)", myImagePopupFadeStartShift, 1, 10);
@@ -431,6 +441,7 @@ void TimingEditor::DrawImagePopup()
         ImGui::PushStyleColor(ImGuiCol_Button, 0xFFFF0F2F);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, 0xFFFF1F5F);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xFFFF0F4F);
+        if(PreviewWindow::GetHasVideo()) {ImGui::EndDisabled();}
         if(ImGui::Button("Remove"))
         {
             myIsImagePopupOpen = false;
@@ -443,7 +454,7 @@ void TimingEditor::DrawImagePopup()
         }
         ImGui::SameLine();
         ImGui::PopStyleColor(3);
-        if(ImGui::Button("Apply"))
+        if(!PreviewWindow::GetHasVideo() && ImGui::Button("Apply"))
         {
             myIsImagePopupOpen = false;
             uint imgTime = 0;
@@ -468,7 +479,8 @@ void TimingEditor::DrawImagePopup()
                 if(doc.IsNull(compToken)) {break;}
                 if(compToken.myStartTime >= imgTime)
                 {
-                    if(doc.GetValidLineBefore(line)[0].myValue.starts_with("image "))
+                    Serialization::KaraokeLine& checkLine = doc.GetValidLineBefore(line);
+                    if(!doc.IsNull(checkLine) && checkLine[0].myValue.starts_with("image "))
                     {
                         line--;
                     }
@@ -509,7 +521,7 @@ void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
     ImGui::SetCursorPos(drawPos);
     ImGui::SetCursorPosX(DPI_SCALED(15));
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), DPI_SCALED(4)});
-    if(texture.myID != 0 && ImGui::ImageButton("##fjdkls", texture.myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()}))
+    if(texture.myID != 0 && ImGui::ImageButton(("##" + std::to_string(aLine)).data(), texture.myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()}))
     {
         myImagePopupEditLine = aLine;
         myImagePopupSelectedPath = imgPath;

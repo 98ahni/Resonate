@@ -27,6 +27,7 @@ public:
     PreviewWindow();
     void OnImGuiDraw() override;
     static void SetFont(ImFont* aFont);
+    static bool GetHasVideo();
     static void AddBackgroundElement(std::string aBGPath);
     static ImExtTexture GetBackgroundTexture(std::string aBGPath, bool aShouldReRender = false);
     static const std::vector<std::string>& GetBackgroundElementPaths();
@@ -49,11 +50,11 @@ private:
     Lane myLanes[7];
     Lane myBackLanes[7];
     Lane myAssemblyLanes[7];
-    bool myHasVideo;
     bool myShouldDebugDraw;
 
     static void SaveBackgroundElementsToLocal();
-    static inline ImFont* ourFont;
+    inline static ImFont* ourFont;
+    static inline bool ourHasVideo = false;
     inline static std::vector<std::string> ourBackgroundPaths;
     static inline std::unordered_map<std::string, ImExtTexture> ourBackgrounds;
 };
