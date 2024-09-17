@@ -15,6 +15,6 @@ namespace GoogleDrive
     /// @param someMimeTypes Sets the types of files the user can choose from.
     /// @param aFileCallbackName The name of a javascript accessible function which takes an Emval string containing the fs path and the gd file-id that was loaded. Might be called multiple times.
     /// @param aCancelCallbackName The name of a javascript accessible function that is called if the user pressed 'Cancel'.
-    void LoadProject(std::string someMimeTypes, std::string aFileCallbackName, std::string aCancelCallbackName);
+    void LoadProject(std::string someMimeTypes, std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName);
     void SaveProject(std::string aFileID, std::string aFilePath);
 }

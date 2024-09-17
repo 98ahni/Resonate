@@ -134,14 +134,14 @@ EM_JS(void, download_document, (emscripten::EM_VAL path, emscripten::EM_VAL mime
 	document.body.removeChild(link);
 });
 
-EM_ASYNC_JS(emscripten::EM_VAL, wait_for_sync_fs, (),
+EM_JS(emscripten::EM_VAL, wait_for_sync_fs, (),
 {
     return Emval.toHandle(new Promise((resolve)=>{
         FS.syncfs(false, function (err) {
             if(err){
                 alert('Unable to sync IndexDB!\n' + err);
             }
-            resolve(Emval.toHandle(true));
+            resolve();
         }); 
     }));
 });
@@ -185,7 +185,7 @@ void FileHandler::DownloadDocument(const char *aPath, const char *aFileType)
 
 void FileHandler::SyncLocalFS()
 {
-    //bool completed = VAR_FROM_JS(wait_for_sync_fs()).await().as<bool>();
+    VAR_FROM_JS(wait_for_sync_fs()).await();
     //VAR_FROM_JS((emscripten::EM_VAL)EM_ASM_INT({
     //    return Emval.toHandle(new Promise((resolve)=>{
     //        FS.syncfs(false, function (err) {
