@@ -85,7 +85,7 @@ EM_JS(void, revoke_client_token, (), {
     }
 });
 
-EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_types, emscripten::EM_VAL callback_name, emscripten::EM_VAL cancel_callback_name), 
+EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_types, emscripten::EM_VAL file_callback_name, emscripten::EM_VAL done_callback_name, emscripten::EM_VAL cancel_callback_name), 
 {
     //const view = new google.picker.View(google.picker.ViewId.FOLDERS);
     //view.setMimeTypes(Emval.toValue(mime_types));
@@ -93,7 +93,8 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
           .setIncludeFolders(true)
           .setMimeTypes(Emval.toValue(mime_types))
           .setSelectFolderEnabled(true);
-    const callback_func = Module[Emval.toValue(callback_name)];
+    const callback_func = Module[Emval.toValue(file_callback_name)];
+    const done_callback_func = Module[Emval.toValue(done_callback_name)];
     const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)];
     const picker = new google.picker.PickerBuilder()
         //.enableFeature(google.picker.Feature.NAV_HIDDEN)
@@ -109,6 +110,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
             if(!FS.analyzePath("/GoogleDrive").exists){
                 FS.mkdir("/GoogleDrive");
             }
+            let loadPromises = [];
             for(const document of documents){
                 const fileId = document[google.picker.Document.ID];
                 console.log(fileId);
@@ -121,24 +123,28 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                 console.log(JSON.stringify(res.result.files));
                 Array.prototype.push.apply(files, res.result.files);
                 console.log(files);
-                files.forEach(async function(file) {
-                    if(file.trashed){
-                        console.log('Found trashed file:', file.name, file.id, ', Skipping');
-                        return;
-                    }
-                    console.log('Found file:', file.name, file.id);
-                    const fres = await gapi.client.drive.files.get({
-                        'fileId': file.id,
-                        'alt': 'media'
-                    });
-                    var bytes = [];
-                    for (var i = 0; i < fres.body.length; ++i) {
-                      bytes.push(fres.body.charCodeAt(i));
-                    }
-                    FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes));
-                    callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); // User callback
+                files.forEach(function(file) {
+                    loadPromises.push(new Promise(async (resolve)=>{
+                        if(file.trashed){
+                            console.log('Found trashed file:', file.name, file.id, ', Skipping');
+                            return;
+                        }
+                        console.log('Found file:', file.name, file.id);
+                        const fres = await gapi.client.drive.files.get({
+                            'fileId': file.id,
+                            'alt': 'media'
+                        });
+                        var bytes = [];
+                        for (var i = 0; i < fres.body.length; ++i) {
+                          bytes.push(fres.body.charCodeAt(i));
+                        }
+                        FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes));
+                        callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); // User callback
+                        resolve();
+                    }));
                 });
             }
+            Promise.all(loadPromises).then(done_callback_func);
         }})
         .build();
     picker.setVisible(true);
@@ -177,9 +183,9 @@ void GoogleDrive::LogOut()
     revoke_client_token();
 }
 
-void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aFileCallbackName, std::string aCancelCallbackName)
+void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName)
 {
-    create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aCancelCallbackName));
+    create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aDoneCallbackName), VAR_TO_JS(aCancelCallbackName));
 }
 
 void GoogleDrive::SaveProject(std::string aFileID, std::string aFilePath)
