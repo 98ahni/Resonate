@@ -98,7 +98,8 @@ EM_JS(void , set_audio_playback_speed, (emscripten::EM_VAL play_rate), {
 
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnEnded(){AudioPlayback::ourInstance->myIsPlaying = false;}
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPause(){AudioPlayback::ourInstance->myIsPlaying = false;}
-extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPlay(){AudioPlayback::ourInstance->myIsPlaying = true;}
+extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPlay(){AudioPlayback::ourInstance->myIsPlaying = true;AudioPlayback::ourInstance->myWaitingToPlay=false;}
+extern"C" EMSCRIPTEN_KEEPALIVE bool IsWaitingToPlay(){return AudioPlayback::ourInstance->myWaitingToPlay;}
 
 EM_JS(void, audio_element_play, (), {
     global_audio_element.play();
@@ -361,6 +362,9 @@ EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
         global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate);
         global_audio_completion[9] = true;
         set_audio_playback_buffer(Emval.toHandle(10));
+        if(_IsWaitingToPlay()){
+            audio_element_play();
+        }
         var audioDatas = [];
         audioDatas.length = buffer.numberOfChannels;
         for(var i = 0; i < buffer.numberOfChannels; i++){

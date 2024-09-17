@@ -31,7 +31,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsSetPreviewVideoProgress()
 PreviewWindow::PreviewWindow()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    myHasVideo = false;
+    ourHasVideo = false;
     std::string chosenBackground = "";
     for(auto& [path, tex] : ourBackgrounds)
     {
@@ -39,7 +39,7 @@ PreviewWindow::PreviewWindow()
         if(fpath.extension() == ".mp4")
         {
             chosenBackground = path;
-            myHasVideo = true;
+            ourHasVideo = true;
             break;
         }
         if(doc.GetName() == fpath.filename().string())
@@ -58,7 +58,7 @@ PreviewWindow::PreviewWindow()
             chosenBackground = "ResonateIconLarger.png";
         }
     }
-    if(myHasVideo)
+    if(ourHasVideo)
     {
         ImGui::Ext::LoadVideo("##PreviewBackground", ("/local/" + chosenBackground).data());
         AudioPlayback::AddEventListener("play", "_jsPlayPreviewVideo");
@@ -205,6 +205,11 @@ void PreviewWindow::SetFont(ImFont *aFont)
     ourFont = aFont;
 }
 
+bool PreviewWindow::GetHasVideo()
+{
+    return ourHasVideo;
+}
+
 void PreviewWindow::AddBackgroundElement(std::string aBGPath)
 {
     printf("Loading %s.\n", aBGPath.c_str());
@@ -228,6 +233,7 @@ void PreviewWindow::AddBackgroundElement(std::string aBGPath)
     {
         std::filesystem::copy(aBGPath, "/local", std::filesystem::copy_options::overwrite_existing);
     }
+    ourHasVideo = std::filesystem::path(aBGPath).extension() == ".mp4";
     aBGPath = std::filesystem::path(aBGPath).filename().string();
     ourBackgroundPaths.push_back(aBGPath);
     ourBackgrounds[aBGPath] = {0};
@@ -269,6 +275,7 @@ void PreviewWindow::ClearBackgroundElements()
 
 void PreviewWindow::QueueImageFade()
 {
+    if(ourHasVideo) {return;}
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     std::string timeStr = StringTools::Split(doc.GetToken(myNextAddLineIndex, 0).myValue, " ")[1];
     std::string imgPath = doc.GetToken(myNextAddLineIndex, 0).myValue.substr(("image " + timeStr + " ").size());

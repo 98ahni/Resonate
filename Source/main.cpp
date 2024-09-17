@@ -42,6 +42,7 @@ bool g_fileTabOpenedThisFrame = true; // Only use in File tab!
 bool g_closeFileTab = false;
 bool g_closeAboutTab = false;
 bool g_shouldDeleteOnLoad = false;
+bool g_firstFrameAfterFileLoad = false;
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
@@ -100,7 +101,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL 
     {
         PreviewWindow::AddBackgroundElement(path.string());
     }
-    FileHandler::SyncLocalFS();
+    //FileHandler::SyncLocalFS();
+}
+extern "C" EMSCRIPTEN_KEEPALIVE void LoadCompletedFromGoogleDrive()
+{
+    g_firstFrameAfterFileLoad = true;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
 {
@@ -125,6 +130,11 @@ void loop(void* window){
     if(doc.GetIsAutoDirty())
     {
         doc.AutoSave();
+        FileHandler::SyncLocalFS();
+    }
+    if(g_firstFrameAfterFileLoad)
+    {
+        g_firstFrameAfterFileLoad = false;
         FileHandler::SyncLocalFS();
     }
 
@@ -159,7 +169,7 @@ void loop(void* window){
                 if(ImGui::MenuItem("Open Project", 0, false, g_hasGoogleAcc))
                 {
                     g_shouldDeleteOnLoad = true;
-                    GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
+                    GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCompletedFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
                 }
                 if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
                 {
@@ -258,7 +268,7 @@ void loop(void* window){
             {
                 hasNoEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<no effect>");
             }
-            if(ImGui::BeginMenu("Image", PreviewWindow::GetBackgroundElementPaths().size() > 1))
+            if(ImGui::BeginMenu("Image", !PreviewWindow::GetHasVideo() && PreviewWindow::GetBackgroundElementPaths().size() > 1))
             {
                 int imgCount = PreviewWindow::GetBackgroundElementPaths().size();
                 for(int i = 0; i < imgCount; i++)
@@ -272,7 +282,8 @@ void loop(void* window){
                             if(doc.IsNull(compToken)) {break;}
                             if(compToken.myStartTime >= imgTime)
                             {
-                                if(doc.GetValidLineBefore(line)[0].myValue.starts_with("image "))
+                                Serialization::KaraokeLine& checkLine = doc.GetValidLineBefore(line);
+                                if(!doc.IsNull(checkLine) && checkLine[0].myValue.starts_with("image "))
                                 {
                                     line--;
                                 }
