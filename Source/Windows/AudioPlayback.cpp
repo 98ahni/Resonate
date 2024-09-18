@@ -70,6 +70,7 @@ EM_JS(void, create_audio_playback, (), {
     audio.onplay = (e) => { _AudioOnPlay(); };
     audio.onpause = (e) => { _AudioOnPause(); };
     audio.onended = (e) => { _AudioOnEnded(); };
+    audio.ondurationchange = (e) => { _AudioOnDurationChange(); };
     window.onpagehide = (e) => {
         //global_audio_context.close();
     };
@@ -99,6 +100,7 @@ EM_JS(void , set_audio_playback_speed, (emscripten::EM_VAL play_rate), {
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnEnded(){AudioPlayback::ourInstance->myIsPlaying = false;}
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPause(){AudioPlayback::ourInstance->myIsPlaying = false;}
 extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnPlay(){AudioPlayback::ourInstance->myIsPlaying = true;AudioPlayback::ourInstance->myWaitingToPlay=false;}
+extern"C" EMSCRIPTEN_KEEPALIVE void AudioOnDurationChange(){AudioPlayback::ourInstance->myDuration = 100 * AudioPlayback::ourInstance->myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();}
 extern"C" EMSCRIPTEN_KEEPALIVE bool IsWaitingToPlay(){return AudioPlayback::ourInstance->myWaitingToPlay;}
 
 EM_JS(void, audio_element_play, (), {
@@ -134,7 +136,7 @@ void AudioPlayback::OnImGuiDraw()
     //if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration))
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
-    if(ImGui::BeginChild(GetName().c_str(), {0, 0}, ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border))
+    if(ImGui::BeginChild(GetName().c_str(), {0, 0}, ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border, ImGuiWindowFlags_NoNav))
     {
         if(!TouchInput_HasTouch())
         {
@@ -270,6 +272,7 @@ uint AudioPlayback::GetPlaybackProgress()
 
 void AudioPlayback::SetPlaybackProgress(uint someProgress)
 {
+    if(!ourInstance->myHasAudio) {return;}
     set_audio_playback_progress(VAR_TO_JS(((float)someProgress) * .01f / ourInstance->myTimeScale));
 }
 
