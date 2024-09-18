@@ -27,6 +27,7 @@ public:
     PreviewWindow();
     void OnImGuiDraw() override;
     static void SetFont(ImFont* aFont);
+    static void SetRulerFont(ImFont* aFont);
     static bool GetHasVideo();
     static void AddBackgroundElement(std::string aBGPath);
     static ImExtTexture GetBackgroundTexture(std::string aBGPath, bool aShouldReRender = false);
@@ -54,7 +55,8 @@ private:
 
     static void SaveBackgroundElementsToLocal();
     inline static ImFont* ourFont;
-    static inline bool ourHasVideo = false;
-    inline static std::vector<std::string> ourBackgroundPaths;
-    static inline std::unordered_map<std::string, ImExtTexture> ourBackgrounds;
+    static inline ImFont* ourRulerFont;
+    inline static bool ourHasVideo = false;
+    static inline std::vector<std::string> ourBackgroundPaths;
+    inline static std::unordered_map<std::string, ImExtTexture> ourBackgrounds;
 };
