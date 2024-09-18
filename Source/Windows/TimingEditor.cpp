@@ -339,7 +339,7 @@ void TimingEditor::CheckMarkerIsSafe(bool aIsMovingRight)
     }
     if(myMarkedToken < 0) myMarkedToken = 0;
     if(myMarkedToken >= doc.GetLine(myMarkedLine).size()) myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
-    if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
+    if(doc.IsPauseToken(myMarkedLine, myMarkedToken) && !doc.IsNull(doc.GetValidLineAfter(myMarkedLine)))
     {
         if(aIsMovingRight)
         {
