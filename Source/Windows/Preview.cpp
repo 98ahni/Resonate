@@ -102,7 +102,7 @@ void PreviewWindow::OnImGuiDraw()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
     float textScale = (float)doc.GetFontSize() / 50.f;
-    textScale *= contentSize.y / ((50 + ImGui::GetStyle().ItemSpacing.y) * 6);
+    textScale *= contentSize.y / ((DPI_SCALED(50) + ImGui::GetStyle().ItemSpacing.y) * 6);
     ourFont->Scale = DPI_UNSCALED((textScale < .001f ? .001f : textScale));
     uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
     if(AudioPlayback::GetPlaybackProgress() < TimingEditor::Get().GetLatencyOffset())
@@ -162,7 +162,6 @@ void PreviewWindow::OnImGuiDraw()
         }
     }
     ImGui::PopStyleVar();
-
     if(RemoveOldLanes(playbackProgress, 50))
     {
         while(TryDisplayLanes())
@@ -203,6 +202,11 @@ void PreviewWindow::OnImGuiDraw()
 void PreviewWindow::SetFont(ImFont *aFont)
 {
     ourFont = aFont;
+}
+
+void PreviewWindow::SetRulerFont(ImFont *aFont)
+{
+    ourRulerFont = aFont;
 }
 
 bool PreviewWindow::GetHasVideo()
@@ -314,6 +318,8 @@ int PreviewWindow::AssembleLanes(float aWidth)
         myAssemblyLanes[lane].myLine = myNextAddLineIndex;
         myAssemblyLanes[lane].myStartToken = nextStartToken;
         float currentTextWidth = 0;
+        ImGui::PushFont(ourRulerFont);
+        ourRulerFont->Scale = 1;
         do
         {
             if(doc.GetLine(myNextAddLineIndex).size() <= nextStartToken)
@@ -327,17 +333,21 @@ int PreviewWindow::AssembleLanes(float aWidth)
                 nextStartToken++;
                 continue;
             }
-            ImGui::PushFont(MainWindow::Font);
-            // Multipying by 2.5 on the below line is to go from the Main font (40 / 2) to the preview display font of 50.
-            currentTextWidth += ImGui::CalcTextSize(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.data()).x * 2.5f;
+            // Multipying by 2.5 on the below lines is to go from the Main font (40 / 2) to the preview display font of 50.
+            currentTextWidth += ImGui::CalcTextSize(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.data()).x;
             if(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.ends_with(" "))
             {
-                myAssemblyLanes[lane].myWidth = currentTextWidth - ImGui::CalcTextSize(" ").x * 2.5f;
+                if(currentTextWidth > aWidth && lastSpaceToken != -1)
+                {
+                    break;
+                }
+                myAssemblyLanes[lane].myWidth = currentTextWidth;
                 lastSpaceToken = nextStartToken;
             }
-            ImGui::PopFont();
             nextStartToken++;
         } while(currentTextWidth < aWidth || lastSpaceToken == -1);
+        printf("Assemble: %f, %f\n", ImGui::CalcTextSize("M").x *2.5f, ImGui::CalcTextSize("M").y *2.5f);
+        ImGui::PopFont();
         nextStartToken = lastSpaceToken == -1 ? nextStartToken : (lastSpaceToken + 1);
         myAssemblyLanes[lane].myEndToken = nextStartToken;
         lastSpaceToken = -1;
