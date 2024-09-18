@@ -496,6 +496,7 @@ int main(){
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
+    PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
     ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
     timingEditor->SetFont(timingFont);
     timingFont->Scale = .5f;
