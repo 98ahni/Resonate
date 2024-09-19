@@ -157,9 +157,9 @@ void loop(void* window){
                 {
                     if(ImGui::MenuItem("Log In With Google"))
                     {
-                        LogInToGoogle();
+                        //LogInToGoogle();
                     }
-                    //ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
+                    ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
                 }
                 else
                 {
