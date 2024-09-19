@@ -37,7 +37,7 @@ public:
 private:
     void QueueImageFade();
     int AssembleLanes(float aWidth);
-    bool FillBackLanes(int aLaneCount, float aScaledWidth);
+    bool FillBackLanes(int aLaneCount);
     int FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds);
     bool TryDisplayLanes();
     bool CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay);

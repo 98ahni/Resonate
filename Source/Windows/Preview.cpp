@@ -26,6 +26,10 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsSetPreviewVideoProgress()
     {
         ImGui::Ext::PlayVideo("##PreviewBackground");
     }
+    else
+    {
+        ImGui::Ext::PauseVideo("##PreviewBackground");
+    }
 }
 
 PreviewWindow::PreviewWindow()
@@ -81,6 +85,14 @@ PreviewWindow::PreviewWindow()
 void PreviewWindow::OnImGuiDraw()
 {
     Gui_Begin();
+    if(ourHasVideo && ImGui::Ext::IsVideoPaused("##PreviewBackground") && AudioPlayback::GetIsPlaying())
+    {
+        EM_ASM(audio_element_pause(););
+    }
+    else if(ourHasVideo && !ImGui::Ext::IsVideoPaused("##PreviewBackground") && !AudioPlayback::GetIsPlaying())
+    {
+        EM_ASM(audio_element_play(););
+    }
     ImVec2 windowSize = ImGui::GetWindowContentRegionMax();
     ImVec2 contentOffset = ImGui::GetWindowContentRegionMin();
     ImVec2 contentSize = {windowSize.x - contentOffset.x, windowSize.y - contentOffset.y};
@@ -102,10 +114,10 @@ void PreviewWindow::OnImGuiDraw()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
     float textScale = (float)doc.GetFontSize() / 50.f;
-    textScale *= contentSize.y / ((DPI_SCALED(50) + ImGui::GetStyle().ItemSpacing.y) * 6);
+    textScale *= contentSize.y / ((50 + ImGui::GetStyle().ItemSpacing.y) * 6);
     ourFont->Scale = DPI_UNSCALED((textScale < .001f ? .001f : textScale));
     uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
-    if(AudioPlayback::GetPlaybackProgress() < TimingEditor::Get().GetLatencyOffset())
+    if(((int)AudioPlayback::GetPlaybackProgress()) < TimingEditor::Get().GetLatencyOffset())
     {
         playbackProgress = 0;
     }
@@ -142,7 +154,7 @@ void PreviewWindow::OnImGuiDraw()
     {
         if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
         ImGui::SetCursorPosY((laneHeight * lane) + ImGui::GetStyle().ItemSpacing.y + contentOffset.y);
-        float cursorStartX = ((contentSize.x - DPI_UNSCALED(myLanes[lane].myWidth * textScale)) * .5f) + contentOffset.x;
+        float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * textScale)) * .5f) + contentOffset.x;
         ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {
@@ -166,7 +178,7 @@ void PreviewWindow::OnImGuiDraw()
     {
         while(TryDisplayLanes())
         {
-            while (FillBackLanes(lanesShown, 600 * (50 / doc.GetFontSize())/*DPI_UNSCALED(contentSize.x) * textScale*/))
+            while (FillBackLanes(lanesShown))
             {
             }
         }
@@ -207,6 +219,7 @@ void PreviewWindow::SetFont(ImFont *aFont)
 void PreviewWindow::SetRulerFont(ImFont *aFont)
 {
     ourRulerFont = aFont;
+    ourRulerFont->Scale = DPI_UNSCALED(1);
 }
 
 bool PreviewWindow::GetHasVideo()
@@ -319,7 +332,7 @@ int PreviewWindow::AssembleLanes(float aWidth)
         myAssemblyLanes[lane].myStartToken = nextStartToken;
         float currentTextWidth = 0;
         ImGui::PushFont(ourRulerFont);
-        ourRulerFont->Scale = 1;
+        ourRulerFont->Scale = DPI_UNSCALED(1);
         do
         {
             if(doc.GetLine(myNextAddLineIndex).size() <= nextStartToken)
@@ -358,9 +371,10 @@ int PreviewWindow::AssembleLanes(float aWidth)
     return 7;
 }
 
-bool PreviewWindow::FillBackLanes(int aLaneCount, float aScaledWidth)
+bool PreviewWindow::FillBackLanes(int aLaneCount)
 {
-    int nextLineNeeds = AssembleLanes(aScaledWidth);
+    float scaledWidth = 640 * (50 / Serialization::KaraokeDocument::Get().GetFontSize());
+    int nextLineNeeds = AssembleLanes(scaledWidth);
 	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
     {
         myNextAddLineIndex++;
@@ -529,12 +543,12 @@ void PreviewWindow::Resetprogress()
         myBackLanes[lane].myLine = -1;
         myAssemblyLanes[lane].myLine = -1;
     }
-    while (FillBackLanes(lanesShown, 600 * (50 / doc.GetFontSize())))
+    while (FillBackLanes(lanesShown))
     {
     }
     while(TryDisplayLanes())
     {
-        while (FillBackLanes(lanesShown, 600 * (50 / doc.GetFontSize())))
+        while (FillBackLanes(lanesShown))
         {
         }
     }
