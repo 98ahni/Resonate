@@ -139,7 +139,7 @@ EM_JS(emscripten::EM_VAL, wait_for_sync_fs, (),
     return Emval.toHandle(new Promise((resolve)=>{
         FS.syncfs(false, function (err) {
             if(err){
-                alert('Unable to sync IndexDB!\n' + err);
+                console.error('Unable to sync IndexDB!\n' + err);
             }
             resolve();
         }); 
