@@ -19,15 +19,15 @@ EM_JS(void, print_preferences_json, (), {
     console.log(JSON.stringify(global_preferences));
 });
 
-EM_ASYNC_JS(void, set_preference_value, (emscripten::EM_VAL key, emscripten::EM_VAL value), {
+EM_JS(emscripten::EM_VAL, set_preference_value, (emscripten::EM_VAL key, emscripten::EM_VAL value), {
     global_preferences[Emval.toValue(key)] = Emval.toValue(value);
     FS.writeFile('/local/Prefs.Resonate', JSON.stringify(global_preferences));
-    await new Promise((resolve)=>{FS.syncfs(false, function (err) {
+    return Emval.toHandle(new Promise((resolve)=>{FS.syncfs(false, function (err) {
         if(err){
-            alert('Unable to sync IndexDB!\n' + err);
+            console.error('Unable to sync IndexDB!\n' + err);
         }
         resolve();
-    })});
+    })}));
 });
 
 EM_JS(emscripten::EM_VAL, get_preference_value, (emscripten::EM_VAL key), {
@@ -50,27 +50,27 @@ void Serialization::PrintPrefs()
 
 void Serialization::Preferences::SetBool(std::string aKey, bool someValue)
 {
-    set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+    VAR_FROM_JS(set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue))).await();
 }
 void Serialization::Preferences::SetInt(std::string aKey, int someValue)
 {
-    set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+    VAR_FROM_JS(set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue))).await();
 }
 void Serialization::Preferences::SetUint(std::string aKey, uint32_t someValue)
 {
-    set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+    VAR_FROM_JS(set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue))).await();
 }
 void Serialization::Preferences::SetFloat(std::string aKey, float someValue)
 {
-    set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+    VAR_FROM_JS(set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue))).await();
 }
 void Serialization::Preferences::SetDouble(std::string aKey, double someValue)
 {
-    set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+    VAR_FROM_JS(set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue))).await();
 }
 void Serialization::Preferences::SetString(std::string aKey, std::string someValue)
 {
-    set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue));
+    VAR_FROM_JS(set_preference_value(VAR_TO_JS(aKey), VAR_TO_JS(someValue))).await();
 }
 
 bool Serialization::Preferences::HasKey(std::string aKey)
