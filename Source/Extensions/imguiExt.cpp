@@ -55,8 +55,13 @@ EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL
     var imid = Emval.toValue(id);
     var vid = document.getElementById(imid);
     if(vid === null){
+        if(global_audio_context === null){
+            return;
+        }
         vid = document.createElement('video');
         vid.id = imid;
+        vid.volume = 0;             // If the muted and volume settings are not set here AND after the source has been set
+        vid.defaultMuted = true;        // videos that contain audio won't play on iOS for some reason. :')
         document.body.insertBefore(vid, document.getElementById('canvas'));
     }
 	const vidData = FS.readFile(Emval.toValue(fs_path));
@@ -111,6 +116,14 @@ EM_JS(void, set_video_playback_rate, (emscripten::EM_VAL id, double rate), {
         return;
     }
     vid.playbackRate = rate;
+});
+EM_JS(bool, is_video_paused, (emscripten::EM_VAL id), {
+    let imid = Emval.toValue(id);
+    let vid = document.getElementById(imid);
+    if(vid === null){
+        return true;
+    }
+    return vid.paused;
 });
 EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
     return Emval.toHandle(new Promise(async(resolve)=>{
@@ -342,6 +355,11 @@ void ImGui::Ext::SetVideoProgress(const char *anID, uint aProgress)
 void ImGui::Ext::SetVideoSpeed(const char *anID, int aSpeed)
 {
     set_video_playback_rate(VAR_TO_JS(anID), (double)(aSpeed) * .1);
+}
+
+bool ImGui::Ext::IsVideoPaused(const char *anID)
+{
+    return is_video_paused(VAR_TO_JS(anID));
 }
 
 void ImGui::Ext::LoadImage(const char *anID, const char *anFSPath)
