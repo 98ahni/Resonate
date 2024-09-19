@@ -14,6 +14,7 @@ namespace ImGui{
         void PauseVideo(const char* anID);
         void SetVideoProgress(const char* anID, uint aProgress);
         void SetVideoSpeed(const char* anID, int aSpeed);
+        bool IsVideoPaused(const char* anID);
         void LoadImage(const char* anID, const char* anFSPath);
         bool RenderTexture(const char* anID, ImExtTexture& aTexture);
         bool DeleteTexture(const char* anID, ImExtTexture& aTexture);
