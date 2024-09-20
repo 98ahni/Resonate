@@ -115,8 +115,8 @@ void PreviewWindow::OnImGuiDraw()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
     float fontScale = (float)doc.GetFontSize() / 50.f;
-    float textScale = fontScale * (contentSize.y / ((50 + ImGui::GetStyle().ItemSpacing.y) * 6));
-    ourFont->Scale = DPI_UNSCALED((textScale < .001f ? .001f : textScale));
+    float textScale = (DPI_UNSCALED(contentSize.y) / ((50 + DPI_UNSCALED(ImGui::GetStyle().ItemSpacing.y)) * 6));
+    ourFont->Scale = fontScale * ((textScale < .001f ? .001f : textScale));
     uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
     if(((int)AudioPlayback::GetPlaybackProgress()) < TimingEditor::Get().GetLatencyOffset())
     {
@@ -155,7 +155,7 @@ void PreviewWindow::OnImGuiDraw()
     {
         if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
         ImGui::SetCursorPosY((laneHeight * lane) + ImGui::GetStyle().ItemSpacing.y + contentOffset.y);
-        float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * (textScale / fontScale))) * .5f) + contentOffset.x;
+        float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * DPI_SCALED(textScale))) * .5f) + contentOffset.x;
         ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {

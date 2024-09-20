@@ -64,13 +64,13 @@ EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL
         vid.defaultMuted = true;        // videos that contain audio won't play on iOS for some reason. :')
         document.body.insertBefore(vid, document.getElementById('canvas'));
     }
+    vid.style.position = 'fixed';
+    vid.style.width = 160 + 'px';
+    vid.style.height = 90 + 'px';
 	const vidData = FS.readFile(Emval.toValue(fs_path));
     const vidBlob = new Blob([vidData.buffer], {type: 'video/mp4'});
     //const vidSource = new (window.ManagedMediaSource || window.MediaSource)();
     vid.src = URL.createObjectURL(vidBlob);
-    vid.style.position = 'fixed';
-    vid.style.width = 160 + 'px';
-    vid.style.height = 90 + 'px';
     //vid.autoplay="autoplay";
     vid.disablePictureInPicture = true;
     vid.volume = 0;
@@ -134,13 +134,13 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
         img.id = imid;
         document.body.insertBefore(img, document.getElementById('canvas'));
     }
+    img.style.position = 'fixed';
+    img.style.width = 1 + 'px';
+    img.style.height = 1 + 'px';
 	const imgData = FS.readFile(Emval.toValue(fs_path));
     const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'});
     img.src = URL.createObjectURL(imgBlob);
     await img.decode();
-    img.style.position = 'fixed';
-    img.style.width = 1 + 'px';
-    img.style.height = 1 + 'px';
     resolve();}));
 });
 EM_JS(ImExtTexture&, render_image, (emscripten::EM_VAL id, ImExtTexture& texture), {
