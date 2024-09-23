@@ -127,7 +127,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                     loadPromises.push(new Promise(async (resolve)=>{
                         if(file.trashed){
                             console.log('Found trashed file:', file.name, file.id, ', Skipping');
-                            return;
+                            resolve();
                         }
                         console.log('Found file:', file.name, file.id);
                         const fres = await gapi.client.drive.files.get({
@@ -144,7 +144,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                     }));
                 });
             }
-            Promise.all(loadPromises).then(done_callback_func);
+            Promise.all(loadPromises).then(()=>{console.log('Done loading from Google Drive!');done_callback_func();});
         }})
         .build();
     picker.setVisible(true);

@@ -339,7 +339,7 @@ namespace Serialization
         }
         myTokens.clear();
     }
-    void KaraokeDocument::Load(std::string aPath, std::string aFileID)
+    void KaraokeDocument::Load(std::string aPath, std::string aFileID, bool aShouldParse)
     {
         //if(aPath == myPath)
         //{
@@ -376,7 +376,20 @@ namespace Serialization
         myPath = aPath;
         myFileID = aFileID;
         myName = std::filesystem::path(myPath).filename().string();
-        std::ifstream docFile(aPath);
+        if(aShouldParse)
+        {
+            std::ifstream docFile(aPath);
+            std::string line;
+            while(std::getline(docFile, line))
+            {
+                ParseLine(line);
+            }
+            docFile.close();
+        }
+    }
+    void KaraokeDocument::ParseLoadedFile()
+    {
+        std::ifstream docFile(myPath);
         std::string line;
         while(std::getline(docFile, line))
         {
