@@ -54,8 +54,9 @@ EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL
     return Emval.toHandle(new Promise(async(resolve)=>{
     var imid = Emval.toValue(id);
     var vid = document.getElementById(imid);
+    const fsPath = Emval.toValue(fs_path);
     if(vid === null){
-        if(global_audio_context === null){
+        if(!FS.analyzePath(fsPath, false).exists){
             return;
         }
         vid = document.createElement('video');
@@ -67,7 +68,7 @@ EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL
     vid.style.position = 'fixed';
     vid.style.width = 160 + 'px';
     vid.style.height = 90 + 'px';
-	const vidData = FS.readFile(Emval.toValue(fs_path));
+	const vidData = FS.readFile(fsPath);
     const vidBlob = new Blob([vidData.buffer], {type: 'video/mp4'});
     //const vidSource = new (window.ManagedMediaSource || window.MediaSource)();
     vid.src = URL.createObjectURL(vidBlob);
