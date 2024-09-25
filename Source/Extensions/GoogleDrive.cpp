@@ -128,6 +128,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                         if(file.trashed){
                             console.log('Found trashed file:', file.name, file.id, ', Skipping');
                             resolve();
+                            return;
                         }
                         console.log('Found file:', file.name, file.id);
                         const fres = await gapi.client.drive.files.get({
