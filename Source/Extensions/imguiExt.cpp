@@ -130,7 +130,11 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
     return Emval.toHandle(new Promise(async(resolve)=>{
     let imid = Emval.toValue(id);
     let img = document.getElementById(imid);
+    const fsPath = Emval.toValue(fs_path);
     if(img === null){
+        if(!FS.analyzePath(fsPath, false).exists){
+            return;
+        }
         img = document.createElement('img');
         img.id = imid;
         document.body.insertBefore(img, document.getElementById('canvas'));
@@ -138,7 +142,7 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
     img.style.position = 'fixed';
     img.style.width = 1 + 'px';
     img.style.height = 1 + 'px';
-	const imgData = FS.readFile(Emval.toValue(fs_path));
+	const imgData = FS.readFile(fsPath);
     const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'});
     img.src = URL.createObjectURL(imgBlob);
     await img.decode();
@@ -551,7 +555,7 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         }
         else
         {
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
         }
     }
     else

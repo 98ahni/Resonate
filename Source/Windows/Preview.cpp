@@ -261,6 +261,8 @@ ImExtTexture PreviewWindow::GetBackgroundTexture(std::string aBGPath, bool aShou
 {
     if(!ourBackgrounds.contains(aBGPath) || ourBackgrounds[aBGPath].myID == 0)
     {
+        std::string extension = std::filesystem::path(aBGPath).extension().string();
+        if(extension == ".mp4" || extension == ".png" || extension == ".jpg")
         ImGui::Ext::LoadImage(("##" + aBGPath).data(), ("/local/" + aBGPath).data());
         ourBackgrounds[aBGPath] = {};
         ImGui::Ext::RenderTexture(("##" + aBGPath).data(), ourBackgrounds[aBGPath]);
