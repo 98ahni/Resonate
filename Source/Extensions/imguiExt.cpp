@@ -544,7 +544,15 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     }
     else if(aCurrentTime < end)
     {
+        uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();
+        if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, {0.87f, 0.8f, 1.f, 1.f});
+        }
+        else
+        {
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
+        }
     }
     else
     {
