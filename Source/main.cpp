@@ -44,6 +44,8 @@ bool g_closeAboutTab = false;
 bool g_shouldDeleteOnLoad = false;
 bool g_firstFrameAfterFileLoad = false;
 
+bool g_selfTestFailed = false;
+
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
     //AudioPlayback::PrepPlayback();
@@ -201,22 +203,36 @@ void loop(void* window){
             if(ImGui::MenuItem("Merge Line Up"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.RevoveLineBreak(timing->GetMarkedLine());
+                if(doc.GetLine(timing->GetMarkedLine() - 1).size() == 1 && (doc.GetToken(timing->GetMarkedLine() - 1, 0).myValue.starts_with("image") || (doc.GetLine(timing->GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing->GetMarkedLine() - 2, 0).myValue.starts_with("image"))))
+                {
+                    doc.RevoveLineBreak(timing->GetMarkedLine());
+                }
             }
             if(ImGui::MenuItem("Merge Line Down"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.RevoveLineBreak(timing->GetMarkedLine() + 1);
+                if(doc.GetLine(timing->GetMarkedLine() + 1).size() == 1 && doc.GetToken(timing->GetMarkedLine() + 1, 0).myValue.starts_with("image"))
+                {
+                    doc.RevoveLineBreak(timing->GetMarkedLine() + 1);
+                }
             }
             if(ImGui::MenuItem("Move Line Up"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
                 doc.MoveLineUp(timing->GetMarkedLine());
+                if(timing->GetMarkedLine() > 1 && doc.GetLine(timing->GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing->GetMarkedLine() - 2, 0).myValue.starts_with("image"))
+                {
+                    doc.MoveLineUp(timing->GetMarkedLine() - 1);
+                }
             }
             if(ImGui::MenuItem("Move Line Down"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
                 doc.MoveLineUp(timing->GetMarkedLine() + 1);
+                if(doc.GetLine(timing->GetMarkedLine() + 2).size() == 1 && doc.GetLine(timing->GetMarkedLine()).size() == 1 && doc.GetToken(timing->GetMarkedLine(), 0).myValue.starts_with("image"))
+                {
+                    doc.MoveLineUp(timing->GetMarkedLine() + 2);
+                }
             }
             if(ImGui::MenuItem("Duplicate Line"))
             {
@@ -462,6 +478,37 @@ void loop(void* window){
         ImGui::End();
     }
 
+    if(ImGui::BeginPopupModal("WARNING!##StartFail", &g_selfTestFailed))
+    {
+        ImGui::TextWrapped("Start up has failed multiple times in a row. To prevent another crash the project was not loaded. \n\n"
+        "You can choose to continue and try to load the files again. \n"
+        "If you have unsaved work you can enter Safe Mode and fix any errors. \n"
+        "If you cannot find anything wrong with the project and have saved any files you care about, you can choose Reset to remove all settings and the project.");
+        ImGui::Spacing();
+        if(ImGui::Button("Continue"))
+        {
+            Serialization::KaraokeDocument::Get().Load("/local", (
+                Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
+            ));
+            ImGui::GetIO().IniFilename = "/local/Layout.Resonate";
+            PreviewWindow::AddBackgroundElement("/local/");
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Safe Mode"))
+        {
+            WindowManager::DestroyWindow(WindowManager::GetWindow("Timing"));
+            Serialization::KaraokeDocument::Get().Load("/local", (
+                Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
+            ));
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Reset"))
+        {
+            // Reset
+        }
+        ImGui::EndPopup();
+    }
+
     WindowManager::ImGuiDraw();
 
     MainWindow_RenderFrame();
@@ -474,9 +521,26 @@ int main(){
     MainWindow_StyleColorsShadow();
     Serialization::Syllabify_Init();
     Serialization::LoadPrefs();
-    Serialization::KaraokeDocument::Get().Load("/local", (
-        Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
-    ));
+    if(Serialization::Preferences::HasKey("Startup/FailCount"))
+    {
+        int failCount = Serialization::Preferences::GetInt("Startup/FailCount");
+        if(failCount > 4)
+        {
+            // Prevent data from loading because an error prevented the program from starting last time
+            g_selfTestFailed = true;
+        }
+        Serialization::Preferences::SetInt("Startup/FailCount", failCount + 1);
+    }
+    else
+    {
+        Serialization::Preferences::SetInt("Startup/FailCount", 1);
+    }
+    if(!g_selfTestFailed)
+    {
+        Serialization::KaraokeDocument::Get().Load("/local", (
+            Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
+        ));
+    }
 
     ImGui::Ext::SetShortcutEvents();
     
@@ -486,6 +550,10 @@ int main(){
         std::filesystem::copy_file("/imgui.ini", "/local/Layout.Resonate");
         FileHandler::SyncLocalFS();
     }
+    if(g_selfTestFailed)
+    {
+        ImGui::GetIO().IniFilename = "/imgui.ini";
+    }
 
     WindowManager::Init();
     WindowManager::AddWindow<TextEditor>("Raw Text");
@@ -493,7 +561,10 @@ int main(){
     WindowManager::AddWindow<AudioPlayback>("Audio");
     ImGui::SetWindowFocus("Timing");
 
-    PreviewWindow::AddBackgroundElement("/local/");
+    if(!g_selfTestFailed)
+    {
+        PreviewWindow::AddBackgroundElement("/local/");
+    }
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
@@ -507,5 +578,9 @@ int main(){
     //ImGui::PushFont(roboto);
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
+    if(!g_selfTestFailed)
+    {
+        Serialization::Preferences::SetInt("Startup/FailCount", 0);
+    }
     return 0;
 }
