@@ -68,11 +68,38 @@ void HelpWindow::OnImGuiDraw()
     ImGui::TextWrapped("In the Edit menu you can split lines into two where the text marker is, merge lines with their neighbors, duplicate them and switch their places. ");
     EndTreeNode
 
+    StartTreeNode("Document Properties");
+    ImGui::TextWrapped("In the Document Properties you can set effects that affect the whole document and add or remove effects that can be stored to the browser storage. \n"
+    "The Document tab contains options stored in the document itself while the Local tab has effects stored locally and can be used in any project. \n "
+    "The start and end colors defined here are the default colors used in the document. \n "
+    "Font Size affects how many lines can be shown at a time in ECHO, up to seven. \n "
+    "Using Direct Text is used when the singer is singing faster than ECHO animates the text which rarely happens. \n "
+    "Shift Timings will shift all time codes in the document by the specified amount. "
+    );
+    EndTreeNode
+
     StartTreeNode("Adding Effects");
-    ImGui::TextWrapped("Adding effects is as simple as clicking the Effects menu and selecting the appropriate one. "
-    "After the built in line effects are the text effects added to the document. "
-    "You can create effects by selecting Document Properties in the View menu. Here you can add or remove effects and store them to the browser storage. "
+    ImGui::TextWrapped("Adding effects is as simple as clicking the Effects menu and selecting the appropriate one. ");
+    StartTreeNode("Setting the Line");
+    ImGui::TextWrapped("By selecting Display Line a <line#> tag will be added to the selected line in the Timing editor. "
+    "The value can then be changed in the Timing editor any time. \nTo remove it, move the text marker to the line and un-select the Effects > Display Line option");
+    EndTreeNode
+    StartTreeNode("No Effect");
+    ImGui::TextWrapped("This option will remove all text animation in ECHO and make the text white. It is most often used when someone is talking in the song instead of singing. \n"
+    "To remove it, move the text marker to the line and un-select the Effects > No Effect option");
+    EndTreeNode
+    StartTreeNode("Text Color");
+    ImGui::TextWrapped("After the built in line effects are the text effects added to the document. "
+    "You can create effects in the Document Properties. "
     "A named effect will appear as its name in the Timing editor but when exporting will be translated to a command readable by ECHO.");
+    EndTreeNode
+    StartTreeNode("Images");
+    ImGui::TextWrapped("This dropdown shows all images in the project. Selecting one will add an image tag to the Timing editor, visible as a small thumbnail. "
+    "An image has several options that can be changed by selecting it in the Timing editor and then selecting Apply when done. \n"
+    "When adding an image or applying options it is sorted according to its time of appearance. However, it does not move when its time is changed in other ways such as Raw Text. "
+    "For information on why sorting is important, please read the guidelines (View > Guidelines). \n"
+    "Images can not be used if a video is present in the project!");
+    EndTreeNode
     EndTreeNode
 
     StartTreeNode("Previewing");
