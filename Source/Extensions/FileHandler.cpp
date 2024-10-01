@@ -153,7 +153,9 @@ EM_JS(void, set_local_value, (emscripten::EM_VAL key, emscripten::EM_VAL value_t
 
 EM_JS(emscripten::EM_VAL, get_local_value, (emscripten::EM_VAL key),
 {
-    return Emval.toHandle(localStorage.getItem(Emval.toValue(key)));
+    const keyname = Emval.toValue(key);
+    if(!localStorage.getItem(keyname)){return Emval.toHandle("");}
+    return Emval.toHandle(localStorage.getItem(keyname));
 });
 
 EM_JS(void, remove_local_value, (emscripten::EM_VAL key),

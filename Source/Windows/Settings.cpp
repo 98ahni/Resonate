@@ -64,6 +64,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveLayout()
 Settings::Settings()
 {
     setup_latency_metronome();
+    myTimingEditorExists = WindowManager::GetWindow("Timing") != nullptr;
 }
 
 void Settings::OnImGuiDraw()
@@ -130,6 +131,7 @@ void Settings::OnImGuiDraw()
         ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
     }
     // Latency compensation
+    if(!myTimingEditorExists) {ImGui::BeginDisabled();}
     DrawLatencyWidget();
     if(ImGui::Button("Open Auto Latency"))
     {
@@ -166,6 +168,7 @@ void Settings::OnImGuiDraw()
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
+    if(!myTimingEditorExists) {ImGui::EndDisabled();}
     // Toggle fullscreen (might not be nessesary)
     // Download/Upload preferences
     ImGui::Button("Export Preferences");

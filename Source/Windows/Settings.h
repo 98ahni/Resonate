@@ -13,6 +13,7 @@ public:
 private:
     int DrawLatencyWidget();
 
+    bool myTimingEditorExists;
     bool myLatencyPopup;
     bool myLatencyPopupOpenLastFrame;
     float myLatencyStartTime;

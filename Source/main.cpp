@@ -44,7 +44,10 @@ bool g_closeAboutTab = false;
 bool g_shouldDeleteOnLoad = false;
 bool g_firstFrameAfterFileLoad = false;
 
+void DrawSelfTestWarningPopup();
+bool g_selfTestInProgress = true;
 bool g_selfTestFailed = false;
+bool g_isSafeMode = false;
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
@@ -129,6 +132,7 @@ void loop(void* window){
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     MainWindow_SetName(doc.GetName().empty() ? "Resonate" : (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate");
     MainWindow_SetIcon(doc.GetIsDirty() ? "ResonateIconUnsaved.png" : "ResonateIcon.png");
+    DrawSelfTestWarningPopup();
     if(doc.GetIsAutoDirty())
     {
         doc.AutoSave();
@@ -149,8 +153,8 @@ void loop(void* window){
             {
                 g_hasGoogleAcc = GoogleDrive::HasToken();
             }
-            ImGui::MenuItem("Open Project");
-            ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");
+            ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
+            if(g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
             ImGui::MenuItem("Save Document");
             ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
             ImGui::Separator();
@@ -169,7 +173,7 @@ void loop(void* window){
                     // Profile info + logout
                 }
                 ImGui::Separator();
-                if(ImGui::MenuItem("Open Project", 0, false, g_hasGoogleAcc))
+                if(ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode && g_hasGoogleAcc))
                 {
                     g_shouldDeleteOnLoad = true;
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCompletedFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
@@ -193,7 +197,7 @@ void loop(void* window){
             ImGui::Ext::DestroyHTMLElement("SaveProject");
             ImGui::Ext::DestroyHTMLElement("GoogleLogin");
         }
-        if(ImGui::BeginMenu("Edit"))
+        if(ImGui::BeginMenu("Edit", !g_isSafeMode))
         {
             if(ImGui::MenuItem("Insert Line Break"))
             {
@@ -203,7 +207,7 @@ void loop(void* window){
             if(ImGui::MenuItem("Merge Line Up"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                if(doc.GetLine(timing->GetMarkedLine() - 1).size() == 1 && (doc.GetToken(timing->GetMarkedLine() - 1, 0).myValue.starts_with("image") || (doc.GetLine(timing->GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing->GetMarkedLine() - 2, 0).myValue.starts_with("image"))))
+                if(!(doc.GetLine(timing->GetMarkedLine() - 1).size() == 1 && (doc.GetToken(timing->GetMarkedLine() - 1, 0).myValue.starts_with("image") || (doc.GetLine(timing->GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing->GetMarkedLine() - 2, 0).myValue.starts_with("image")))))
                 {
                     doc.RevoveLineBreak(timing->GetMarkedLine());
                 }
@@ -211,7 +215,7 @@ void loop(void* window){
             if(ImGui::MenuItem("Merge Line Down"))
             {
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                if(doc.GetLine(timing->GetMarkedLine() + 1).size() == 1 && doc.GetToken(timing->GetMarkedLine() + 1, 0).myValue.starts_with("image"))
+                if(!(doc.GetLine(timing->GetMarkedLine() + 1).size() == 1 && doc.GetToken(timing->GetMarkedLine() + 1, 0).myValue.starts_with("image")))
                 {
                     doc.RevoveLineBreak(timing->GetMarkedLine() + 1);
                 }
@@ -247,7 +251,7 @@ void loop(void* window){
             }
             ImGui::EndMenu();
         }
-        if(ImGui::BeginMenu("Effects"))
+        if(ImGui::BeginMenu("Effects", !g_isSafeMode))
         {
             if(ImGui::MenuItem("Preview", 0, WindowManager::GetWindow("Preview") != nullptr))
             {
@@ -356,7 +360,7 @@ void loop(void* window){
             }
             ImGui::EndMenu();
         }
-        if(ImGui::BeginMenu("Syllabify"))
+        if(ImGui::BeginMenu("Syllabify", !g_isSafeMode))
         {
             if(ImGui::BeginMenu("All"))
             {
@@ -395,7 +399,7 @@ void loop(void* window){
         }
         if(ImGui::BeginMenu("View"))
         {
-            if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr))
+            if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr, !g_isSafeMode))
             {
                 if(WindowManager::GetWindow("Touch Control") != nullptr)
                 {
@@ -478,20 +482,35 @@ void loop(void* window){
         ImGui::End();
     }
 
-    if(ImGui::BeginPopupModal("WARNING!##StartFail", &g_selfTestFailed))
+    WindowManager::ImGuiDraw();
+
+    MainWindow_RenderFrame();
+    if(g_selfTestInProgress && !g_selfTestFailed)
     {
-        ImGui::TextWrapped("Start up has failed multiple times in a row. To prevent another crash the project was not loaded. \n\n"
-        "You can choose to continue and try to load the files again. \n"
-        "If you have unsaved work you can enter Safe Mode and fix any errors. \n"
-        "If you cannot find anything wrong with the project and have saved any files you care about, you can choose Reset to remove all settings and the project.");
-        ImGui::Spacing();
+        FileHandler::SetLocalValue("Startup/FailCount", "0");
+        g_selfTestInProgress = false;
+    }
+}
+
+void DrawSelfTestWarningPopup()
+{
+    if(ImGui::BeginPopupModal("WARNING!##StartFail", 0, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::TextWrapped("Start up has failed multiple times in a row. To prevent another crash the project was not loaded. \n\n\n"
+        "    You can choose to continue and try to load the files again. \n\n"
+        "    If you have unsaved work you can enter Safe Mode and fix any errors. \n\n"
+        "    If you cannot find anything wrong with the project and have saved any files you care about, you can choose Reset to remove all settings and the project.");
+        ImGui::Dummy({5, DPI_SCALED(30)});
         if(ImGui::Button("Continue"))
         {
             Serialization::KaraokeDocument::Get().Load("/local", (
                 Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
             ));
             ImGui::GetIO().IniFilename = "/local/Layout.Resonate";
+            AudioPlayback::SetPlaybackFile("/local");
             PreviewWindow::AddBackgroundElement("/local/");
+            g_selfTestFailed = false;
+            ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         if(ImGui::Button("Safe Mode"))
@@ -500,41 +519,68 @@ void loop(void* window){
             Serialization::KaraokeDocument::Get().Load("/local", (
                 Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
             ));
+            g_selfTestFailed = false;
+            g_selfTestInProgress = false; // Open popup on next load as well
+            g_isSafeMode = true;
+            ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         if(ImGui::Button("Reset"))
         {
-            // Reset
+            for (auto &path : std::filesystem::directory_iterator("/local/"))
+            {
+                std::filesystem::remove(path);
+            }
+            FileHandler::SyncLocalFS();
+            FileHandler::SetLocalValue("Startup/FailCount", "0");
+            EM_ASM(location.reload(););
         }
         ImGui::EndPopup();
     }
-
-    WindowManager::ImGuiDraw();
-
-    MainWindow_RenderFrame();
+    if(g_selfTestFailed)
+    {
+        ImGui::OpenPopup("WARNING!##StartFail");
+    }
 }
 
 int main(){
     void* _window = nullptr;
-    MainWindow_Init("Resonate", &_window);
-    MainWindow_StyleVarsShadow();
-    MainWindow_StyleColorsShadow();
-    Serialization::Syllabify_Init();
-    Serialization::LoadPrefs();
-    if(Serialization::Preferences::HasKey("Startup/FailCount"))
+    if(FileHandler::GetLocalValue("Startup/FailCount") != "")
     {
-        int failCount = Serialization::Preferences::GetInt("Startup/FailCount");
+        int failCount = std::stoi(FileHandler::GetLocalValue("Startup/FailCount"));
         if(failCount > 4)
         {
             // Prevent data from loading because an error prevented the program from starting last time
             g_selfTestFailed = true;
         }
-        Serialization::Preferences::SetInt("Startup/FailCount", failCount + 1);
+        FileHandler::SetLocalValue("Startup/FailCount", std::to_string(failCount + 1));
     }
     else
     {
-        Serialization::Preferences::SetInt("Startup/FailCount", 1);
+        FileHandler::SetLocalValue("Startup/FailCount", "1");
     }
+    MainWindow_Init("Resonate", &_window);
+    MainWindow_StyleVarsShadow();
+    MainWindow_StyleColorsShadow();
+    Serialization::Syllabify_Init();
+    if(!g_selfTestFailed)
+    {
+        Serialization::LoadPrefs();
+    }
+    //if(Serialization::Preferences::HasKey("Startup/FailCount"))
+    //{
+    //    int failCount = Serialization::Preferences::GetInt("Startup/FailCount");
+    //    if(failCount > 4)
+    //    {
+    //        // Prevent data from loading because an error prevented the program from starting last time
+    //        g_selfTestFailed = true;
+    //    }
+    //    Serialization::Preferences::SetInt("Startup/FailCount", failCount + 1);
+    //}
+    //else
+    //{
+    //    Serialization::Preferences::SetInt("Startup/FailCount", 1);
+    //}
     if(!g_selfTestFailed)
     {
         Serialization::KaraokeDocument::Get().Load("/local", (
@@ -560,6 +606,10 @@ int main(){
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");
     ImGui::SetWindowFocus("Timing");
+    if(g_selfTestFailed)
+    {
+        AudioPlayback::SetPlaybackFile("-"); // Just to make sure the audio is not loaded.
+    }
 
     if(!g_selfTestFailed)
     {
@@ -578,9 +628,5 @@ int main(){
     //ImGui::PushFont(roboto);
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
-    if(!g_selfTestFailed)
-    {
-        Serialization::Preferences::SetInt("Startup/FailCount", 0);
-    }
     return 0;
 }
