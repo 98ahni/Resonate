@@ -32,7 +32,7 @@ public:
     static void RemoveEventListener(std::string anEvent, std::string aJSFunctonName);
 
 private:            // Is defined as public in AudioPlayback.cpp
-    static inline AudioPlayback* ourInstance;
+    static inline AudioPlayback* ourInstance = nullptr;
 
     void ProcessAudio();
     void DrawPlaybackProgress(float aDrawUntil);

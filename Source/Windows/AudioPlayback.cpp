@@ -207,7 +207,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsPrepPlayback()
 }
 void AudioPlayback::PrepPlayback()
 {
-    if(ourInstance->myHasAudio) return;
+    if(!ourInstance || ourInstance->myHasAudio) return;
     EM_ASM(if(global_audio_context !== null)global_audio_context.close(););
     create_audio_playback();
     if(ourInstance->myPath.empty()) 
