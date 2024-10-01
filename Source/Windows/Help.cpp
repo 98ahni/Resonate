@@ -80,6 +80,7 @@ void HelpWindow::OnImGuiDraw()
 
     StartTreeNode("Adding Effects");
     ImGui::TextWrapped("Adding effects is as simple as clicking the Effects menu and selecting the appropriate one. ");
+    ImGui::PushFont(MainWindow::Font);
     StartTreeNode("Setting the Line");
     ImGui::TextWrapped("By selecting Display Line a <line#> tag will be added to the selected line in the Timing editor. "
     "The value can then be changed in the Timing editor any time. \nTo remove it, move the text marker to the line and un-select the Effects > Display Line option");
@@ -100,6 +101,7 @@ void HelpWindow::OnImGuiDraw()
     "For information on why sorting is important, please read the guidelines (View > Guidelines). \n"
     "Images can not be used if a video is present in the project!");
     EndTreeNode
+    ImGui::PopFont();
     EndTreeNode
 
     StartTreeNode("Previewing");
