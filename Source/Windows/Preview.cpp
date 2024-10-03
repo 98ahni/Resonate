@@ -375,7 +375,7 @@ int PreviewWindow::AssembleLanes(float aWidth)
 
 bool PreviewWindow::FillBackLanes(int aLaneCount)
 {
-    float scaledWidth = 640.f;// * (50 / Serialization::KaraokeDocument::Get().GetFontSize());
+    float scaledWidth = 640.f - 40.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
     int nextLineNeeds = AssembleLanes(scaledWidth);
 	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
     {
