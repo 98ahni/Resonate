@@ -154,7 +154,7 @@ void loop(void* window){
                 g_hasGoogleAcc = GoogleDrive::HasToken();
             }
             ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
-            if(g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
+            if(!g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
             ImGui::MenuItem("Save Document");
             ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
             ImGui::Separator();
@@ -617,8 +617,8 @@ int main(){
     }
 
     ImGui::GetIO().Fonts->AddFontDefault(nullptr);
-    PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
-    PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/FredokaOne-Regular.ttf", 50.0f));
+    PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f));
+    PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f));
     ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
     timingEditor->SetFont(timingFont);
     timingFont->Scale = .5f;

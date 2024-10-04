@@ -326,6 +326,11 @@ int PreviewWindow::AssembleLanes(float aWidth)
     {
         if(doc.GetLine(myNextAddLineIndex).size() <= nextStartToken)
         {
+            if(myAssemblyLanes[lane - 1].myWidth < 0.5f)
+            {
+                lane--;
+                printf("Removed an empty lane at end of line %i.\n", myNextAddLineIndex);
+            }
             printf("Line %i (size: %i) assembled and takes %i lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size(), lane);
             printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
             return lane;
@@ -361,7 +366,6 @@ int PreviewWindow::AssembleLanes(float aWidth)
             }
             nextStartToken++;
         } while(currentTextWidth < aWidth || lastSpaceToken == -1);
-        printf("Assemble: %f, %f\n", ImGui::CalcTextSize("M").x *2.5f, ImGui::CalcTextSize("M").y *2.5f);
         ImGui::PopFont();
         nextStartToken = lastSpaceToken == -1 ? nextStartToken : (lastSpaceToken + 1);
         myAssemblyLanes[lane].myEndToken = nextStartToken;
@@ -375,7 +379,7 @@ int PreviewWindow::AssembleLanes(float aWidth)
 
 bool PreviewWindow::FillBackLanes(int aLaneCount)
 {
-    float scaledWidth = 640.f - 40.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
+    float scaledWidth = 640.f - 80.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
     int nextLineNeeds = AssembleLanes(scaledWidth);
 	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
     {

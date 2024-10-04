@@ -999,23 +999,23 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3944781: ($0) => { init_gapi_with_key($0); },  
- 3944807: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3944930: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3945032: () => { return Date.now(); },  
- 3945053: () => { location.reload() },  
- 3945071: () => { location.reload(); },  
- 3945090: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3945153: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3945246: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3945342: () => { return global_audio_element.paused ? 1 : 0; },  
- 3945386: () => { return global_audio_element.paused ? 1 : 0; },  
- 3945430: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3945480: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3945736: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3946005: () => { audio_element_pause(); },  
- 3946028: () => { audio_element_play(); },  
- 3946050: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3982765: ($0) => { init_gapi_with_key($0); },  
+ 3982791: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3982914: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3983016: () => { return Date.now(); },  
+ 3983037: () => { location.reload() },  
+ 3983055: () => { location.reload(); },  
+ 3983074: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3983137: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3983230: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3983326: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3983370: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3983414: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3983464: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3983720: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3983989: () => { audio_element_pause(); },  
+ 3984012: () => { audio_element_play(); },  
+ 3984034: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
@@ -11592,9 +11592,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3885216;
-var ___start_em_js = Module['___start_em_js'] = 3919648;
-var ___stop_em_js = Module['___stop_em_js'] = 3944781;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923036;
+var ___start_em_js = Module['___start_em_js'] = 3957632;
+var ___stop_em_js = Module['___stop_em_js'] = 3982765;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
