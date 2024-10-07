@@ -95,7 +95,6 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL 
     printf("Loaded project '%s' with file id: %s\n", path.string().data(), id.data());
     if(path.extension() == ".txt")
     {
-        Serialization::Preferences::SetString("Document/FileID", id);
         Serialization::KaraokeDocument::Get().Load(path.string(), id, false);
     }
     else if(path.extension() == ".mp3")
@@ -141,6 +140,7 @@ void loop(void* window){
     if(g_firstFrameAfterFileLoad)
     {
         g_firstFrameAfterFileLoad = false;
+        Serialization::Preferences::SetString("Document/FileID", doc.GetFileID());
         doc.ParseLoadedFile();
         FileHandler::SyncLocalFS();
     }
