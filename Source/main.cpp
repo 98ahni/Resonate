@@ -562,6 +562,7 @@ int main(){
     MainWindow_Init("Resonate", &_window);
     MainWindow_StyleVarsShadow();
     MainWindow_StyleColorsShadow();
+    ImGui::Ext::StartLoadingScreen(1);
     Serialization::Syllabify_Init();
     if(!g_selfTestFailed)
     {
@@ -627,6 +628,7 @@ int main(){
     ImGui::GetIO().Fonts->Build();
     //ImGui::PushFont(roboto);
 
+    ImGui::Ext::StopLoadingScreen();
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;
 }

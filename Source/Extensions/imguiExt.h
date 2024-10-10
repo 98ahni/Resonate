@@ -23,6 +23,8 @@ namespace ImGui{
         void RemoveWindowEvent(const char* anEvent, const char* aJSFunctionName);
 
         void SetShortcutEvents();
+        void StartLoadingScreen(float someAlpha);
+        void StopLoadingScreen();
 
         bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha = false);
         void SetColor(unsigned int aCol);

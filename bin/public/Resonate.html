@@ -96,6 +96,7 @@
 </head>
     <body>
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" onclick="_jsPrepPlayback()"></canvas>
+        <canvas class="emscripten" id="loadingCanvas" oncontextmenu="event.preventDefault()"></canvas>
         <script type='text/javascript'>
             var Module;
             (async () => {
@@ -133,7 +134,18 @@
                 };
 
                 
-
+                
+                // Create loading screen canvas
+                {
+                    const worker = new Worker("plugins/LoadingScreenWorker.js");
+                    Module["loadingScreenWorker"] = worker;
+                    const htmlCanvas = document.getElementById("loadingCanvas");
+                    htmlCanvas.style.zIndex = 0;
+                    document.getElementById("canvas").style.zIndex = 1;
+                    const offscreen = htmlCanvas.transferControlToOffscreen();
+                    worker.postMessage({ cmd: 'init', canvas: offscreen }, [offscreen]);
+                }
+                
                 // Initialize the graphics adapter
                 {
                     const adapter = await navigator.gpu.requestAdapter();
