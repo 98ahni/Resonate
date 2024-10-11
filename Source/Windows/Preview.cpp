@@ -549,6 +549,7 @@ void PreviewWindow::Resetprogress()
         myBackLanes[lane].myLine = -1;
         myAssemblyLanes[lane].myLine = -1;
     }
+    myBackgroundQueue.clear();
     while (FillBackLanes(lanesShown))
     {
     }
