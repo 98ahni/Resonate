@@ -999,23 +999,25 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3983374: ($0) => { init_gapi_with_key($0); },  
- 3983400: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3983523: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3983625: () => { return Date.now(); },  
- 3983646: () => { location.reload() },  
- 3983664: () => { location.reload(); },  
- 3983683: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3983746: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3983839: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3983935: () => { return global_audio_element.paused ? 1 : 0; },  
- 3983979: () => { return global_audio_element.paused ? 1 : 0; },  
- 3984023: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3984073: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3984329: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3984598: () => { audio_element_pause(); },  
- 3984621: () => { audio_element_play(); },  
- 3984643: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3982765: ($0) => { init_gapi_with_key($0); },  
+ 3982791: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 3982831: () => { Module.hide_loading_screen(); },  
+ 3982861: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3982984: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3983086: () => { return Date.now(); },  
+ 3983107: () => { location.reload() },  
+ 3983125: () => { location.reload(); },  
+ 3983144: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3983207: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3983300: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3983396: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3983440: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3983484: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3983534: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3983790: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3984059: () => { audio_element_pause(); },  
+ 3984082: () => { audio_element_play(); },  
+ 3984104: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
@@ -1044,8 +1046,6 @@ function set_video_playback_rate(id,rate) { let imid = Emval.toValue(id); let vi
 function is_video_paused(id) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return true; } return vid.paused; }
 function load_image(id,fs_path) { return Emval.toHandle(new Promise(async(resolve)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(img === null){ if(!FS.analyzePath(fsPath, false).exists){ return; } img = document.createElement('img'); img.id = imid; document.body.insertBefore(img, document.getElementById('canvas')); } img.style.position = 'fixed'; img.style.width = 1 + 'px'; img.style.height = 1 + 'px'; const imgData = FS.readFile(fsPath); const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'}); img.src = URL.createObjectURL(imgBlob); await img.decode(); resolve();})); }
 function render_image(id,texture) { var imid = Emval.toValue(id); var img = document.getElementById(imid); if(img === null){ return Emval.toHandle(0); } var canvas = document.getElementById(imid + 'canvas'); if(canvas === null){ canvas = document.createElement('canvas'); canvas.id = imid + 'canvas'; document.body.insertBefore(canvas, document.getElementById('canvas')); if(img.nodeName == 'IMG'){ canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; } else if(img.nodeName == 'VIDEO'){ canvas.width = img.videoWidth; canvas.height = img.videoHeight; } canvas.style.position = 'fixed'; canvas.style.top = 100 + 'px'; canvas.style.width = 160 + 'px'; canvas.style.height = 90 + 'px'; } var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0); var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height); var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height); ctx = null; pixels = null; return output; }
-function show_loading_screen(bg_color,decor_color) { const loadingCanvas = document.getElementById('loadingCanvas'); loadingCanvas.style.zIndex = 2; Module.loadingScreenWorker.postMessage({cmd: 'show', bgColor: bg_color, decorColor: decor_color, width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio}); }
-function hide_loading_screen() { const loadingCanvas = document.getElementById('loadingCanvas'); loadingCanvas.style.zIndex = 0; Module.loadingScreenWorker.postMessage({cmd: 'hide', width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio}); }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
 function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(Emval.toValue(id)); setTimeout(()=>{ if(input !== null){ input.remove(); } }, delay_ms); }); }
 function add_window_event(event,callback) { window.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }
@@ -11369,8 +11369,6 @@ var wasmImports = {
   /** @export */
   has_preference_key: has_preference_key,
   /** @export */
-  hide_loading_screen: hide_loading_screen,
-  /** @export */
   hide_touch_keyboard: hide_touch_keyboard,
   /** @export */
   is_audio_stretched: is_audio_stretched,
@@ -11412,8 +11410,6 @@ var wasmImports = {
   set_video_playback_progress: set_video_playback_progress,
   /** @export */
   set_video_playback_rate: set_video_playback_rate,
-  /** @export */
-  show_loading_screen: show_loading_screen,
   /** @export */
   stop_latency_metronome: stop_latency_metronome,
   /** @export */
@@ -11598,9 +11594,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923036;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923040;
 var ___start_em_js = Module['___start_em_js'] = 3957632;
-var ___stop_em_js = Module['___stop_em_js'] = 3983374;
+var ___stop_em_js = Module['___stop_em_js'] = 3982765;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

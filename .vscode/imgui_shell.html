@@ -140,10 +140,23 @@
                     const worker = new Worker("plugins/LoadingScreenWorker.js");
                     Module["loadingScreenWorker"] = worker;
                     const htmlCanvas = document.getElementById("loadingCanvas");
-                    htmlCanvas.style.zIndex = 0;
-                    document.getElementById("canvas").style.zIndex = 1;
+                    htmlCanvas.style.zIndex = -1;
+                    document.getElementById("canvas").style.zIndex = 0;
                     const offscreen = htmlCanvas.transferControlToOffscreen();
                     worker.postMessage({ cmd: 'init', canvas: offscreen }, [offscreen]);
+                    
+                    Module["show_loading_screen"] = (bg_color, decor_color, should_anim_in) => {
+                        const loadingCanvas = document.getElementById('loadingCanvas');
+                        loadingCanvas.style.zIndex = 1;
+                        Module.loadingScreenWorker.postMessage({cmd: 'show', bgColor: bg_color, decorColor: decor_color, width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio, animIn: should_anim_in});
+                    };
+                    Module["hide_loading_screen"] = () => {
+                        const loadingCanvas = document.getElementById('loadingCanvas');
+                        Module.loadingScreenWorker.postMessage({cmd: 'hide', width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio});
+                    };
+                    worker.addEventListener("message", (msg)=>{
+                        if(msg.data.cmd == 'resetZ'){ document.getElementById("loadingCanvas").style.zIndex = -1;}
+                    });
                 }
                 
                 // Initialize the graphics adapter

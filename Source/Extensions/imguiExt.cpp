@@ -180,17 +180,6 @@ EM_JS(ImExtTexture&, render_image, (emscripten::EM_VAL id, ImExtTexture& texture
     pixels = null;
     return output;
 });
-EM_JS(void, show_loading_screen, (uint bg_color, uint decor_color), {
-    const loadingCanvas = document.getElementById('loadingCanvas');
-    loadingCanvas.style.zIndex = 2;
-    //canvas.style.zIndex = 0;
-    Module.loadingScreenWorker.postMessage({cmd: 'show', bgColor: bg_color, decorColor: decor_color, width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio});
-});
-EM_JS(void, hide_loading_screen, (), {
-    const loadingCanvas = document.getElementById('loadingCanvas');
-    loadingCanvas.style.zIndex = 0;
-    Module.loadingScreenWorker.postMessage({cmd: 'hide', width: window.innerWidth * window.devicePixelRatio, height: window.innerHeight * window.devicePixelRatio});
-});
 EM_JS(void, destroy_element, (emscripten::EM_VAL id), {
     let input = document.getElementById(Emval.toValue(id));
     if(input !== null){
@@ -544,14 +533,14 @@ void ImGui::Ext::SetShortcutEvents()
     ImGui::AddContextHook(ImGui::GetCurrentContext(), &copyPaste);
 }
 
-void ImGui::Ext::StartLoadingScreen(float someAlpha)
+void ImGui::Ext::StartLoadingScreen(float someAlpha, bool aShouldAnimateIn)
 {
-    show_loading_screen(ImGui::GetColorU32(ImGuiCol_WindowBg), ImGui::GetColorU32(ImGuiCol_ButtonActive));
+    EM_ASM(Module.show_loading_screen($0, $1, $2);, ImGui::GetColorU32(ImGuiCol_PopupBg, someAlpha), ImGui::GetColorU32(ImGuiCol_ButtonActive), aShouldAnimateIn);
 }
 
 void ImGui::Ext::StopLoadingScreen()
 {
-    hide_loading_screen();
+    EM_ASM(Module.hide_loading_screen(););
 }
 
 bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha)

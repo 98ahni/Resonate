@@ -44,6 +44,8 @@ bool g_closeAboutTab = false;
 bool g_shouldDeleteOnLoad = false;
 bool g_firstFrameAfterFileLoad = false;
 
+bool g_shouldHideLoadingScreen = false;
+
 void DrawSelfTestWarningPopup();
 bool g_selfTestInProgress = true;
 bool g_selfTestFailed = false;
@@ -51,6 +53,7 @@ bool g_isSafeMode = false;
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
+    ImGui::Ext::StartLoadingScreen();
     //AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
     if(folderPath == "") return;
@@ -60,15 +63,18 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
     PreviewWindow::AddBackgroundElement(folderPath);
     FileHandler::SyncLocalFS();
     g_closeFileTab = true;
+    ImGui::Ext::StopLoadingScreen();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
 {
+    ImGui::Ext::StartLoadingScreen();
     std::string docPath = Serialization::KaraokeDocument::Get().Save();
     //std::string docPath = AudioPlayback::GetPath();       // Test audio file
     FileHandler::DownloadDocument(docPath.c_str());
     Serialization::KaraokeDocument::Get().UnsetIsDirty();
     FileHandler::SyncLocalFS();
     g_closeFileTab = true;
+    ImGui::Ext::StopLoadingScreen();
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::EM_VAL aTime)
@@ -110,10 +116,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromGoogleDrive(emscripten::EM_VAL 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadCompletedFromGoogleDrive()
 {
     g_firstFrameAfterFileLoad = true;
+    g_shouldHideLoadingScreen = true;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromGoogleDrive()
 {
     g_shouldDeleteOnLoad = false;
+    g_shouldHideLoadingScreen = true;
     Serialization::KaraokeDocument::Get().AutoSave();
     AudioPlayback::SaveLocalBackup();
     FileHandler::SyncLocalFS();
@@ -176,13 +184,16 @@ void loop(void* window){
                 if(ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode && g_hasGoogleAcc))
                 {
                     g_shouldDeleteOnLoad = true;
+                    ImGui::Ext::StartLoadingScreen();
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromGoogleDrive", "_LoadCompletedFromGoogleDrive", "_LoadCanceledFromGoogleDrive");
                 }
                 if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
                 {
+                    ImGui::Ext::StartLoadingScreen();
                     GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
                     Serialization::KaraokeDocument::Get().UnsetIsDirty();
                     FileHandler::SyncLocalFS();
+                    ImGui::Ext::StopLoadingScreen();
                 }
                 ImGui::EndMenu();
             }
@@ -485,6 +496,11 @@ void loop(void* window){
     WindowManager::ImGuiDraw();
 
     MainWindow_RenderFrame();
+    if(g_shouldHideLoadingScreen)
+    {
+        g_shouldHideLoadingScreen = false;
+        ImGui::Ext::StopLoadingScreen();
+    }
     if(g_selfTestInProgress && !g_selfTestFailed)
     {
         FileHandler::SetLocalValue("Startup/FailCount", "0");
@@ -562,7 +578,8 @@ int main(){
     MainWindow_Init("Resonate", &_window);
     MainWindow_StyleVarsShadow();
     MainWindow_StyleColorsShadow();
-    ImGui::Ext::StartLoadingScreen(1);
+    ImGui::Ext::StartLoadingScreen(1, false);
+    g_shouldHideLoadingScreen = true;
     Serialization::Syllabify_Init();
     if(!g_selfTestFailed)
     {
@@ -628,7 +645,6 @@ int main(){
     ImGui::GetIO().Fonts->Build();
     //ImGui::PushFont(roboto);
 
-    ImGui::Ext::StopLoadingScreen();
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;
 }

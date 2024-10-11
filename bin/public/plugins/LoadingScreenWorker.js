@@ -68,19 +68,60 @@ const default_console_error = console.error;
         };
     });
 })();
+function remap(value, l1, h1, l2, h2) {
+    return l2 + (h2 - l2) * (value - l1) / (h1 - l1);
+}
+
+const animMaxDuration = 250;
 
 var canvas = null;
 var context;
 var bgColor = 0;
 var decorColor = 0;
+var isShowing = false;
+var animIn = false;
+var animOut = false;
+var animStartTime = 0;
 function render(time){
+    if(!isShowing){
+        requestAnimationFrame(render);
+        return;
+    }
     let width = canvas.width;
     let height = canvas.height;
     let size = (width < height ? width : height) * .4;
-    let sizeMult = (Math.sin(time * .0005) * .5) + .5;
+    let sizeMult = ((Math.sin(time * .001) + 1) * .25) + .5;
     let alphaMult = (1 - sizeMult) + .5;
 
     context.clearRect(0, 0, width, height);
+    if(animIn){
+        if(animStartTime == 0){animStartTime = time;}
+        let duration = time - animStartTime;
+        if(duration >= animMaxDuration){
+            duration = animMaxDuration;
+            animIn = false;
+            animStartTime = 0;
+        }
+        sizeMult = remap(Math.sqrt(Math.sqrt(duration)), 0, Math.sqrt(Math.sqrt(animMaxDuration)), 5, sizeMult);
+        alphaMult = remap(duration, 0, animMaxDuration, 0, alphaMult);
+        context.globalAlpha = remap(duration, 0, animMaxDuration, 0, 1);
+    }
+    if(animOut){
+        if(animStartTime == 0){animStartTime = time; console.log("animOut start");}
+        let duration = time - animStartTime;
+        if(duration >= animMaxDuration){
+            duration = animMaxDuration;
+            animOut = false;
+            isShowing = false;
+            animStartTime = 0;
+            console.log("animOut end");
+            this.postMessage({cmd: 'resetZ'});
+        }
+        sizeMult = remap(duration * duration * duration, 0, animMaxDuration * animMaxDuration * animMaxDuration, sizeMult, 5);
+        alphaMult = remap(duration, 0, animMaxDuration, alphaMult, 0);
+        context.globalAlpha = remap(duration, 0, animMaxDuration, 1, 0);
+    }
+
     context.fillStyle = `rgba(
         ${bgColor&0xff},
         ${(bgColor>>>8)&0xff},
@@ -132,11 +173,12 @@ onmessage = async function (msg)
         decorColor = msg.data.decorColor;
         canvas.width = msg.data.width;
         canvas.height = msg.data.height;
-        canvas.style.zIndex = 2;
+        animIn = msg.data.animIn;
+        isShowing = true;
     }
     else if(msg.data.cmd == 'hide'){
         canvas.width = msg.data.width;
         canvas.height = msg.data.height;
-        canvas.style.zIndex = 0;
+        animOut = true;
     }
 }
