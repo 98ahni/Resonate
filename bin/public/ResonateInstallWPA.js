@@ -13,6 +13,7 @@ self.addEventListener('install', event => {
 			'./icons/ResonateIconLarge.png',
 			'./icons/ResonateIconUnsaved.png',
 			'./plugins/audiostretchworker.js',
+			'./plugins/LoadingScreenWorker.js',
 			'./plugins/timestretch.js',
 			'./public/plugins/RubberBand.js',
 			'./public/plugins/RubberBand.js.mem',

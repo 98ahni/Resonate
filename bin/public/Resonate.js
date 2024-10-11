@@ -134,8 +134,6 @@ readAsync = (filename, onload, onerror, binary = true) => {
     throw toThrow;
   };
 
-  Module['inspect'] = () => '[Emscripten Module object]';
-
 } else
 if (ENVIRONMENT_IS_SHELL) {
 
@@ -222,10 +220,10 @@ if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
   // and scriptDirectory will correctly be replaced with an empty string.
   // If scriptDirectory contains a query (starting with ?) or a fragment (starting with #),
   // they are removed because they could contain a slash.
-  if (scriptDirectory.indexOf('blob:') !== 0) {
-    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf('/')+1);
-  } else {
+  if (scriptDirectory.startsWith('blob:')) {
     scriptDirectory = '';
+  } else {
+    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, '').lastIndexOf('/')+1);
   }
 
   if (!(typeof window == 'object' || typeof importScripts == 'function')) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
@@ -320,7 +318,7 @@ var OPFS = 'OPFS is no longer included by default; build with -lopfs.js';
 
 var NODEFS = 'NODEFS is no longer included by default; build with -lnodefs.js';
 
-assert(!ENVIRONMENT_IS_SHELL, "shell environment detected but not enabled at build time.  Add 'shell' to `-sENVIRONMENT` to enable.");
+assert(!ENVIRONMENT_IS_SHELL, 'shell environment detected but not enabled at build time.  Add `shell` to `-sENVIRONMENT` to enable.');
 
 
 // end include: shell.js
@@ -513,7 +511,7 @@ function initRuntime() {
   checkStackCookie();
 
   
-if (!Module["noFSInit"] && !FS.init.initialized)
+if (!Module['noFSInit'] && !FS.init.initialized)
   FS.init();
 FS.ignorePermissions = false;
 
@@ -596,9 +594,7 @@ function getUniqueRunDependency(id) {
 function addRunDependency(id) {
   runDependencies++;
 
-  if (Module['monitorRunDependencies']) {
-    Module['monitorRunDependencies'](runDependencies);
-  }
+  Module['monitorRunDependencies']?.(runDependencies);
 
   if (id) {
     assert(!runDependencyTracking[id]);
@@ -632,9 +628,7 @@ function addRunDependency(id) {
 function removeRunDependency(id) {
   runDependencies--;
 
-  if (Module['monitorRunDependencies']) {
-    Module['monitorRunDependencies'](runDependencies);
-  }
+  Module['monitorRunDependencies']?.(runDependencies);
 
   if (id) {
     assert(runDependencyTracking[id]);
@@ -657,9 +651,7 @@ function removeRunDependency(id) {
 
 /** @param {string|number=} what */
 function abort(what) {
-  if (Module['onAbort']) {
-    Module['onAbort'](what);
-  }
+  Module['onAbort']?.(what);
 
   what = 'Aborted(' + what + ')';
   // TODO(sbc): Should we remove printing and leave it up to whoever
@@ -714,11 +706,11 @@ var isDataURI = (filename) => filename.startsWith(dataURIPrefix);
 var isFileURI = (filename) => filename.startsWith('file://');
 // end include: URIUtils.js
 function createExportWrapper(name) {
-  return function() {
+  return (...args) => {
     assert(runtimeInitialized, `native function \`${name}\` called before runtime initialization`);
     var f = wasmExports[name];
     assert(f, `exported native function \`${name}\` not found`);
-    return f.apply(null, arguments);
+    return f(...args);
   };
 }
 
@@ -737,7 +729,7 @@ function getBinarySync(file) {
   if (readBinary) {
     return readBinary(file);
   }
-  throw "both async and sync fetching of the wasm failed";
+  throw 'both async and sync fetching of the wasm failed';
 }
 
 function getBinaryPromise(binaryFile) {
@@ -753,7 +745,7 @@ function getBinaryPromise(binaryFile) {
     ) {
       return fetch(binaryFile, { credentials: 'same-origin' }).then((response) => {
         if (!response['ok']) {
-          throw "failed to load wasm binary file at '" + binaryFile + "'";
+          throw `failed to load wasm binary file at '${binaryFile}'`;
         }
         return response['arrayBuffer']();
       }).catch(() => getBinarySync(binaryFile));
@@ -773,8 +765,6 @@ function getBinaryPromise(binaryFile) {
 function instantiateArrayBuffer(binaryFile, imports, receiver) {
   return getBinaryPromise(binaryFile).then((binary) => {
     return WebAssembly.instantiate(binary, imports);
-  }).then((instance) => {
-    return instance;
   }).then(receiver, (reason) => {
     err(`failed to asynchronously prepare wasm: ${reason}`);
 
@@ -843,7 +833,7 @@ function createWasm() {
 
     wasmMemory = wasmExports['memory'];
     
-    assert(wasmMemory, "memory not found in wasm exports");
+    assert(wasmMemory, 'memory not found in wasm exports');
     // This assertion doesn't hold when emscripten is run in --post-link
     // mode.
     // TODO(sbc): Read INITIAL_MEMORY out of the wasm file in post-link mode.
@@ -990,35 +980,38 @@ function unexportedRuntimeSymbol(sym) {
 }
 
 // Used by XXXXX_DEBUG settings to output debug messages.
-function dbg(text) {
+function dbg(...args) {
   // TODO(sbc): Make this configurable somehow.  Its not always convenient for
   // logging to show up as warnings.
-  console.warn.apply(console, arguments);
+  console.warn(...args);
 }
 // end include: runtime_debug.js
 // === Body ===
 
 var ASM_CONSTS = {
-  3982765: ($0) => { init_gapi_with_key($0); },  
- 3982791: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 3982831: () => { Module.hide_loading_screen(); },  
- 3982861: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3982984: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3983086: () => { return Date.now(); },  
- 3983107: () => { location.reload() },  
- 3983125: () => { location.reload(); },  
- 3983144: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3983207: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3983300: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3983396: () => { return global_audio_element.paused ? 1 : 0; },  
- 3983440: () => { return global_audio_element.paused ? 1 : 0; },  
- 3983484: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3983534: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3983790: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3984059: () => { audio_element_pause(); },  
- 3984082: () => { audio_element_play(); },  
- 3984104: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3983005: () => { return Date.now(); },  
+ 3983026: () => { location.reload() },  
+ 3983044: () => { location.reload(); },  
+ 3983063: ($0) => { init_gapi_with_key($0); },  
+ 3983089: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3983212: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3983314: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 3983354: () => { Module.hide_loading_screen(); },  
+ 3983384: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3983447: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3983540: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3983636: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3983680: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3983724: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3983774: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3984030: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3984299: () => { audio_element_pause(); },  
+ 3984322: () => { audio_element_play(); },  
+ 3984344: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
+function show_input_debugger() {_ShowInputDebugger(); }
+function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
+function open_resonate_issues() { window.open('https://github.com/98ahni/Resonate/issues', '_blank'); }
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path,mime_type) { const docPath = Emval.toValue(path); const mime = Emval.toValue(mime_type); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.type = mime; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -1036,6 +1029,12 @@ function request_client_token(prompt,token_callback) { var client_token_callback
 function revoke_client_token() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } }
 function create_picker(APIKey,mime_types,file_callback_name,done_callback_name,cancel_callback_name) { const view = new google.picker.DocsView() .setIncludeFolders(true) .setMimeTypes(Emval.toValue(mime_types)) .setSelectFolderEnabled(true); const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const picker = new google.picker.PickerBuilder() .setDeveloperKey(Emval.toValue(APIKey)) .setAppId(824603127976) .setOAuthToken(gapi.client.getToken().access_token) .setTitle('Choose a folder') .addView(view) .addView(new google.picker.DocsUploadView()) .setCallback(async(data) => {if (data.action === google.picker.Action.CANCEL){cancel_callback_func();} if (data.action === google.picker.Action.PICKED){ const documents = data[google.picker.Response.DOCUMENTS]; if(!FS.analyzePath("/GoogleDrive").exists){ FS.mkdir("/GoogleDrive"); } let loadPromises = []; for(const document of documents){ const fileId = document[google.picker.Document.ID]; console.log(fileId); const files = []; const res = await gapi.client.drive.files.list({ q: "'" + fileId + "' in parents", fields: 'nextPageToken, files(id, name, trashed)', spaces: 'drive' }); console.log(JSON.stringify(res.result.files)); Array.prototype.push.apply(files, res.result.files); console.log(files); files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ if(file.trashed){ console.log('Found trashed file:', file.name, file.id, ', Skipping'); resolve(); return; } console.log('Found file:', file.name, file.id); const fres = await gapi.client.drive.files.get({ 'fileId': file.id, 'alt': 'media' }); var bytes = []; for (var i = 0; i < fres.body.length; ++i) { bytes.push(fres.body.charCodeAt(i)); } FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes)); callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); resolve(); })); }); } Promise.all(loadPromises).then(()=>{console.log('Done loading from Google Drive!');done_callback_func();}); }}) .build(); picker.setVisible(true); }
 function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync(async () => { const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'}); await gapi.client.request({ path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id), method: 'PATCH', body: fileData, params: { uploadType: 'media', fields: 'id,version,name', }, }); }); }
+function force_click_event(node) { try { node.dispatchEvent(new MouseEvent('click')); } catch(e) { var evt = document.createEvent('MouseEvents'); evt.initMouseEvent('click', true, false, window, 0, 0, 0, 80, 20, false, false, false, false, 0, null); node.dispatchEvent(evt); } }
+function has_physical_touch() { return window.matchMedia('(any-pointer: coarse)').matches; }
+function __asyncjs__show_touch_keyboard(is_num_board,pos_y) { return Asyncify.handleAsync(async () => { let input = document.createElement('input'); input.id = 'temp-text-input'; if(is_num_board) { input.type = 'number'; } else { input.type = 'text'; } input.addEventListener('input', (evt) => { if(evt.inputType == "deleteContentBackward") { _TouchExtraKeyEvents(0, true); evt.stopPropagation(); setTimeout(()=>{_TouchExtraKeyEvents(0, false); }, 60); } if(evt.inputType == "deleteContentForeward") { _TouchExtraKeyEvents(1, true); evt.stopPropagation(); setTimeout(()=>{_TouchExtraKeyEvents(1, false); }, 60); } }); input.style.position = 'fixed'; input.style.left = '-1000px'; input.style.top = pos_y + 'px'; document.body.insertBefore(input, document.getElementById('canvas')); }); }
+function always_show_touch_keyboard() { let input = document.createElement('input'); input.id = 'mobile-text-input'; input.type = 'text'; input.addEventListener('focusout', (evt) => { alert('Focus lost!'); }); document.body.insertBefore(input, document.getElementById('canvas')); }
+function hide_touch_keyboard() { let input = document.getElementById('temp-text-input'); input.remove(); }
+function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { _jsPrepPlayback(); for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let imid = Emval.toValue(id); let btn = document.getElementById(imid); if(btn === null){ btn = document.createElement('button'); btn.id = imid; document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0.1; }
 function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let imid = Emval.toValue(id); let input = document.getElementById(imid); if(input === null){ input = document.createElement('input'); input.id = imid; document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
 function load_video(id,fs_path) { return Emval.toHandle(new Promise(async(resolve)=>{ var imid = Emval.toValue(id); var vid = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(vid === null){ if(!FS.analyzePath(fsPath, false).exists){ return; } vid = document.createElement('video'); vid.id = imid; vid.volume = 0; vid.defaultMuted = true; document.body.insertBefore(vid, document.getElementById('canvas')); } vid.style.position = 'fixed'; vid.style.width = 160 + 'px'; vid.style.height = 90 + 'px'; const vidData = FS.readFile(fsPath); const vidBlob = new Blob([vidData.buffer], {type: 'video/mp4'}); vid.src = URL.createObjectURL(vidBlob); vid.disablePictureInPicture = true; vid.volume = 0; vid.defaultMuted = true; vid.load(); vid.oncanplaythrough = ()=>{vid.play().then(()=>{vid.pause();});resolve();}; })); }
@@ -1052,15 +1051,6 @@ function add_window_event(event,callback) { window.addEventListener(Emval.toValu
 function remove_window_event(event,callback) { window.removeEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }
 function __asyncjs__get_clipboard_content() { return Asyncify.handleAsync(async () => { var output = ''; const clipboardContents = await navigator.clipboard.read(); for (const item of clipboardContents) { if (item.types.includes("text/plain")) { let blob = await item.getType("text/plain"); output = await blob.text(); } } return Emval.toHandle(output); }); }
 function __asyncjs__set_clipboard_content(content) { return Asyncify.handleAsync(async () => { const type = "text/plain"; const blob = new Blob([Emval.toValue(content)], { type }); const data = [new ClipboardItem({ [type]: blob })]; await navigator.clipboard.write(data); }); }
-function force_click_event(node) { try { node.dispatchEvent(new MouseEvent('click')); } catch(e) { var evt = document.createEvent('MouseEvents'); evt.initMouseEvent('click', true, false, window, 0, 0, 0, 80, 20, false, false, false, false, 0, null); node.dispatchEvent(evt); } }
-function has_physical_touch() { return window.matchMedia('(any-pointer: coarse)').matches; }
-function __asyncjs__show_touch_keyboard(is_num_board,pos_y) { return Asyncify.handleAsync(async () => { let input = document.createElement('input'); input.id = 'temp-text-input'; if(is_num_board) { input.type = 'number'; } else { input.type = 'text'; } input.addEventListener('input', (evt) => { if(evt.inputType == "deleteContentBackward") { _TouchExtraKeyEvents(0, true); evt.stopPropagation(); setTimeout(()=>{_TouchExtraKeyEvents(0, false); }, 60); } if(evt.inputType == "deleteContentForeward") { _TouchExtraKeyEvents(1, true); evt.stopPropagation(); setTimeout(()=>{_TouchExtraKeyEvents(1, false); }, 60); } }); input.style.position = 'fixed'; input.style.left = '-1000px'; input.style.top = pos_y + 'px'; document.body.insertBefore(input, document.getElementById('canvas')); }); }
-function always_show_touch_keyboard() { let input = document.createElement('input'); input.id = 'mobile-text-input'; input.type = 'text'; input.addEventListener('focusout', (evt) => { alert('Focus lost!'); }); document.body.insertBefore(input, document.getElementById('canvas')); }
-function hide_touch_keyboard() { let input = document.getElementById('temp-text-input'); input.remove(); }
-function touch_input_handler() { const el = document.getElementById('canvas'); el.addEventListener('touchstart', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchStart(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchend', (evt) => { _jsPrepPlayback(); for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchEnd(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchcancel', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchCancel(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); el.addEventListener('touchmove', (evt) => { for(var i = 0; i < evt.changedTouches.length; ++i) { var touch = evt.changedTouches[i]; _TouchMove(touch.identifier, touch.clientX, touch.clientY); } evt.preventDefault(); }); }
-function show_input_debugger() {_ShowInputDebugger(); }
-function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
-function open_resonate_issues() { window.open('https://github.com/98ahni/Resonate/issues', '_blank'); }
 function load_preferences_json() { if(!FS.analyzePath('/local/Prefs.Resonate').exists) { FS.writeFile('/local/Prefs.Resonate', '{}'); } global_preferences = JSON.parse(FS.readFile('/local/Prefs.Resonate', { encoding: 'utf8' })); } var global_preferences = {};
 function print_preferences_json() { console.log(JSON.stringify(global_preferences)); }
 function set_preference_value(key,value) { global_preferences[Emval.toValue(key)] = Emval.toValue(value); FS.writeFile('/local/Prefs.Resonate', JSON.stringify(global_preferences)); return Emval.toHandle(new Promise((resolve)=>{FS.syncfs(false, function (err) { if(err){ console.error('Unable to sync IndexDB!\n' + err); } resolve(); })})); }
@@ -1122,8 +1112,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   function getValue(ptr, type = 'i8') {
     if (type.endsWith('*')) type = '*';
     switch (type) {
-      case 'i1': return HEAP8[((ptr)>>0)];
-      case 'i8': return HEAP8[((ptr)>>0)];
+      case 'i1': return HEAP8[ptr];
+      case 'i8': return HEAP8[ptr];
       case 'i16': return HEAP16[((ptr)>>1)];
       case 'i32': return HEAP32[((ptr)>>2)];
       case 'i64': abort('to do getValue(i64) use WASM_BIGINT');
@@ -1152,8 +1142,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   function setValue(ptr, value, type = 'i8') {
     if (type.endsWith('*')) type = '*';
     switch (type) {
-      case 'i1': HEAP8[((ptr)>>0)] = value; break;
-      case 'i8': HEAP8[((ptr)>>0)] = value; break;
+      case 'i1': HEAP8[ptr] = value; break;
+      case 'i8': HEAP8[ptr] = value; break;
       case 'i16': HEAP16[((ptr)>>1)] = value; break;
       case 'i32': HEAP32[((ptr)>>2)] = value; break;
       case 'i64': abort('to do setValue(i64) use WASM_BIGINT');
@@ -1165,7 +1155,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   }
 
   var warnOnce = (text) => {
-      if (!warnOnce.shown) warnOnce.shown = {};
+      warnOnce.shown ||= {};
       if (!warnOnce.shown[text]) {
         warnOnce.shown[text] = 1;
         if (ENVIRONMENT_IS_NODE) text = 'warning: ' + text;
@@ -1250,65 +1240,67 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       abort(`Assertion failed: ${UTF8ToString(condition)}, at: ` + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
     };
 
-  /** @constructor */
-  function ExceptionInfo(excPtr) {
-      this.excPtr = excPtr;
-      this.ptr = excPtr - 24;
+  class ExceptionInfo {
+      // excPtr - Thrown object pointer to wrap. Metadata pointer is calculated from it.
+      constructor(excPtr) {
+        this.excPtr = excPtr;
+        this.ptr = excPtr - 24;
+      }
   
-      this.set_type = function(type) {
+      set_type(type) {
         HEAPU32[(((this.ptr)+(4))>>2)] = type;
-      };
+      }
   
-      this.get_type = function() {
+      get_type() {
         return HEAPU32[(((this.ptr)+(4))>>2)];
-      };
+      }
   
-      this.set_destructor = function(destructor) {
+      set_destructor(destructor) {
         HEAPU32[(((this.ptr)+(8))>>2)] = destructor;
-      };
+      }
   
-      this.get_destructor = function() {
+      get_destructor() {
         return HEAPU32[(((this.ptr)+(8))>>2)];
-      };
+      }
   
-      this.set_caught = function(caught) {
+      set_caught(caught) {
         caught = caught ? 1 : 0;
-        HEAP8[(((this.ptr)+(12))>>0)] = caught;
-      };
+        HEAP8[(this.ptr)+(12)] = caught;
+      }
   
-      this.get_caught = function() {
-        return HEAP8[(((this.ptr)+(12))>>0)] != 0;
-      };
+      get_caught() {
+        return HEAP8[(this.ptr)+(12)] != 0;
+      }
   
-      this.set_rethrown = function(rethrown) {
+      set_rethrown(rethrown) {
         rethrown = rethrown ? 1 : 0;
-        HEAP8[(((this.ptr)+(13))>>0)] = rethrown;
-      };
+        HEAP8[(this.ptr)+(13)] = rethrown;
+      }
   
-      this.get_rethrown = function() {
-        return HEAP8[(((this.ptr)+(13))>>0)] != 0;
-      };
+      get_rethrown() {
+        return HEAP8[(this.ptr)+(13)] != 0;
+      }
   
       // Initialize native structure fields. Should be called once after allocated.
-      this.init = function(type, destructor) {
+      init(type, destructor) {
         this.set_adjusted_ptr(0);
         this.set_type(type);
         this.set_destructor(destructor);
       }
   
-      this.set_adjusted_ptr = function(adjustedPtr) {
+      set_adjusted_ptr(adjustedPtr) {
         HEAPU32[(((this.ptr)+(16))>>2)] = adjustedPtr;
-      };
+      }
   
-      this.get_adjusted_ptr = function() {
+      get_adjusted_ptr() {
         return HEAPU32[(((this.ptr)+(16))>>2)];
-      };
+      }
   
       // Get pointer which is expected to be received by catch clause in C++ code. It may be adjusted
       // when the pointer is casted to some of the exception object base classes (e.g. when virtual
       // inheritance is used). When a pointer is thrown this method should return the thrown pointer
       // itself.
-      this.get_exception_ptr = function() {
+      get_exception_ptr() {
         // Work around a fastcomp bug, this code is still included for some reason in a build without
         // exceptions support.
         var isPointer = ___cxa_is_pointer_type(this.get_type());
@@ -1318,7 +1310,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         var adjusted = this.get_adjusted_ptr();
         if (adjusted !== 0) return adjusted;
         return this.excPtr;
-      };
+      }
     }
   
   var exceptionLast = 0;
@@ -1398,10 +1390,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (lastSlash === -1) return path;
         return path.substr(lastSlash+1);
       },
-  join:function() {
-        var paths = Array.prototype.slice.call(arguments);
-        return PATH.normalize(paths.join('/'));
-      },
+  join:(...paths) => PATH.normalize(paths.join('/')),
   join2:(l, r) => PATH.normalize(l + '/' + r),
   };
   
@@ -1431,7 +1420,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         }
       }
       // we couldn't find a proper implementation, as Math.random() is not suitable for /dev/random, see emscripten-core/emscripten/pull/7096
-      abort("no cryptographic support found for randomDevice. consider polyfilling it if you want to use something insecure like Math.random(), e.g. put this in a --pre-js: var crypto = { getRandomValues: (array) => { for (var i = 0; i < array.length; i++) array[i] = (Math.random()*256)|0 } };");
+      abort('no cryptographic support found for randomDevice. consider polyfilling it if you want to use something insecure like Math.random(), e.g. put this in a --pre-js: var crypto = { getRandomValues: (array) => { for (var i = 0; i < array.length; i++) array[i] = (Math.random()*256)|0 } };');
     };
   var randomFill = (view) => {
       // Lazily init on the first invocation.
@@ -1441,11 +1430,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
   
   var PATH_FS = {
-  resolve:function() {
+  resolve:(...args) => {
         var resolvedPath = '',
           resolvedAbsolute = false;
-        for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-          var path = (i >= 0) ? arguments[i] : FS.cwd();
+        for (var i = args.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+          var path = (i >= 0) ? args[i] : FS.cwd();
           // Skip empty and invalid entries
           if (typeof path != 'string') {
             throw new TypeError('Arguments to path.resolve must be strings');
@@ -1793,55 +1782,53 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           // no supported
           throw new FS.ErrnoError(63);
         }
-        if (!MEMFS.ops_table) {
-          MEMFS.ops_table = {
-            dir: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr,
-                lookup: MEMFS.node_ops.lookup,
-                mknod: MEMFS.node_ops.mknod,
-                rename: MEMFS.node_ops.rename,
-                unlink: MEMFS.node_ops.unlink,
-                rmdir: MEMFS.node_ops.rmdir,
-                readdir: MEMFS.node_ops.readdir,
-                symlink: MEMFS.node_ops.symlink
-              },
-              stream: {
-                llseek: MEMFS.stream_ops.llseek
-              }
+        MEMFS.ops_table ||= {
+          dir: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr,
+              lookup: MEMFS.node_ops.lookup,
+              mknod: MEMFS.node_ops.mknod,
+              rename: MEMFS.node_ops.rename,
+              unlink: MEMFS.node_ops.unlink,
+              rmdir: MEMFS.node_ops.rmdir,
+              readdir: MEMFS.node_ops.readdir,
+              symlink: MEMFS.node_ops.symlink
             },
-            file: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr
-              },
-              stream: {
-                llseek: MEMFS.stream_ops.llseek,
-                read: MEMFS.stream_ops.read,
-                write: MEMFS.stream_ops.write,
-                allocate: MEMFS.stream_ops.allocate,
-                mmap: MEMFS.stream_ops.mmap,
-                msync: MEMFS.stream_ops.msync
-              }
-            },
-            link: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr,
-                readlink: MEMFS.node_ops.readlink
-              },
-              stream: {}
-            },
-            chrdev: {
-              node: {
-                getattr: MEMFS.node_ops.getattr,
-                setattr: MEMFS.node_ops.setattr
-              },
-              stream: FS.chrdev_stream_ops
+            stream: {
+              llseek: MEMFS.stream_ops.llseek
             }
-          };
-        }
+          },
+          file: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr
+            },
+            stream: {
+              llseek: MEMFS.stream_ops.llseek,
+              read: MEMFS.stream_ops.read,
+              write: MEMFS.stream_ops.write,
+              allocate: MEMFS.stream_ops.allocate,
+              mmap: MEMFS.stream_ops.mmap,
+              msync: MEMFS.stream_ops.msync
+            }
+          },
+          link: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr,
+              readlink: MEMFS.node_ops.readlink
+            },
+            stream: {}
+          },
+          chrdev: {
+            node: {
+              getattr: MEMFS.node_ops.getattr,
+              setattr: MEMFS.node_ops.setattr
+            },
+            stream: FS.chrdev_stream_ops
+          }
+        };
         var node = FS.createNode(parent, name, mode, dev);
         if (FS.isDir(node.mode)) {
           node.node_ops = MEMFS.ops_table.dir.node;
@@ -1984,10 +1971,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         },
   readdir(node) {
           var entries = ['.', '..'];
-          for (var key in node.contents) {
-            if (!node.contents.hasOwnProperty(key)) {
-              continue;
-            }
+          for (var key of Object.keys(node.contents)) {
             entries.push(key);
           }
           return entries;
@@ -2162,15 +2146,15 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       var dep = getUniqueRunDependency(`cp ${fullname}`); // might have several active requests for the same fullname
       function processData(byteArray) {
         function finish(byteArray) {
-          if (preFinish) preFinish();
+          preFinish?.();
           if (!dontCreateFile) {
             FS_createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
           }
-          if (onload) onload();
+          onload?.();
           removeRunDependency(dep);
         }
         if (FS_handledByPreloadPlugin(byteArray, fullname, finish, () => {
-          if (onerror) onerror();
+          onerror?.();
           removeRunDependency(dep);
         })) {
           return;
@@ -2179,7 +2163,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       }
       addRunDependency(dep);
       if (typeof url == 'string') {
-        asyncLoad(url, (byteArray) => processData(byteArray), onerror);
+        asyncLoad(url, processData, onerror);
       } else {
         processData(url);
       }
@@ -2225,10 +2209,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       },
   DB_VERSION:21,
   DB_STORE_NAME:"FILE_DATA",
-  mount:function(mount) {
-        // reuse all of the core MEMFS functionality
-        return MEMFS.mount.apply(null, arguments);
-      },
+  mount:(...args) => MEMFS.mount(...args),
   syncfs:(mount, populate, callback) => {
         IDBFS.getLocalSet(mount, (err, local) => {
           if (err) return callback(err);
@@ -2314,7 +2295,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           }
   
           if (FS.isDir(stat.mode)) {
-            check.push.apply(check, FS.readdir(path).filter(isRealDir).map(toAbsolute(path)));
+            check.push(...FS.readdir(path).filter(isRealDir).map(toAbsolute(path)));
           }
   
           entries[path] = { 'timestamp': stat.mtime };
@@ -2475,8 +2456,9 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           }
         };
   
-        transaction.onerror = (e) => {
-          done(this.error);
+        // transaction may abort if (for example) there is a QuotaExceededError
+        transaction.onerror = transaction.onabort = (e) => {
+          done(e.target.error);
           e.preventDefault();
         };
   
@@ -2759,20 +2741,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       'EOWNERDEAD': 62,
       'ESTRPIPE': 135,
     };
-  
-  var demangle = (func) => {
-      warnOnce('warning: build with -sDEMANGLE_SUPPORT to link in libcxxabi demangling');
-      return func;
-    };
-  var demangleAll = (text) => {
-      var regex =
-        /\b_Z[\w\d_]+/g;
-      return text.replace(regex,
-        function(x) {
-          var y = demangle(x);
-          return x === y ? x : (y + ' [' + x + ']');
-        });
-    };
   var FS = {
   root:null,
   mounts:[],
@@ -2784,7 +2752,27 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   currentPath:"/",
   initialized:false,
   ignorePermissions:true,
-  ErrnoError:null,
+  ErrnoError:class extends Error {
+        // We set the `name` property to be able to identify `FS.ErrnoError`
+        // - the `name` is a standard ECMA-262 property of error objects. Kind of good to have it anyway.
+        // - when using PROXYFS, an error can come from an underlying FS
+        // as different FS objects have their own FS.ErrnoError each,
+        // the test `err instanceof FS.ErrnoError` won't detect an error coming from another filesystem, causing bugs.
+        // we'll use the reliable test `err.name == "ErrnoError"` instead
+        constructor(errno) {
+          super(ERRNO_MESSAGES[errno]);
+          // TODO(sbc): Use the inline member delclaration syntax once we
+          // support it in acorn and closure.
+          this.name = 'ErrnoError';
+          this.errno = errno;
+          for (var key in ERRNO_CODES) {
+            if (ERRNO_CODES[key] === errno) {
+              this.code = key;
+              break;
+            }
+          }
+        }
+      },
   genericErrors:{
   },
   filesystems:null,
@@ -2891,7 +2879,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   lookupNode(parent, name) {
         var errCode = FS.mayLookup(parent);
         if (errCode) {
-          throw new FS.ErrnoError(errCode, parent);
+          throw new FS.ErrnoError(errCode);
         }
         var hash = FS.hashName(parent.id, name);
         for (var node = FS.nameTable[hash]; node; node = node.name_next) {
@@ -2963,6 +2951,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         return 0;
       },
   mayLookup(dir) {
+        if (!FS.isDir(dir.mode)) return 54;
         var errCode = FS.nodePermissions(dir, 'x');
         if (errCode) return errCode;
         if (!dir.node_ops.lookup) return 2;
@@ -3089,9 +3078,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           // override node's stream ops with the device's
           stream.stream_ops = device.stream_ops;
           // forward the open call
-          if (stream.stream_ops.open) {
-            stream.stream_ops.open(stream);
-          }
+          stream.stream_ops.open?.(stream);
         },
   llseek() {
           throw new FS.ErrnoError(70);
@@ -3113,7 +3100,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
           mounts.push(m);
   
-          check.push.apply(check, m.mounts);
+          check.push(...m.mounts);
         }
   
         return mounts;
@@ -3942,47 +3929,12 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         assert(stdout.fd === 1, `invalid handle for stdout (${stdout.fd})`);
         assert(stderr.fd === 2, `invalid handle for stderr (${stderr.fd})`);
       },
-  ensureErrnoError() {
-        if (FS.ErrnoError) return;
-        FS.ErrnoError = /** @this{Object} */ function ErrnoError(errno, node) {
-          // We set the `name` property to be able to identify `FS.ErrnoError`
-          // - the `name` is a standard ECMA-262 property of error objects. Kind of good to have it anyway.
-          // - when using PROXYFS, an error can come from an underlying FS
-          // as different FS objects have their own FS.ErrnoError each,
-          // the test `err instanceof FS.ErrnoError` won't detect an error coming from another filesystem, causing bugs.
-          // we'll use the reliable test `err.name == "ErrnoError"` instead
-          this.name = 'ErrnoError';
-          this.node = node;
-          this.setErrno = /** @this{Object} */ function(errno) {
-            this.errno = errno;
-            for (var key in ERRNO_CODES) {
-              if (ERRNO_CODES[key] === errno) {
-                this.code = key;
-                break;
-              }
-            }
-          };
-          this.setErrno(errno);
-          this.message = ERRNO_MESSAGES[errno];
-  
-          // Try to get a maximally helpful stack trace. On Node.js, getting Error.stack
-          // now ensures it shows what we want.
-          if (this.stack) {
-            // Define the stack property for Node.js 4, which otherwise errors on the next line.
-            Object.defineProperty(this, "stack", { value: (new Error).stack, writable: true });
-            this.stack = demangleAll(this.stack);
-          }
-        };
-        FS.ErrnoError.prototype = new Error();
-        FS.ErrnoError.prototype.constructor = FS.ErrnoError;
+  staticInit() {
         // Some errors may happen quite a bit, to avoid overhead we reuse them (and suffer a lack of stack info)
         [44].forEach((code) => {
           FS.genericErrors[code] = new FS.ErrnoError(code);
           FS.genericErrors[code].stack = '<generic error, no stack>';
         });
-      },
-  staticInit() {
-        FS.ensureErrnoError();
   
         FS.nameTable = new Array(4096);
   
@@ -4000,8 +3952,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   init(input, output, error) {
         assert(!FS.init.initialized, 'FS.init was previously called. If you want to initialize later with custom parameters, remove any earlier calls (note that one is automatically added to the generated code)');
         FS.init.initialized = true;
-  
-        FS.ensureErrnoError();
   
         // Allow Module.stdin etc. to provide defaults, if none explicitly passed to us here
         Module['stdin'] = input || Module['stdin'];
@@ -4114,7 +4064,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           },
           close(stream) {
             // flush any pending line data
-            if (output && output.buffer && output.buffer.length) {
+            if (output?.buffer?.length) {
               output(10);
             }
           },
@@ -4301,9 +4251,9 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         var keys = Object.keys(node.stream_ops);
         keys.forEach((key) => {
           var fn = node.stream_ops[key];
-          stream_ops[key] = function forceLoadLazyFile() {
+          stream_ops[key] = (...args) => {
             FS.forceLoadFile(node);
-            return fn.apply(null, arguments);
+            return fn(...args);
           };
         });
         function writeChunks(stream, buffer, offset, length, position) {
@@ -4384,15 +4334,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         return PATH.join2(dir, path);
       },
   doStat(func, path, buf) {
-        try {
-          var stat = func(path);
-        } catch (e) {
-          if (e && e.node && PATH.normalize(path) !== PATH.normalize(FS.getPath(e.node))) {
-            // an error occurred while trying to look up the path; we should just report ENOTDIR
-            return -54;
-          }
-          throw e;
-        }
+        var stat = func(path);
         HEAP32[((buf)>>2)] = stat.dev;
         HEAP32[(((buf)+(4))>>2)] = stat.mode;
         HEAPU32[(((buf)+(8))>>2)] = stat.nlink;
@@ -4466,11 +4408,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   }
   }
 
-  var setErrNo = (value) => {
-      HEAP32[((___errno_location())>>2)] = value;
-      return value;
-    };
-  
   function ___syscall_fcntl64(fd, cmd, varargs) {
   SYSCALLS.varargs = varargs;
   try {
@@ -4499,27 +4436,18 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           stream.flags |= arg;
           return 0;
         }
-        case 5: {
+        case 12: {
           var arg = SYSCALLS.getp();
           var offset = 0;
           // We're always unlocked.
           HEAP16[(((arg)+(offset))>>1)] = 2;
           return 0;
         }
-        case 6:
-        case 7:
+        case 13:
+        case 14:
           return 0; // Pretend that the locking is successful.
-        case 16:
-        case 8:
-          return -28; // These are for sockets. We don't have them fully implemented yet.
-        case 9:
-          // musl trusts getown return values, due to a bug where they must be, as they overlap with errors. just return -1 here, so fcntl() returns that, and we set errno ourselves.
-          setErrNo(28);
-          return -1;
-        default: {
-          return -28;
-        }
       }
+      return -28;
     } catch (e) {
     if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
     return -e.errno;
@@ -4537,7 +4465,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   }
   }
 
-  
   var convertI32PairToI53Checked = (lo, hi) => {
       assert(lo == (lo >>> 0) || lo == (lo|0)); // lo should either be a i32 or a u32
       assert(hi === (hi|0));                    // hi should be a i32
@@ -4568,9 +4495,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   try {
   
       var stream = SYSCALLS.getStreamFromFD(fd)
-      if (!stream.getdents) {
-        stream.getdents = FS.readdir(stream.path);
-      }
+      stream.getdents ||= FS.readdir(stream.path);
   
       var struct_size = 280;
       var pos = 0;
@@ -4603,7 +4528,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         (tempI64 = [id>>>0,(tempDouble = id,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[((dirp + pos)>>2)] = tempI64[0],HEAP32[(((dirp + pos)+(4))>>2)] = tempI64[1]);
         (tempI64 = [(idx + 1) * struct_size>>>0,(tempDouble = (idx + 1) * struct_size,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((dirp + pos)+(8))>>2)] = tempI64[0],HEAP32[(((dirp + pos)+(12))>>2)] = tempI64[1]);
         HEAP16[(((dirp + pos)+(16))>>1)] = 280;
-        HEAP8[(((dirp + pos)+(18))>>0)] = type;
+        HEAP8[(dirp + pos)+(18)] = type;
         stringToUTF8(name, dirp + pos + 19, 256);
         pos += struct_size;
         idx += 1;
@@ -4636,7 +4561,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             HEAP32[(((argp)+(8))>>2)] = termios.c_cflag || 0;
             HEAP32[(((argp)+(12))>>2)] = termios.c_lflag || 0;
             for (var i = 0; i < 32; i++) {
-              HEAP8[(((argp + i)+(17))>>0)] = termios.c_cc[i] || 0;
+              HEAP8[(argp + i)+(17)] = termios.c_cc[i] || 0;
             }
             return 0;
           }
@@ -4660,7 +4585,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             var c_lflag = HEAP32[(((argp)+(12))>>2)];
             var c_cc = []
             for (var i = 0; i < 32; i++) {
-              c_cc.push(HEAP8[(((argp + i)+(17))>>0)]);
+              c_cc.push(HEAP8[(argp + i)+(17)]);
             }
             return stream.tty.ops.ioctl_tcsets(stream.tty, op, { c_iflag, c_oflag, c_cflag, c_lflag, c_cc });
           }
@@ -4975,64 +4900,36 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       });
     };
 
-  function handleAllocatorInit() {
-      Object.assign(HandleAllocator.prototype, /** @lends {HandleAllocator.prototype} */ {
-        get(id) {
-          assert(this.allocated[id] !== undefined, `invalid handle: ${id}`);
-          return this.allocated[id];
-        },
-        has(id) {
-          return this.allocated[id] !== undefined;
-        },
-        allocate(handle) {
-          var id = this.freelist.pop() || this.allocated.length;
-          this.allocated[id] = handle;
-          return id;
-        },
-        free(id) {
-          assert(this.allocated[id] !== undefined);
-          // Set the slot to `undefined` rather than using `delete` here since
-          // apparently arrays with holes in them can be less efficient.
-          this.allocated[id] = undefined;
-          this.freelist.push(id);
-        }
-      });
-    }
-  /** @constructor */
-  function HandleAllocator() {
-      // Reserve slot 0 so that 0 is always an invalid handle
-      this.allocated = [undefined];
-      this.freelist = [];
-    }
-  var emval_handles = new HandleAllocator();;
+  
+  var emval_freelist = [];
+  
+  var emval_handles = [];
   var __emval_decref = (handle) => {
-      if (handle >= emval_handles.reserved && 0 === --emval_handles.get(handle).refcount) {
-        emval_handles.free(handle);
+      if (handle > 9 && 0 === --emval_handles[handle + 1]) {
+        assert(emval_handles[handle] !== undefined, `Decref for unallocated handle.`);
+        emval_handles[handle] = undefined;
+        emval_freelist.push(handle);
       }
     };
+  
+  
   
   
   
   var count_emval_handles = () => {
-      var count = 0;
-      for (var i = emval_handles.reserved; i < emval_handles.allocated.length; ++i) {
-        if (emval_handles.allocated[i] !== undefined) {
-          ++count;
-        }
-      }
-      return count;
+      return emval_handles.length / 2 - 5 - emval_freelist.length;
     };
   
   var init_emval = () => {
-      // reserve some special values. These never get de-allocated.
-      // The HandleAllocator takes care of reserving zero.
-      emval_handles.allocated.push(
-        {value: undefined},
-        {value: null},
-        {value: true},
-        {value: false},
+      // reserve 0 and some special values. These never get de-allocated.
+      emval_handles.push(
+        0, 1,
+        undefined, 1,
+        null, 1,
+        true, 1,
+        false, 1,
       );
-      emval_handles.reserved = emval_handles.allocated.length
+      assert(emval_handles.length === 5 * 2);
       Module['count_emval_handles'] = count_emval_handles;
     };
   var Emval = {
@@ -5040,45 +4937,47 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (!handle) {
             throwBindingError('Cannot use deleted val. handle = ' + handle);
         }
-        return emval_handles.get(handle).value;
+        // handle 2 is supposed to be `undefined`.
+        assert(handle === 2 || emval_handles[handle] !== undefined && handle % 2 === 0, `invalid handle: ${handle}`);
+        return emval_handles[handle];
       },
   toHandle:(value) => {
         switch (value) {
-          case undefined: return 1;
-          case null: return 2;
-          case true: return 3;
-          case false: return 4;
+          case undefined: return 2;
+          case null: return 4;
+          case true: return 6;
+          case false: return 8;
           default:{
-            return emval_handles.allocate({refcount: 1, value: value});
+            const handle = emval_freelist.pop() || emval_handles.length;
+            emval_handles[handle] = value;
+            emval_handles[handle + 1] = 1;
+            return handle;
           }
         }
       },
   };
   
-  
-  
   /** @suppress {globalThis} */
-  function simpleReadValueFromPointer(pointer) {
-      return this['fromWireType'](HEAP32[((pointer)>>2)]);
+  function readPointer(pointer) {
+      return this['fromWireType'](HEAPU32[((pointer)>>2)]);
     }
-  var __embind_register_emval = (rawType, name) => {
-      name = readLatin1String(name);
-      registerType(rawType, {
-        name,
-        'fromWireType': (handle) => {
-          var rv = Emval.toValue(handle);
-          __emval_decref(handle);
-          return rv;
-        },
-        'toWireType': (destructors, value) => Emval.toHandle(value),
-        'argPackAdvance': GenericWireTypeSize,
-        'readValueFromPointer': simpleReadValueFromPointer,
-        destructorFunction: null, // This type does not need a destructor
   
-        // TODO: do we need a deleteObject here?  write a test where
-        // emval is passed into JS via an interface
-      });
+  var EmValType = {
+      name: 'emscripten::val',
+      'fromWireType': (handle) => {
+        var rv = Emval.toValue(handle);
+        __emval_decref(handle);
+        return rv;
+      },
+      'toWireType': (destructors, value) => Emval.toHandle(value),
+      'argPackAdvance': GenericWireTypeSize,
+      'readValueFromPointer': readPointer,
+      destructorFunction: null, // This type does not need a destructor
+  
+      // TODO: do we need a deleteObject here?  write a test where
+      // emval is passed into JS via an interface
     };
+  var __embind_register_emval = (rawType) => registerType(rawType, EmValType);
 
   var embindRepr = (v) => {
       if (v === null) {
@@ -5130,8 +5029,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       // integers are quite common, so generate very specialized functions
       switch (width) {
           case 1: return signed ?
-              (pointer) => HEAP8[((pointer)>>0)] :
-              (pointer) => HEAPU8[((pointer)>>0)];
+              (pointer) => HEAP8[pointer] :
+              (pointer) => HEAPU8[pointer];
           case 2: return signed ?
               (pointer) => HEAP16[((pointer)>>1)] :
               (pointer) => HEAPU16[((pointer)>>1)]
@@ -5227,10 +5126,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 
   
   
-  /** @suppress {globalThis} */
-  function readPointer(pointer) {
-      return this['fromWireType'](HEAPU32[((pointer)>>2)]);
-    }
   
   
   
@@ -5298,7 +5193,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             length = value.length;
           }
   
-          // assumes 4-byte alignment
+          // assumes POINTER_SIZE alignment
           var base = _malloc(4 + length + 1);
           var ptr = base + 4;
           HEAPU32[((base)>>2)] = length;
@@ -5376,9 +5271,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       assert(outPtr % 2 == 0, 'Pointer passed to stringToUTF16 must be aligned to two bytes!');
       assert(typeof maxBytesToWrite == 'number', 'stringToUTF16(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!');
       // Backwards compatibility: if max bytes is not specified, assume unsafe unbounded write is allowed.
-      if (maxBytesToWrite === undefined) {
-        maxBytesToWrite = 0x7FFFFFFF;
-      }
+      maxBytesToWrite ??= 0x7FFFFFFF;
       if (maxBytesToWrite < 2) return 0;
       maxBytesToWrite -= 2; // Null terminator.
       var startPtr = outPtr;
@@ -5425,9 +5318,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       assert(outPtr % 4 == 0, 'Pointer passed to stringToUTF32 must be aligned to four bytes!');
       assert(typeof maxBytesToWrite == 'number', 'stringToUTF32(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!');
       // Backwards compatibility: if max bytes is not specified, assume unsafe unbounded write is allowed.
-      if (maxBytesToWrite === undefined) {
-        maxBytesToWrite = 0x7FFFFFFF;
-      }
+      maxBytesToWrite ??= 0x7FFFFFFF;
       if (maxBytesToWrite < 4) return 0;
       var startPtr = outPtr;
       var endPtr = startPtr + maxBytesToWrite - 4;
@@ -5462,33 +5353,30 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
     };
   var __embind_register_std_wstring = (rawType, charSize, name) => {
       name = readLatin1String(name);
-      var decodeString, encodeString, getHeap, lengthBytesUTF, shift;
+      var decodeString, encodeString, readCharAt, lengthBytesUTF;
       if (charSize === 2) {
         decodeString = UTF16ToString;
         encodeString = stringToUTF16;
         lengthBytesUTF = lengthBytesUTF16;
-        getHeap = () => HEAPU16;
-        shift = 1;
+        readCharAt = (pointer) => HEAPU16[((pointer)>>1)];
       } else if (charSize === 4) {
         decodeString = UTF32ToString;
         encodeString = stringToUTF32;
         lengthBytesUTF = lengthBytesUTF32;
-        getHeap = () => HEAPU32;
-        shift = 2;
+        readCharAt = (pointer) => HEAPU32[((pointer)>>2)];
       }
       registerType(rawType, {
         name,
         'fromWireType': (value) => {
           // Code mostly taken from _embind_register_std_string fromWireType
           var length = HEAPU32[((value)>>2)];
-          var HEAP = getHeap();
           var str;
   
           var decodeStartPtr = value + 4;
           // Looping here to support possible embedded '0' bytes
           for (var i = 0; i <= length; ++i) {
             var currentBytePtr = value + 4 + i * charSize;
-            if (i == length || HEAP[currentBytePtr >> shift] == 0) {
+            if (i == length || readCharAt(currentBytePtr) == 0) {
               var maxReadBytes = currentBytePtr - decodeStartPtr;
               var stringSegment = decodeString(decodeStartPtr, maxReadBytes);
               if (str === undefined) {
@@ -5510,10 +5398,10 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             throwBindingError(`Cannot pass non-string to C++ string type ${name}`);
           }
   
-          // assumes 4-byte alignment
+          // assumes POINTER_SIZE alignment
           var length = lengthBytesUTF(value);
           var ptr = _malloc(4 + length + charSize);
-          HEAPU32[ptr >> 2] = length >> shift;
+          HEAPU32[((ptr)>>2)] = length / charSize;
   
           encodeString(value, ptr + 4, length + charSize);
   
@@ -5523,7 +5411,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           return ptr;
         },
         'argPackAdvance': GenericWireTypeSize,
-        'readValueFromPointer': simpleReadValueFromPointer,
+        'readValueFromPointer': readPointer,
         destructorFunction(ptr) {
           _free(ptr);
         }
@@ -5574,7 +5462,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   var requireRegisteredType = (rawType, humanName) => {
       var impl = registeredTypes[rawType];
       if (undefined === impl) {
-          throwBindingError(humanName + " has unknown type " + getTypeName(rawType));
+        throwBindingError(`${humanName} has unknown type ${getTypeName(rawType)}`);
       }
       return impl;
     };
@@ -5624,11 +5512,10 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
   var runtimeKeepaliveCounter = 0;
   var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
-  
   var _proc_exit = (code) => {
       EXITSTATUS = code;
       if (!keepRuntimeAlive()) {
-        if (Module['onExit']) Module['onExit'](code);
+        Module['onExit']?.(code);
         ABORT = true;
       }
       quit_(code, new ExitStatus(code));
@@ -5709,63 +5596,57 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   instrumentWasmImports(imports) {
         var importPattern = /^(invoke_.*|__asyncjs__.*)$/;
   
-        for (var x in imports) {
-          (function(x) {
-            var original = imports[x];
-            var sig = original.sig;
-            if (typeof original == 'function') {
-              var isAsyncifyImport = original.isAsync || importPattern.test(x);
-              imports[x] = function() {
-                var originalAsyncifyState = Asyncify.state;
-                try {
-                  return original.apply(null, arguments);
-                } finally {
-                  // Only asyncify-declared imports are allowed to change the
-                  // state.
-                  // Changing the state from normal to disabled is allowed (in any
-                  // function) as that is what shutdown does (and we don't have an
-                  // explicit list of shutdown imports).
-                  var changedToDisabled =
-                        originalAsyncifyState === Asyncify.State.Normal &&
-                        Asyncify.state        === Asyncify.State.Disabled;
-                  // invoke_* functions are allowed to change the state if we do
-                  // not ignore indirect calls.
-                  var ignoredInvoke = x.startsWith('invoke_') &&
-                                      true;
-                  if (Asyncify.state !== originalAsyncifyState &&
-                      !isAsyncifyImport &&
-                      !changedToDisabled &&
-                      !ignoredInvoke) {
-                    throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
-                  }
+        for (let [x, original] of Object.entries(imports)) {
+          let sig = original.sig;
+          if (typeof original == 'function') {
+            let isAsyncifyImport = original.isAsync || importPattern.test(x);
+            imports[x] = (...args) => {
+              var originalAsyncifyState = Asyncify.state;
+              try {
+                return original(...args);
+              } finally {
+                // Only asyncify-declared imports are allowed to change the
+                // state.
+                // Changing the state from normal to disabled is allowed (in any
+                // function) as that is what shutdown does (and we don't have an
+                // explicit list of shutdown imports).
+                var changedToDisabled =
+                      originalAsyncifyState === Asyncify.State.Normal &&
+                      Asyncify.state        === Asyncify.State.Disabled;
+                // invoke_* functions are allowed to change the state if we do
+                // not ignore indirect calls.
+                var ignoredInvoke = x.startsWith('invoke_') &&
+                                    true;
+                if (Asyncify.state !== originalAsyncifyState &&
+                    !isAsyncifyImport &&
+                    !changedToDisabled &&
+                    !ignoredInvoke) {
+                  throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
                 }
-              };
-            }
-          })(x);
+              }
+            };
+          }
         }
       },
   instrumentWasmExports(exports) {
         var ret = {};
-        for (var x in exports) {
-          (function(x) {
-            var original = exports[x];
-            if (typeof original == 'function') {
-              ret[x] = function() {
-                Asyncify.exportCallStack.push(x);
-                try {
-                  return original.apply(null, arguments);
-                } finally {
-                  if (!ABORT) {
-                    var y = Asyncify.exportCallStack.pop();
-                    assert(y === x);
-                    Asyncify.maybeStopUnwind();
-                  }
+        for (let [x, original] of Object.entries(exports)) {
+          if (typeof original == 'function') {
+            ret[x] = (...args) => {
+              Asyncify.exportCallStack.push(x);
+              try {
+                return original(...args);
+              } finally {
+                if (!ABORT) {
+                  var y = Asyncify.exportCallStack.pop();
+                  assert(y === x);
+                  Asyncify.maybeStopUnwind();
                 }
-              };
-            } else {
-              ret[x] = original;
-            }
-          })(x);
+              }
+            };
+          } else {
+            ret[x] = original;
+          }
         }
         return ret;
       },
@@ -5941,7 +5822,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           _free(Asyncify.currData);
           Asyncify.currData = null;
           // Call all sleep callbacks now that the sleep-resume is all done.
-          Asyncify.sleepCallbacks.forEach((func) => callUserCallback(func));
+          Asyncify.sleepCallbacks.forEach(callUserCallback);
         } else {
           abort(`invalid state: ${Asyncify.state}`);
         }
@@ -6035,7 +5916,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   var runEmAsmFunction = (code, sigPtr, argbuf) => {
       var args = readEmAsmArgs(sigPtr, argbuf);
       assert(ASM_CONSTS.hasOwnProperty(code), `No EM_ASM constant found at address ${code}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
-      return ASM_CONSTS[code].apply(null, args);
+      return ASM_CONSTS[code](...args);
     };
   var _emscripten_asm_const_double = (code, sigPtr, argbuf) => {
       return runEmAsmFunction(code, sigPtr, argbuf);
@@ -6179,7 +6060,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             var expected = Browser.mainLoop.expectedBlockers;
             if (remaining) {
               if (remaining < expected) {
-                Module['setStatus'](message + ' (' + (expected - remaining) + '/' + expected + ')');
+                Module['setStatus'](`{message} ({expected - remaining}/{expected})`);
               } else {
                 Module['setStatus'](message);
               }
@@ -6197,7 +6078,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             }
           }
           callUserCallback(func);
-          if (Module['postMainLoop']) Module['postMainLoop']();
+          Module['postMainLoop']?.();
         },
   },
   isFullscreen:false,
@@ -6238,11 +6119,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             ctx.drawImage(img, 0, 0);
             preloadedImages[name] = canvas;
             URL.revokeObjectURL(url);
-            if (onload) onload(byteArray);
+            onload?.(byteArray);
           };
           img.onerror = (event) => {
             err(`Image ${url} could not be decoded`);
-            if (onerror) onerror();
+            onerror?.();
           };
           img.src = url;
         };
@@ -6258,13 +6139,13 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             if (done) return;
             done = true;
             preloadedAudios[name] = audio;
-            if (onload) onload(byteArray);
+            onload?.(byteArray);
           }
           function fail() {
             if (done) return;
             done = true;
             preloadedAudios[name] = new Audio(); // empty shim
-            if (onerror) onerror();
+            onerror?.();
           }
           var b = new Blob([byteArray], { type: Browser.getMimetype(name) });
           var url = URL.createObjectURL(b); // XXX we never revoke this!
@@ -6430,8 +6311,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
               Browser.updateCanvasDimensions(canvas);
             }
           }
-          if (Module['onFullScreen']) Module['onFullScreen'](Browser.isFullscreen);
-          if (Module['onFullscreen']) Module['onFullscreen'](Browser.isFullscreen);
+          Module['onFullScreen']?.(Browser.isFullscreen);
+          Module['onFullscreen']?.(Browser.isFullscreen);
         }
   
         if (!Browser.fullscreenHandlersInstalled) {
@@ -6523,10 +6404,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         }[name.substr(name.lastIndexOf('.')+1)];
       },
   getUserMedia(func) {
-        if (!window.getUserMedia) {
-          window.getUserMedia = navigator['getUserMedia'] ||
+        window.getUserMedia ||= navigator['getUserMedia'] ||
                                 navigator['mozGetUserMedia'];
-        }
         window.getUserMedia(func);
       },
   getMovementX(event) {
@@ -6584,6 +6463,39 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   },
   lastTouches:{
   },
+  calculateMouseCoords(pageX, pageY) {
+        // Calculate the movement based on the changes
+        // in the coordinates.
+        var rect = Module["canvas"].getBoundingClientRect();
+        var cw = Module["canvas"].width;
+        var ch = Module["canvas"].height;
+  
+        // Neither .scrollX or .pageXOffset are defined in a spec, but
+        // we prefer .scrollX because it is currently in a spec draft.
+        // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
+        var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
+        var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
+        // If this assert lands, it's likely because the browser doesn't support scrollX or pageXOffset
+        // and we have no viable fallback.
+        assert((typeof scrollX != 'undefined') && (typeof scrollY != 'undefined'), 'Unable to retrieve scroll position, mouse positions likely broken.');
+        var adjustedX = pageX - (scrollX + rect.left);
+        var adjustedY = pageY - (scrollY + rect.top);
+  
+        // the canvas might be CSS-scaled compared to its backbuffer;
+        // SDL-using content will want mouse coordinates in terms
+        // of backbuffer units.
+        adjustedX = adjustedX * (cw / rect.width);
+        adjustedY = adjustedY * (ch / rect.height);
+  
+        return { x: adjustedX, y: adjustedY };
+      },
+  setMouseCoords(pageX, pageY) {
+        const {x, y} = Browser.calculateMouseCoords(pageX, pageY);
+        Browser.mouseMovementX = x - Browser.mouseX;
+        Browser.mouseMovementY = y - Browser.mouseY;
+        Browser.mouseX = x;
+        Browser.mouseY = y;
+      },
   calculateMouseEvent(event) { // event should be mousemove, mousedown or mouseup
         if (Browser.pointerLock) {
           // When the pointer is locked, calculate the coordinates
@@ -6608,60 +6520,27 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             Browser.mouseY += Browser.mouseMovementY;
           }
         } else {
-          // Otherwise, calculate the movement based on the changes
-          // in the coordinates.
-          var rect = Module["canvas"].getBoundingClientRect();
-          var cw = Module["canvas"].width;
-          var ch = Module["canvas"].height;
-  
-          // Neither .scrollX or .pageXOffset are defined in a spec, but
-          // we prefer .scrollX because it is currently in a spec draft.
-          // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
-          var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
-          var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
-          // If this assert lands, it's likely because the browser doesn't support scrollX or pageXOffset
-          // and we have no viable fallback.
-          assert((typeof scrollX != 'undefined') && (typeof scrollY != 'undefined'), 'Unable to retrieve scroll position, mouse positions likely broken.');
-  
           if (event.type === 'touchstart' || event.type === 'touchend' || event.type === 'touchmove') {
             var touch = event.touch;
             if (touch === undefined) {
               return; // the "touch" property is only defined in SDL
   
             }
-            var adjustedX = touch.pageX - (scrollX + rect.left);
-            var adjustedY = touch.pageY - (scrollY + rect.top);
-  
-            adjustedX = adjustedX * (cw / rect.width);
-            adjustedY = adjustedY * (ch / rect.height);
-  
-            var coords = { x: adjustedX, y: adjustedY };
+            var coords = Browser.calculateMouseCoords(touch.pageX, touch.pageY);
   
             if (event.type === 'touchstart') {
               Browser.lastTouches[touch.identifier] = coords;
               Browser.touches[touch.identifier] = coords;
             } else if (event.type === 'touchend' || event.type === 'touchmove') {
               var last = Browser.touches[touch.identifier];
-              if (!last) last = coords;
+              last ||= coords;
               Browser.lastTouches[touch.identifier] = last;
               Browser.touches[touch.identifier] = coords;
             }
             return;
           }
   
-          var x = event.pageX - (scrollX + rect.left);
-          var y = event.pageY - (scrollY + rect.top);
-  
-          // the canvas might be CSS-scaled compared to its backbuffer;
-          // SDL-using content will want mouse coordinates in terms
-          // of backbuffer units.
-          x = x * (cw / rect.width);
-          y = y * (ch / rect.height);
-  
-          Browser.mouseMovementX = x - Browser.mouseX;
-          Browser.mouseMovementY = y - Browser.mouseY;
-          Browser.mouseX = x;
-          Browser.mouseY = y;
+          Browser.setMouseCoords(event.pageX, event.pageY);
         }
       },
   resizeListeners:[],
@@ -6896,7 +6775,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         // to queue the newest produced audio samples.
         // TODO: Consider adding pre- and post- rAF callbacks so that GL.newRenderingFrameStarted() and SDL.audio.queueNewAudioData()
         //       do not need to be hardcoded into this function, but can be more generic.
-        if (typeof SDL == 'object' && SDL.audio && SDL.audio.queueNewAudioData) SDL.audio.queueNewAudioData();
+        if (typeof SDL == 'object') SDL.audio?.queueNewAudioData?.();
   
         Browser.mainLoop.scheduler();
       }
@@ -6918,10 +6797,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
     };
   
   var _emscripten_set_main_loop_arg = (func, arg, fps, simulateInfiniteLoop) => {
-      var browserIterationFunc = () => ((a1) => dynCall_vi.apply(null, [func, a1]))(arg);
+      var browserIterationFunc = () => ((a1) => dynCall_vi(func, a1))(arg);
       setMainLoop(browserIterationFunc, fps, simulateInfiniteLoop, arg);
     };
 
+  
   var withStackSave = (f) => {
       var stack = stackSave();
       var ret = f();
@@ -6929,20 +6809,13 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return ret;
     };
   var JSEvents = {
-  inEventHandler:0,
   removeAllEventListeners() {
-        for (var i = JSEvents.eventHandlers.length-1; i >= 0; --i) {
-          JSEvents._removeHandler(i);
+        while (JSEvents.eventHandlers.length) {
+          JSEvents._removeHandler(JSEvents.eventHandlers.length - 1);
         }
-        JSEvents.eventHandlers = [];
         JSEvents.deferredCalls = [];
       },
-  registerRemoveEventListeners() {
-        if (!JSEvents.removeEventListenersRegistered) {
-          __ATEXIT__.push(JSEvents.removeAllEventListeners);
-          JSEvents.removeEventListenersRegistered = true;
-        }
-      },
+  inEventHandler:0,
   deferredCalls:[],
   deferCall(targetFunction, precedence, argsList) {
         function arraysHaveEqualContent(arrA, arrB) {
@@ -6996,7 +6869,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           var call = JSEvents.deferredCalls[i];
           JSEvents.deferredCalls.splice(i, 1);
           --i;
-          call.targetFunction.apply(null, call.argsList);
+          call.targetFunction(...call.argsList);
         }
       },
   eventHandlers:[],
@@ -7019,25 +6892,25 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           console.dir(eventHandler);
           return -4;
         }
-        var jsEventHandler = function jsEventHandler(event) {
-          // Increment nesting count for the event handler.
-          ++JSEvents.inEventHandler;
-          JSEvents.currentEventHandler = eventHandler;
-          // Process any old deferred calls the user has placed.
-          JSEvents.runDeferredCalls();
-          // Process the actual event, calls back to user C code handler.
-          eventHandler.handlerFunc(event);
-          // Process any new deferred calls that were placed right now from this event handler.
-          JSEvents.runDeferredCalls();
-          // Out of event handler - restore nesting count.
-          --JSEvents.inEventHandler;
-        };
-  
         if (eventHandler.callbackfunc) {
-          eventHandler.eventListenerFunc = jsEventHandler;
-          eventHandler.target.addEventListener(eventHandler.eventTypeString, jsEventHandler, eventHandler.useCapture);
+          eventHandler.eventListenerFunc = function(event) {
+            // Increment nesting count for the event handler.
+            ++JSEvents.inEventHandler;
+            JSEvents.currentEventHandler = eventHandler;
+            // Process any old deferred calls the user has placed.
+            JSEvents.runDeferredCalls();
+            // Process the actual event, calls back to user C code handler.
+            eventHandler.handlerFunc(event);
+            // Process any new deferred calls that were placed right now from this event handler.
+            JSEvents.runDeferredCalls();
+            // Out of event handler - restore nesting count.
+            --JSEvents.inEventHandler;
+          };
+  
+          eventHandler.target.addEventListener(eventHandler.eventTypeString,
+                                               eventHandler.eventListenerFunc,
+                                               eventHandler.useCapture);
           JSEvents.eventHandlers.push(eventHandler);
-          JSEvents.registerRemoveEventListeners();
         } else {
           for (var i = 0; i < JSEvents.eventHandlers.length; ++i) {
             if (JSEvents.eventHandlers[i].target == eventHandler.target
@@ -7052,7 +6925,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (!target) return '';
         if (target == window) return '#window';
         if (target == screen) return '#screen';
-        return (target && target.nodeName) ? target.nodeName : '';
+        return target?.nodeName || '';
       },
   fullscreenEnabled() {
         return document.fullscreenEnabled
@@ -7120,7 +6993,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         HEAPF64[(((wheelEvent)+(80))>>3)] = e["deltaY"];
         HEAPF64[(((wheelEvent)+(88))>>3)] = e["deltaZ"];
         HEAP32[(((wheelEvent)+(96))>>2)] = e["deltaMode"];
-        if (((a1, a2, a3) => dynCall_iiii.apply(null, [callbackfunc, a1, a2, a3]))(eventTypeId, wheelEvent, userData)) e.preventDefault();
+        if (((a1, a2, a3) => dynCall_iiii(callbackfunc, a1, a2, a3))(eventTypeId, wheelEvent, userData)) e.preventDefault();
       };
   
       var eventHandler = {
@@ -7161,7 +7034,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   errorCallback:(callback, type, message, userdata) => {
         withStackSave(() => {
           var messagePtr = stringToUTF8OnStack(message);
-          ((a1, a2, a3) => dynCall_viii.apply(null, [callback, a1, a2, a3]))(type, messagePtr, userdata);
+          ((a1, a2, a3) => dynCall_viii(callback, a1, a2, a3))(type, messagePtr, userdata);
         });
       },
   initManagers:() => {
@@ -7308,43 +7181,65 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (entryPointPtr) desc["entryPoint"] = UTF8ToString(entryPointPtr);
         return desc;
       },
-  DeviceLostReason:{
+  Int_BufferMapState:{
+  unmapped:0,
+  pending:1,
+  mapped:2,
+  },
+  Int_CompilationMessageType:{
+  error:0,
+  warning:1,
+  info:2,
+  },
+  Int_DeviceLostReason:{
   undefined:0,
   destroyed:1,
   },
-  PreferredFormat:{
+  Int_PreferredFormat:{
   rgba8unorm:18,
   bgra8unorm:23,
   },
-  BufferMapState:["unmapped","pending","mapped"],
-  AddressMode:["repeat","mirror-repeat","clamp-to-edge"],
-  BlendFactor:["zero","one","src","one-minus-src","src-alpha","one-minus-src-alpha","dst","one-minus-dst","dst-alpha","one-minus-dst-alpha","src-alpha-saturated","constant","one-minus-constant"],
-  BlendOperation:["add","subtract","reverse-subtract","min","max"],
+  WGSLFeatureName:[,"readonly_and_readwrite_storage_textures","packed_4x8_integer_dot_product","unrestricted_pointer_parameters","pointer_composite_access"],
+  AddressMode:[,"clamp-to-edge","repeat","mirror-repeat"],
+  BlendFactor:[,"zero","one","src","one-minus-src","src-alpha","one-minus-src-alpha","dst","one-minus-dst","dst-alpha","one-minus-dst-alpha","src-alpha-saturated","constant","one-minus-constant"],
+  BlendOperation:[,"add","subtract","reverse-subtract","min","max"],
   BufferBindingType:[,"uniform","storage","read-only-storage"],
-  CompareFunction:[,"never","less","less-equal","greater","greater-equal","equal","not-equal","always"],
+  BufferMapState:{
+  1:"unmapped",
+  2:"pending",
+  3:"mapped",
+  },
+  CompareFunction:[,"never","less","equal","less-equal","greater","not-equal","greater-equal","always"],
   CompilationInfoRequestStatus:["success","error","device-lost","unknown"],
-  CullMode:["none","front","back"],
-  ErrorFilter:["validation","out-of-memory","internal"],
-  FeatureName:[,"depth-clip-control","depth32float-stencil8","timestamp-query","texture-compression-bc","texture-compression-etc2","texture-compression-astc","indirect-first-instance","shader-f16","rg11b10ufloat-renderable","bgra8unorm-storage","float32filterable"],
-  FilterMode:["nearest","linear"],
-  FrontFace:["ccw","cw"],
+  CullMode:[,"none","front","back"],
+  ErrorFilter:{
+  1:"validation",
+  2:"out-of-memory",
+  3:"internal",
+  },
+  FeatureName:[,"depth-clip-control","depth32float-stencil8","timestamp-query","texture-compression-bc","texture-compression-etc2","texture-compression-astc","indirect-first-instance","shader-f16","rg11b10ufloat-renderable","bgra8unorm-storage","float32-filterable"],
+  FilterMode:[,"nearest","linear"],
+  FrontFace:[,"ccw","cw"],
   IndexFormat:[,"uint16","uint32"],
   LoadOp:[,"clear","load"],
-  MipmapFilterMode:["nearest","linear"],
+  MipmapFilterMode:[,"nearest","linear"],
   PowerPreference:[,"low-power","high-performance"],
-  PrimitiveTopology:["point-list","line-list","line-strip","triangle-list","triangle-strip"],
-  QueryType:["occlusion","timestamp"],
+  PrimitiveTopology:[,"point-list","line-list","line-strip","triangle-list","triangle-strip"],
+  QueryType:{
+  1:"occlusion",
+  2:"timestamp",
+  },
   SamplerBindingType:[,"filtering","non-filtering","comparison"],
-  StencilOperation:["keep","zero","replace","invert","increment-clamp","decrement-clamp","increment-wrap","decrement-wrap"],
-  StorageTextureAccess:[,"write-only"],
+  StencilOperation:[,"keep","zero","replace","invert","increment-clamp","decrement-clamp","increment-wrap","decrement-wrap"],
+  StorageTextureAccess:[,"write-only","read-only","read-write"],
   StoreOp:[,"store","discard"],
-  TextureAspect:["all","stencil-only","depth-only"],
-  TextureDimension:["1d","2d","3d"],
-  TextureFormat:[,"r8unorm","r8snorm","r8uint","r8sint","r16uint","r16sint","r16float","rg8unorm","rg8snorm","rg8uint","rg8sint","r32float","r32uint","r32sint","rg16uint","rg16sint","rg16float","rgba8unorm","rgba8unorm-srgb","rgba8snorm","rgba8uint","rgba8sint","bgra8unorm","bgra8unorm-srgb","rgb10a2unorm","rg11b10ufloat","rgb9e5ufloat","rg32float","rg32uint","rg32sint","rgba16uint","rgba16sint","rgba16float","rgba32float","rgba32uint","rgba32sint","stencil8","depth16unorm","depth24plus","depth24plus-stencil8","depth32float","depth32float-stencil8","bc1-rgba-unorm","bc1-rgba-unorm-srgb","bc2-rgba-unorm","bc2-rgba-unorm-srgb","bc3-rgba-unorm","bc3-rgba-unorm-srgb","bc4-r-unorm","bc4-r-snorm","bc5-rg-unorm","bc5-rg-snorm","bc6h-rgb-ufloat","bc6h-rgb-float","bc7-rgba-unorm","bc7-rgba-unorm-srgb","etc2-rgb8unorm","etc2-rgb8unorm-srgb","etc2-rgb8a1unorm","etc2-rgb8a1unorm-srgb","etc2-rgba8unorm","etc2-rgba8unorm-srgb","eac-r11unorm","eac-r11snorm","eac-rg11unorm","eac-rg11snorm","astc-4x4-unorm","astc-4x4-unorm-srgb","astc-5x4-unorm","astc-5x4-unorm-srgb","astc-5x5-unorm","astc-5x5-unorm-srgb","astc-6x5-unorm","astc-6x5-unorm-srgb","astc-6x6-unorm","astc-6x6-unorm-srgb","astc-8x5-unorm","astc-8x5-unorm-srgb","astc-8x6-unorm","astc-8x6-unorm-srgb","astc-8x8-unorm","astc-8x8-unorm-srgb","astc-10x5-unorm","astc-10x5-unorm-srgb","astc-10x6-unorm","astc-10x6-unorm-srgb","astc-10x8-unorm","astc-10x8-unorm-srgb","astc-10x10-unorm","astc-10x10-unorm-srgb","astc-12x10-unorm","astc-12x10-unorm-srgb","astc-12x12-unorm","astc-12x12-unorm-srgb"],
+  TextureAspect:[,"all","stencil-only","depth-only"],
+  TextureDimension:[,"1d","2d","3d"],
+  TextureFormat:[,"r8unorm","r8snorm","r8uint","r8sint","r16uint","r16sint","r16float","rg8unorm","rg8snorm","rg8uint","rg8sint","r32float","r32uint","r32sint","rg16uint","rg16sint","rg16float","rgba8unorm","rgba8unorm-srgb","rgba8snorm","rgba8uint","rgba8sint","bgra8unorm","bgra8unorm-srgb","rgb10a2uint","rgb10a2unorm","rg11b10ufloat","rgb9e5ufloat","rg32float","rg32uint","rg32sint","rgba16uint","rgba16sint","rgba16float","rgba32float","rgba32uint","rgba32sint","stencil8","depth16unorm","depth24plus","depth24plus-stencil8","depth32float","depth32float-stencil8","bc1-rgba-unorm","bc1-rgba-unorm-srgb","bc2-rgba-unorm","bc2-rgba-unorm-srgb","bc3-rgba-unorm","bc3-rgba-unorm-srgb","bc4-r-unorm","bc4-r-snorm","bc5-rg-unorm","bc5-rg-snorm","bc6h-rgb-ufloat","bc6h-rgb-float","bc7-rgba-unorm","bc7-rgba-unorm-srgb","etc2-rgb8unorm","etc2-rgb8unorm-srgb","etc2-rgb8a1unorm","etc2-rgb8a1unorm-srgb","etc2-rgba8unorm","etc2-rgba8unorm-srgb","eac-r11unorm","eac-r11snorm","eac-rg11unorm","eac-rg11snorm","astc-4x4-unorm","astc-4x4-unorm-srgb","astc-5x4-unorm","astc-5x4-unorm-srgb","astc-5x5-unorm","astc-5x5-unorm-srgb","astc-6x5-unorm","astc-6x5-unorm-srgb","astc-6x6-unorm","astc-6x6-unorm-srgb","astc-8x5-unorm","astc-8x5-unorm-srgb","astc-8x6-unorm","astc-8x6-unorm-srgb","astc-8x8-unorm","astc-8x8-unorm-srgb","astc-10x5-unorm","astc-10x5-unorm-srgb","astc-10x6-unorm","astc-10x6-unorm-srgb","astc-10x8-unorm","astc-10x8-unorm-srgb","astc-10x10-unorm","astc-10x10-unorm-srgb","astc-12x10-unorm","astc-12x10-unorm-srgb","astc-12x12-unorm","astc-12x12-unorm-srgb"],
   TextureSampleType:[,"float","unfilterable-float","depth","sint","uint"],
   TextureViewDimension:[,"1d","2d","2d-array","cube","cube-array","3d"],
-  VertexFormat:[,"uint8x2","uint8x4","sint8x2","sint8x4","unorm8x2","unorm8x4","snorm8x2","snorm8x4","uint16x2","uint16x4","sint16x2","sint16x4","unorm16x2","unorm16x4","snorm16x2","snorm16x4","float16x2","float16x4","float32","float32x2","float32x3","float32x4","uint32","uint32x2","uint32x3","uint32x4","sint32","sint32x2","sint32x3","sint32x4"],
-  VertexStepMode:["vertex","instance",],
+  VertexFormat:[,"uint8x2","uint8x4","sint8x2","sint8x4","unorm8x2","unorm8x4","snorm8x2","snorm8x4","uint16x2","uint16x4","sint16x2","sint16x4","unorm16x2","unorm16x4","snorm16x2","snorm16x4","float16x2","float16x4","float32","float32x2","float32x3","float32x4","uint32","uint32x2","uint32x3","uint32x4","sint32","sint32x2","sint32x3","sint32x4","unorm10-10-10-2"],
+  VertexStepMode:[,"vertex-buffer-not-used","vertex","instance"],
   FeatureNameString2Enum:{
   undefined:"0",
   'depth-clip-control':"1",
@@ -7357,7 +7252,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   'shader-f16':"8",
   'rg11b10ufloat-renderable':"9",
   'bgra8unorm-storage':"10",
-  float32filterable:"11",
+  'float32-filterable':"11",
   },
   };
   var _emscripten_webgpu_get_device = () => {
@@ -7411,12 +7306,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   var stringToAscii = (str, buffer) => {
       for (var i = 0; i < str.length; ++i) {
         assert(str.charCodeAt(i) === (str.charCodeAt(i) & 0xff));
-        HEAP8[((buffer++)>>0)] = str.charCodeAt(i);
+        HEAP8[buffer++] = str.charCodeAt(i);
       }
       // Null-terminate the string
-      HEAP8[((buffer)>>0)] = 0;
+      HEAP8[buffer] = 0;
     };
-  
   var _environ_get = (__environ, environ_buf) => {
       var bufSize = 0;
       getEnvStrings().forEach((string, i) => {
@@ -7428,7 +7322,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return 0;
     };
 
-  
   var _environ_sizes_get = (penviron_count, penviron_buf_size) => {
       var strings = getEnvStrings();
       HEAPU32[((penviron_count)>>2)] = strings.length;
@@ -7465,7 +7358,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
                    FS.isLink(stream.mode) ? 7 :
                    4;
       }
-      HEAP8[((pbuf)>>0)] = type;
+      HEAP8[pbuf] = type;
       HEAP16[(((pbuf)+(2))>>1)] = flags;
       (tempI64 = [rightsBase>>>0,(tempDouble = rightsBase,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((pbuf)+(8))>>2)] = tempI64[0],HEAP32[(((pbuf)+(12))>>2)] = tempI64[1]);
       (tempI64 = [rightsInheriting>>>0,(tempDouble = rightsInheriting,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((pbuf)+(16))>>2)] = tempI64[0],HEAP32[(((pbuf)+(20))>>2)] = tempI64[1]);
@@ -7603,6 +7496,58 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return !!(ctx.multiDrawWebgl = ctx.getExtension('WEBGL_multi_draw'));
     };
   
+  var getEmscriptenSupportedExtensions = (ctx) => {
+      // Restrict the list of advertised extensions to those that we actually
+      // support.
+      var supportedExtensions = [
+        // WebGL 1 extensions
+        'ANGLE_instanced_arrays',
+        'EXT_blend_minmax',
+        'EXT_disjoint_timer_query',
+        'EXT_frag_depth',
+        'EXT_shader_texture_lod',
+        'EXT_sRGB',
+        'OES_element_index_uint',
+        'OES_fbo_render_mipmap',
+        'OES_standard_derivatives',
+        'OES_texture_float',
+        'OES_texture_half_float',
+        'OES_texture_half_float_linear',
+        'OES_vertex_array_object',
+        'WEBGL_color_buffer_float',
+        'WEBGL_depth_texture',
+        'WEBGL_draw_buffers',
+        // WebGL 2 extensions
+        'EXT_color_buffer_float',
+        'EXT_conservative_depth',
+        'EXT_disjoint_timer_query_webgl2',
+        'EXT_texture_norm16',
+        'NV_shader_noperspective_interpolation',
+        'WEBGL_clip_cull_distance',
+        // WebGL 1 and WebGL 2 extensions
+        'EXT_color_buffer_half_float',
+        'EXT_depth_clamp',
+        'EXT_float_blend',
+        'EXT_texture_compression_bptc',
+        'EXT_texture_compression_rgtc',
+        'EXT_texture_filter_anisotropic',
+        'KHR_parallel_shader_compile',
+        'OES_texture_float_linear',
+        'WEBGL_blend_func_extended',
+        'WEBGL_compressed_texture_astc',
+        'WEBGL_compressed_texture_etc',
+        'WEBGL_compressed_texture_etc1',
+        'WEBGL_compressed_texture_s3tc',
+        'WEBGL_compressed_texture_s3tc_srgb',
+        'WEBGL_debug_renderer_info',
+        'WEBGL_debug_shaders',
+        'WEBGL_lose_context',
+        'WEBGL_multi_draw',
+      ];
+      // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
+      return (ctx.getSupportedExtensions() || []).filter(ext => supportedExtensions.includes(ext));
+    };
+  
   
   var GL = {
   counter:1,
@@ -7625,7 +7570,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   stringiCache:{
   },
   unpackAlignment:4,
-  recordError:function recordError(errorCode) {
+  recordError:(errorCode) => {
         if (!GL.lastError) {
           GL.lastError = errorCode;
         }
@@ -7637,11 +7582,25 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         }
         return ret;
       },
+  genObject:(n, buffers, createFunction, objectTable
+        ) => {
+        for (var i = 0; i < n; i++) {
+          var buffer = GLctx[createFunction]();
+          var id = buffer && GL.getNewId(objectTable);
+          if (buffer) {
+            buffer.name = id;
+            objectTable[id] = buffer;
+          } else {
+            GL.recordError(0x502 /* GL_INVALID_OPERATION */);
+          }
+          HEAP32[(((buffers)+(i*4))>>2)] = id;
+        }
+      },
   getSource:(shader, count, string, length) => {
         var source = '';
         for (var i = 0; i < count; ++i) {
-          var len = length ? HEAP32[(((length)+(i*4))>>2)] : -1;
-          source += UTF8ToString(HEAP32[(((string)+(i*4))>>2)], len < 0 ? undefined : len);
+          var len = length ? HEAPU32[(((length)+(i*4))>>2)] : undefined;
+          source += UTF8ToString(HEAPU32[(((string)+(i*4))>>2)], len);
         }
         return source;
       },
@@ -7707,7 +7666,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         // Active Emscripten GL layer context object.
         GL.currentContext = GL.contexts[contextHandle];
         // Active WebGL context object.
-        Module.ctx = GLctx = GL.currentContext && GL.currentContext.GLctx;
+        Module.ctx = GLctx = GL.currentContext?.GLctx;
         return !(contextHandle && !GLctx);
       },
   getContext:(contextHandle) => {
@@ -7732,7 +7691,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   initExtensions:(context) => {
         // If this function is called without a specific context object, init the
         // extensions of the currently active context.
-        if (!context) context = GL.currentContext;
+        context ||= GL.currentContext;
   
         if (context.initExtensionsDone) return;
         context.initExtensionsDone = true;
@@ -7768,10 +7727,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
         webgl_enable_WEBGL_multi_draw(GLctx);
   
-        // .getSupportedExtensions() can return null if context is lost, so coerce
-        // to empty array.
-        var exts = GLctx.getSupportedExtensions() || [];
-        exts.forEach((ext) => {
+        getEmscriptenSupportedExtensions(GLctx).forEach((ext) => {
           // WEBGL_lose_context, WEBGL_debug_renderer_info and WEBGL_debug_shaders
           // are not enabled by default.
           if (!ext.includes('lose_context') && !ext.includes('debug')) {
@@ -7780,14 +7736,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           }
         });
       },
-  getExtensions() {
-        // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
-        var exts = GLctx.getSupportedExtensions() || [];
-        exts = exts.concat(exts.map((e) => "GL_" + e));
-        return exts;
-      },
   };
-  function _glActiveTexture(x0) { GLctx.activeTexture(x0) }
+  var _glActiveTexture = (x0) => GLctx.activeTexture(x0);
 
   var _glAttachShader = (program, shader) => {
       GLctx.attachShader(GL.programs[program], GL.shaders[shader]);
@@ -7824,11 +7774,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
     };
   var _glBindVertexArrayOES = _glBindVertexArray;
 
-  function _glBlendEquation(x0) { GLctx.blendEquation(x0) }
+  var _glBlendEquation = (x0) => GLctx.blendEquation(x0);
 
-  function _glBlendEquationSeparate(x0, x1) { GLctx.blendEquationSeparate(x0, x1) }
+  var _glBlendEquationSeparate = (x0, x1) => GLctx.blendEquationSeparate(x0, x1);
 
-  function _glBlendFuncSeparate(x0, x1, x2, x3) { GLctx.blendFuncSeparate(x0, x1, x2, x3) }
+  var _glBlendFuncSeparate = (x0, x1, x2, x3) => GLctx.blendFuncSeparate(x0, x1, x2, x3);
 
   var _glBufferData = (target, size, data, usage) => {
   
@@ -7863,9 +7813,9 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       GLctx.bufferSubData(target, offset, HEAPU8.subarray(data, data+size));
     };
 
-  function _glClear(x0) { GLctx.clear(x0) }
+  var _glClear = (x0) => GLctx.clear(x0);
 
-  function _glClearColor(x0, x1, x2, x3) { GLctx.clearColor(x0, x1, x2, x3) }
+  var _glClearColor = (x0, x1, x2, x3) => GLctx.clearColor(x0, x1, x2, x3);
 
   var _glCompileShader = (shader) => {
       GLctx.compileShader(GL.shaders[shader]);
@@ -7932,7 +7882,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       GLctx.detachShader(GL.programs[program], GL.shaders[shader]);
     };
 
-  function _glDisable(x0) { GLctx.disable(x0) }
+  var _glDisable = (x0) => GLctx.disable(x0);
 
   var _glDrawElements = (mode, count, type, indices) => {
   
@@ -7940,45 +7890,28 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
     };
 
-  function _glEnable(x0) { GLctx.enable(x0) }
+  var _glEnable = (x0) => GLctx.enable(x0);
 
   var _glEnableVertexAttribArray = (index) => {
       GLctx.enableVertexAttribArray(index);
     };
 
-  var __glGenObject = (n, buffers, createFunction, objectTable
-      ) => {
-      for (var i = 0; i < n; i++) {
-        var buffer = GLctx[createFunction]();
-        var id = buffer && GL.getNewId(objectTable);
-        if (buffer) {
-          buffer.name = id;
-          objectTable[id] = buffer;
-        } else {
-          GL.recordError(0x502 /* GL_INVALID_OPERATION */);
-        }
-        HEAP32[(((buffers)+(i*4))>>2)] = id;
-      }
-    };
-  
   var _glGenBuffers = (n, buffers) => {
-      __glGenObject(n, buffers, 'createBuffer', GL.buffers
+      GL.genObject(n, buffers, 'createBuffer', GL.buffers
         );
     };
 
-  
   var _glGenTextures = (n, textures) => {
-      __glGenObject(n, textures, 'createTexture', GL.textures
+      GL.genObject(n, textures, 'createTexture', GL.textures
         );
     };
 
-  
   
   /** @suppress {duplicate } */
-  function _glGenVertexArrays(n, arrays) {
-      __glGenObject(n, arrays, 'createVertexArray', GL.vaos
+  var _glGenVertexArrays = (n, arrays) => {
+      GL.genObject(n, arrays, 'createVertexArray', GL.vaos
         );
-    }
+    };
   var _glGenVertexArraysOES = _glGenVertexArrays;
 
   
@@ -8000,6 +7933,13 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       var deserialized = (num >= 0) ? readI53FromU64(ptr) : readI53FromI64(ptr);
       var offset = ((ptr)>>2);
       if (deserialized != num) warnOnce(`writeI53ToI64() out of range: serialized JS Number ${num} to Wasm heap as bytes lo=${ptrToString(HEAPU32[offset])}, hi=${ptrToString(HEAPU32[offset+1])}, which deserializes back to ${deserialized} instead!`);
+    };
+  
+  
+  var webglGetExtensions = function $webglGetExtensions() {
+      var exts = getEmscriptenSupportedExtensions(GLctx);
+      exts = exts.concat(exts.map((e) => "GL_" + e));
+      return exts;
     };
   
   var emscriptenWebGLGet = (name_, p, type) => {
@@ -8043,11 +7983,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             GL.recordError(0x502 /* GL_INVALID_OPERATION */);
             return;
           }
-          // .getSupportedExtensions() can return null if context is lost, so coerce to empty array.
-          var exts = GLctx.getSupportedExtensions() || [];
-          // each extension is duplicated, first in unprefixed WebGL form, and
-          // then a second time with "GL_" prefix.
-          ret = 2 * exts.length;
+          ret = webglGetExtensions().length;
           break;
         case 0x821B: // GL_MAJOR_VERSION
         case 0x821C: // GL_MINOR_VERSION
@@ -8112,7 +8048,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
                 switch (type) {
                   case 0: HEAP32[(((p)+(i*4))>>2)] = result[i]; break;
                   case 2: HEAPF32[(((p)+(i*4))>>2)] = result[i]; break;
-                  case 4: HEAP8[(((p)+(i))>>0)] = result[i] ? 1 : 0; break;
+                  case 4: HEAP8[(p)+(i)] = result[i] ? 1 : 0; break;
                 }
               }
               return;
@@ -8137,7 +8073,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         case 1: writeI53ToI64(p, ret); break;
         case 0: HEAP32[((p)>>2)] = ret; break;
         case 2:   HEAPF32[((p)>>2)] = ret; break;
-        case 4: HEAP8[((p)>>0)] = ret ? 1 : 0; break;
+        case 4: HEAP8[p] = ret ? 1 : 0; break;
       }
     };
   
@@ -8329,7 +8265,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return -1;
     };
 
-  function _glIsEnabled(x0) { return GLctx.isEnabled(x0) }
+  var _glIsEnabled = (x0) => GLctx.isEnabled(x0);
 
   var _glIsProgram = (program) => {
       program = GL.programs[program];
@@ -8353,7 +8289,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       GLctx.pixelStorei(pname, param);
     };
 
-  function _glScissor(x0, x1, x2, x3) { GLctx.scissor(x0, x1, x2, x3) }
+  var _glScissor = (x0, x1, x2, x3) => GLctx.scissor(x0, x1, x2, x3);
 
   var _glShaderSource = (shader, count, string, length) => {
       var source = GL.getSource(shader, count, string, length);
@@ -8421,15 +8357,14 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return HEAPU16;
     };
   
-  var heapAccessShiftForWebGLHeap = (heap) => 31 - Math.clz32(heap.BYTES_PER_ELEMENT);
+  var toTypedArrayIndex = (pointer, heap) =>
+      pointer >>> (31 - Math.clz32(heap.BYTES_PER_ELEMENT));
   
   var emscriptenWebGLGetTexPixelData = (type, format, width, height, pixels, internalFormat) => {
       var heap = heapObjectForWebGLType(type);
-      var shift = heapAccessShiftForWebGLHeap(heap);
-      var byteSize = 1<<shift;
-      var sizePerPixel = colorChannelsInGlTextureFormat(format) * byteSize;
+      var sizePerPixel = colorChannelsInGlTextureFormat(format) * heap.BYTES_PER_ELEMENT;
       var bytes = computeUnpackAlignedImageSize(width, height, sizePerPixel, GL.unpackAlignment);
-      return heap.subarray(pixels >> shift, pixels + bytes >> shift);
+      return heap.subarray(toTypedArrayIndex(pixels, heap), toTypedArrayIndex(pixels + bytes, heap));
     };
   
   
@@ -8442,7 +8377,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
         } else if (pixels) {
           var heap = heapObjectForWebGLType(type);
-          GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, heap, pixels >> heapAccessShiftForWebGLHeap(heap));
+          GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, heap, toTypedArrayIndex(pixels, heap));
         } else {
           GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, null);
         }
@@ -8451,7 +8386,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, pixels ? emscriptenWebGLGetTexPixelData(type, format, width, height, pixels, internalFormat) : null);
     };
 
-  function _glTexParameteri(x0, x1, x2) { GLctx.texParameteri(x0, x1, x2) }
+  var _glTexParameteri = (x0, x1, x2) => GLctx.texParameteri(x0, x1, x2);
 
   var webglGetUniformLocation = (location) => {
       var p = GLctx.currentProgram;
@@ -8484,7 +8419,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       // WebGL 2 provides new garbage-free entry points to call to WebGL. Use
       // those always when possible.
       if (GL.currentContext.version >= 2) {
-        count && GLctx.uniformMatrix4fv(webglGetUniformLocation(location), !!transpose, HEAPF32, value>>2, count*16);
+        count && GLctx.uniformMatrix4fv(webglGetUniformLocation(location), !!transpose, HEAPF32, ((value)>>2), count*16);
         return;
       }
   
@@ -8493,7 +8428,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         var view = miniTempWebGLFloatBuffers[16*count-1];
         // hoist the heap out of the loop for size and for pthreads+growth.
         var heap = HEAPF32;
-        value >>= 2;
+        value = ((value)>>2);
         for (var i = 0; i < 16 * count; i += 16) {
           var dst = value + i;
           view[i] = heap[dst];
@@ -8515,7 +8450,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         }
       } else
       {
-        var view = HEAPF32.subarray((value)>>2, (value+count*64)>>2);
+        var view = HEAPF32.subarray((((value)>>2)), ((value+count*64)>>2));
       }
       GLctx.uniformMatrix4fv(webglGetUniformLocation(location), !!transpose, view);
     };
@@ -8532,13 +8467,13 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       GLctx.vertexAttribPointer(index, size, type, !!normalized, stride, ptr);
     };
 
-  function _glViewport(x0, x1, x2, x3) { GLctx.viewport(x0, x1, x2, x3) }
+  var _glViewport = (x0, x1, x2, x3) => GLctx.viewport(x0, x1, x2, x3);
 
   
   
   
   /** @constructor */
-  function GLFW_Window(id, width, height, title, monitor, share) {
+  function GLFW_Window(id, width, height, framebufferWidth, framebufferHeight, title, monitor, share) {
         this.id = id;
         this.x = 0;
         this.y = 0;
@@ -8547,12 +8482,14 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         this.storedY = 0; // Used to store Y before fullscreen
         this.width = width;
         this.height = height;
+        this.framebufferWidth = framebufferWidth;
+        this.framebufferHeight = framebufferHeight;
         this.storedWidth = width; // Used to store width before fullscreen
         this.storedHeight = height; // Used to store height before fullscreen
         this.title = title;
         this.monitor = monitor;
         this.share = share;
-        this.attributes = GLFW.hints;
+        this.attributes = Object.assign({}, GLFW.hints);
         this.inputModes = {
           0x00033001:0x00034001, // GLFW_CURSOR (GLFW_CURSOR_NORMAL)
           0x00033002:0, // GLFW_STICKY_KEYS
@@ -8609,7 +8546,9 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   versionString:null,
   initialTime:null,
   extensions:null,
+  devicePixelRatioMQL:null,
   hints:null,
+  primaryTouchId:null,
   defaultHints:{
   131073:0,
   131074:0,
@@ -8761,6 +8700,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           case 0x11:return 341; // DOM_VK_CONTROL -> GLFW_KEY_LEFT_CONTROL
           case 0x12:return 342; // DOM_VK_ALT -> GLFW_KEY_LEFT_ALT
           case 0x5B:return 343; // DOM_VK_WIN -> GLFW_KEY_LEFT_SUPER
+          case 0xE0:return 343; // DOM_VK_META -> GLFW_KEY_LEFT_SUPER
           // case 0x10:return 344; // DOM_VK_SHIFT -> GLFW_KEY_RIGHT_SHIFT (DOM_KEY_LOCATION_RIGHT)
           // case 0x11:return 345; // DOM_VK_CONTROL -> GLFW_KEY_RIGHT_CONTROL (DOM_KEY_LOCATION_RIGHT)
           // case 0x12:return 346; // DOM_VK_ALT -> GLFW_KEY_RIGHT_ALT (DOM_KEY_LOCATION_RIGHT)
@@ -8775,7 +8715,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (win.keys[340]) mod |= 0x0001; // GLFW_MOD_SHIFT
         if (win.keys[341]) mod |= 0x0002; // GLFW_MOD_CONTROL
         if (win.keys[342]) mod |= 0x0004; // GLFW_MOD_ALT
-        if (win.keys[343]) mod |= 0x0008; // GLFW_MOD_SUPER
+        if (win.keys[343] || win.keys[348]) mod |= 0x0008; // GLFW_MOD_SUPER
         // add caps and num lock keys? only if lock_key_mod is set
         return mod;
       },
@@ -8787,7 +8727,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         var charCode = event.charCode;
         if (charCode == 0 || (charCode >= 0x00 && charCode <= 0x1F)) return;
   
-        ((a1, a2) => dynCall_vii.apply(null, [GLFW.active.charFunc, a1, a2]))(GLFW.active.id, charCode);
+        ((a1, a2) => dynCall_vii(GLFW.active.charFunc, a1, a2))(GLFW.active.id, charCode);
       },
   onKeyChanged:(keyCode, status) => {
         if (!GLFW.active) return;
@@ -8801,7 +8741,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
         if (GLFW.active.keyFunc) {
           if (repeat) status = 2; // GLFW_REPEAT
-          ((a1, a2, a3, a4, a5) => dynCall_viiiii.apply(null, [GLFW.active.keyFunc, a1, a2, a3, a4, a5]))(GLFW.active.id, key, keyCode, status, GLFW.getModBits(GLFW.active));
+          ((a1, a2, a3, a4, a5) => dynCall_viiiii(GLFW.active.keyFunc, a1, a2, a3, a4, a5))(GLFW.active.id, key, keyCode, status, GLFW.getModBits(GLFW.active));
         }
       },
   onGamepadConnected:(event) => {
@@ -8835,12 +8775,36 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   onMousemove:(event) => {
         if (!GLFW.active) return;
   
-        Browser.calculateMouseEvent(event);
+        if (event.type === 'touchmove') {
+          // Handling for touch events that are being converted to mouse input.
+  
+          // Don't let the browser fire a duplicate mouse event.
+          event.preventDefault();
+  
+          let primaryChanged = false;
+          for (let i of event.changedTouches) {
+            // If our chosen primary touch moved, update Browser mouse coords
+            if (GLFW.primaryTouchId === i.identifier) {
+              Browser.setMouseCoords(i.pageX, i.pageY);
+              primaryChanged = true;
+              break;
+            }
+          }
+  
+          if (!primaryChanged) {
+            // Do not send mouse events if some touch other than the primary triggered this.
+            return;
+          }
+  
+        } else {
+          // Handling for non-touch mouse input events.
+          Browser.calculateMouseEvent(event);
+        }
   
         if (event.target != Module["canvas"] || !GLFW.active.cursorPosFunc) return;
   
         if (GLFW.active.cursorPosFunc) {
-          ((a1, a2, a3) => dynCall_vidd.apply(null, [GLFW.active.cursorPosFunc, a1, a2, a3]))(GLFW.active.id, Browser.mouseX, Browser.mouseY);
+          ((a1, a2, a3) => dynCall_vidd(GLFW.active.cursorPosFunc, a1, a2, a3))(GLFW.active.id, Browser.mouseX, Browser.mouseY);
         }
       },
   DOMToGLFWMouseButton:(event) => {
@@ -8862,7 +8826,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (event.target != Module["canvas"]) return;
   
         if (GLFW.active.cursorEnterFunc) {
-          ((a1, a2) => dynCall_vii.apply(null, [GLFW.active.cursorEnterFunc, a1, a2]))(GLFW.active.id, 1);
+          ((a1, a2) => dynCall_vii(GLFW.active.cursorEnterFunc, a1, a2))(GLFW.active.id, 1);
         }
       },
   onMouseleave:(event) => {
@@ -8871,17 +8835,57 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (event.target != Module["canvas"]) return;
   
         if (GLFW.active.cursorEnterFunc) {
-          ((a1, a2) => dynCall_vii.apply(null, [GLFW.active.cursorEnterFunc, a1, a2]))(GLFW.active.id, 0);
+          ((a1, a2) => dynCall_vii(GLFW.active.cursorEnterFunc, a1, a2))(GLFW.active.id, 0);
         }
       },
   onMouseButtonChanged:(event, status) => {
         if (!GLFW.active) return;
   
-        Browser.calculateMouseEvent(event);
-  
         if (event.target != Module["canvas"]) return;
   
-        var eventButton = GLFW.DOMToGLFWMouseButton(event);
+        // Is this from a touch event?
+        const isTouchType = event.type === 'touchstart' || event.type === 'touchend' || event.type === 'touchcancel';
+  
+        // Only emulating mouse left-click behavior for touches.
+        let eventButton = 0;
+        if (isTouchType) {
+          // Handling for touch events that are being converted to mouse input.
+  
+          // Don't let the browser fire a duplicate mouse event.
+          event.preventDefault();
+  
+          let primaryChanged = false;
+  
+          // Set a primary touch if we have none.
+          if (GLFW.primaryTouchId === null && event.type === 'touchstart' && event.targetTouches.length > 0) {
+            // Pick the first touch that started in the canvas and treat it as primary.
+            const chosenTouch = event.targetTouches[0];
+            GLFW.primaryTouchId = chosenTouch.identifier;
+  
+            Browser.setMouseCoords(chosenTouch.pageX, chosenTouch.pageY);
+            primaryChanged = true;
+          } else if (event.type === 'touchend' || event.type === 'touchcancel') {
+            // Clear the primary touch if it ended.
+            for (let i of event.changedTouches) {
+              // If our chosen primary touch ended, remove it.
+              if (GLFW.primaryTouchId === i.identifier) {
+                GLFW.primaryTouchId = null;
+                primaryChanged = true;
+                break;
+              }
+            }
+          }
+  
+          if (!primaryChanged) {
+            // Do not send mouse events if some touch other than the primary triggered this.
+            return;
+          }
+  
+        } else {
+          // Handling for non-touch mouse input events.
+          Browser.calculateMouseEvent(event);
+          eventButton = GLFW.DOMToGLFWMouseButton(event);
+        }
   
         if (status == 1) { // GLFW_PRESS
           GLFW.active.buttons |= (1 << eventButton);
@@ -8892,8 +8896,9 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           GLFW.active.buttons &= ~(1 << eventButton);
         }
   
+        // Send mouse event to GLFW.
         if (GLFW.active.mouseButtonFunc) {
-          ((a1, a2, a3, a4) => dynCall_viiii.apply(null, [GLFW.active.mouseButtonFunc, a1, a2, a3, a4]))(GLFW.active.id, eventButton, status, GLFW.getModBits(GLFW.active));
+          ((a1, a2, a3, a4) => dynCall_viiii(GLFW.active.mouseButtonFunc, a1, a2, a3, a4))(GLFW.active.id, eventButton, status, GLFW.getModBits(GLFW.active));
         }
       },
   onMouseButtonDown:(event) => {
@@ -8919,48 +8924,50 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           sx = event.deltaX;
         }
   
-        ((a1, a2, a3) => dynCall_vidd.apply(null, [GLFW.active.scrollFunc, a1, a2, a3]))(GLFW.active.id, sx, sy);
+        ((a1, a2, a3) => dynCall_vidd(GLFW.active.scrollFunc, a1, a2, a3))(GLFW.active.id, sx, sy);
   
         event.preventDefault();
       },
-  onCanvasResize:(width, height) => {
+  onCanvasResize:(width, height, framebufferWidth, framebufferHeight) => {
         if (!GLFW.active) return;
   
-        var resizeNeeded = true;
+        var resizeNeeded = false;
   
         // If the client is requesting fullscreen mode
         if (document["fullscreen"] || document["fullScreen"] || document["mozFullScreen"] || document["webkitIsFullScreen"]) {
-          GLFW.active.storedX = GLFW.active.x;
-          GLFW.active.storedY = GLFW.active.y;
-          GLFW.active.storedWidth = GLFW.active.width;
-          GLFW.active.storedHeight = GLFW.active.height;
-          GLFW.active.x = GLFW.active.y = 0;
-          GLFW.active.width = screen.width;
-          GLFW.active.height = screen.height;
-          GLFW.active.fullscreen = true;
-  
+          if (!GLFW.active.fullscreen) {
+            resizeNeeded = width != screen.width || height != screen.height;
+            GLFW.active.storedX = GLFW.active.x;
+            GLFW.active.storedY = GLFW.active.y;
+            GLFW.active.storedWidth = GLFW.active.width;
+            GLFW.active.storedHeight = GLFW.active.height;
+            GLFW.active.x = GLFW.active.y = 0;
+            GLFW.active.width = screen.width;
+            GLFW.active.height = screen.height;
+            GLFW.active.fullscreen = true;
+          }
         // If the client is reverting from fullscreen mode
         } else if (GLFW.active.fullscreen == true) {
+          resizeNeeded = width != GLFW.active.storedWidth || height != GLFW.active.storedHeight;
           GLFW.active.x = GLFW.active.storedX;
           GLFW.active.y = GLFW.active.storedY;
           GLFW.active.width = GLFW.active.storedWidth;
           GLFW.active.height = GLFW.active.storedHeight;
           GLFW.active.fullscreen = false;
-  
-        // If the width/height values do not match current active window sizes
-        } else if (GLFW.active.width != width || GLFW.active.height != height) {
-            GLFW.active.width = width;
-            GLFW.active.height = height;
-        } else {
-          resizeNeeded = false;
         }
   
-        // If any of the above conditions were true, we need to resize the canvas
         if (resizeNeeded) {
-          // resets the canvas size to counter the aspect preservation of Browser.updateCanvasDimensions
-          Browser.setCanvasSize(GLFW.active.width, GLFW.active.height, true);
-          // TODO: Client dimensions (clientWidth/clientHeight) vs pixel dimensions (width/height) of
-          // the canvas should drive window and framebuffer size respectfully.
+          // width or height is changed (fullscreen / exit fullscreen) which will call this listener back
+          // with proper framebufferWidth/framebufferHeight
+          Browser.setCanvasSize(GLFW.active.width, GLFW.active.height);
+        } else if (GLFW.active.width != width ||
+                   GLFW.active.height != height ||
+                   GLFW.active.framebufferWidth != framebufferWidth ||
+                   GLFW.active.framebufferHeight != framebufferHeight) {
+          GLFW.active.width = width;
+          GLFW.active.height = height;
+          GLFW.active.framebufferWidth = framebufferWidth;
+          GLFW.active.framebufferHeight = framebufferHeight;
           GLFW.onWindowSizeChanged();
           GLFW.onFramebufferSizeChanged();
         }
@@ -8969,14 +8976,14 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (!GLFW.active) return;
   
         if (GLFW.active.windowSizeFunc) {
-          ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.windowSizeFunc, a1, a2, a3]))(GLFW.active.id, GLFW.active.width, GLFW.active.height);
+          ((a1, a2, a3) => dynCall_viii(GLFW.active.windowSizeFunc, a1, a2, a3))(GLFW.active.id, GLFW.active.width, GLFW.active.height);
         }
       },
   onFramebufferSizeChanged:() => {
         if (!GLFW.active) return;
   
         if (GLFW.active.framebufferSizeFunc) {
-          ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.framebufferSizeFunc, a1, a2, a3]))(GLFW.active.id, GLFW.active.width, GLFW.active.height);
+          ((a1, a2, a3) => dynCall_viii(GLFW.active.framebufferSizeFunc, a1, a2, a3))(GLFW.active.id, GLFW.active.framebufferWidth, GLFW.active.framebufferHeight);
         }
       },
   onWindowContentScaleChanged:(scale) => {
@@ -9010,7 +9017,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   refreshJoysticks:() => {
         // Produce a new Gamepad API sample if we are ticking a new game frame, or if not using emscripten_set_main_loop() at all to drive animation.
         if (Browser.mainLoop.currentFrameNumber !== GLFW.lastGamepadStateFrame || !Browser.mainLoop.currentFrameNumber) {
-          GLFW.lastGamepadState = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+          GLFW.lastGamepadState = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads || []);
           GLFW.lastGamepadStateFrame = Browser.mainLoop.currentFrameNumber;
   
           for (var joy = 0; joy < GLFW.lastGamepadState.length; ++joy) {
@@ -9028,14 +9035,14 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
                 };
   
                 if (GLFW.joystickFunc) {
-                  ((a1, a2) => dynCall_vii.apply(null, [GLFW.joystickFunc, a1, a2]))(joy, 0x00040001); // GLFW_CONNECTED
+                  ((a1, a2) => dynCall_vii(GLFW.joystickFunc, a1, a2))(joy, 0x00040001); // GLFW_CONNECTED
                 }
               }
   
               var data = GLFW.joys[joy];
   
               for (var i = 0; i < gamepad.buttons.length;  ++i) {
-                HEAP8[((data.buttons + i)>>0)] = gamepad.buttons[i].pressed;
+                HEAP8[data.buttons + i] = gamepad.buttons[i].pressed;
               }
   
               for (var i = 0; i < gamepad.axes.length; ++i) {
@@ -9046,7 +9053,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
                 out('glfw joystick disconnected',joy);
   
                 if (GLFW.joystickFunc) {
-                  ((a1, a2) => dynCall_vii.apply(null, [GLFW.joystickFunc, a1, a2]))(joy, 0x00040002); // GLFW_DISCONNECTED
+                  ((a1, a2) => dynCall_vii(GLFW.joystickFunc, a1, a2))(joy, 0x00040002); // GLFW_DISCONNECTED
                 }
   
                 _free(GLFW.joys[joy].id);
@@ -9129,7 +9136,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             var data = e.target.result;
             FS.writeFile(path, new Uint8Array(data));
             if (++written === count) {
-              ((a1, a2, a3) => dynCall_viii.apply(null, [GLFW.active.dropFunc, a1, a2, a3]))(GLFW.active.id, count, filenames);
+              ((a1, a2, a3) => dynCall_viii(GLFW.active.dropFunc, a1, a2, a3))(GLFW.active.id, count, filenames);
   
               for (var i = 0; i < filenamesArray.length; ++i) {
                 _free(filenamesArray[i]);
@@ -9303,14 +9310,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (!win) return;
   
         if (GLFW.active.id == win.id) {
-          Browser.setCanvasSize(width, height);
-          win.width = width;
-          win.height = height;
+          Browser.setCanvasSize(width, height); // triggers the listener (onCanvasResize) + windowSizeFunc
         }
-  
-        if (win.windowSizeFunc) {
-          ((a1, a2, a3) => dynCall_viii.apply(null, [win.windowSizeFunc, a1, a2, a3]))(win.id, width, height);
-        }
+      },
+  defaultWindowHints:() => {
+        GLFW.hints = Object.assign({}, GLFW.defaultHints);
       },
   createWindow:(width, height, title, monitor, share) => {
         var i, id;
@@ -9354,7 +9358,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (!Module.ctx && useWebGL) return 0;
   
         // Get non alive id
-        var win = new GLFW_Window(id, width, height, title, monitor, share);
+        const canvas = Module['canvas'];
+        var win = new GLFW_Window(id, canvas.clientWidth, canvas.clientHeight, canvas.width, canvas.height, title, monitor, share);
   
         // Set window to array
         if (id - 1 == GLFW.windows.length) {
@@ -9364,6 +9369,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         }
   
         GLFW.active = win;
+        GLFW.adjustCanvasDimensions();
         return win.id;
       },
   destroyWindow:(winid) => {
@@ -9371,7 +9377,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         if (!win) return;
   
         if (win.windowCloseFunc) {
-          ((a1) => dynCall_vi.apply(null, [win.windowCloseFunc, a1]))(win.id);
+          ((a1) => dynCall_vi(win.windowCloseFunc, a1))(win.id);
         }
   
         GLFW.windows[win.id - 1] = null;
@@ -9385,6 +9391,165 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         Module.ctx = Browser.destroyContext(Module['canvas'], true, true);
       },
   swapBuffers:(winid) => {
+      },
+  requestFullscreen(lockPointer, resizeCanvas) {
+        Browser.lockPointer = lockPointer;
+        Browser.resizeCanvas = resizeCanvas;
+        if (typeof Browser.lockPointer == 'undefined') Browser.lockPointer = true;
+        if (typeof Browser.resizeCanvas == 'undefined') Browser.resizeCanvas = false;
+  
+        var canvas = Module['canvas'];
+        function fullscreenChange() {
+          Browser.isFullscreen = false;
+          var canvasContainer = canvas.parentNode;
+          if ((document['fullscreenElement'] || document['mozFullScreenElement'] ||
+            document['msFullscreenElement'] || document['webkitFullscreenElement'] ||
+            document['webkitCurrentFullScreenElement']) === canvasContainer) {
+            canvas.exitFullscreen = Browser.exitFullscreen;
+            if (Browser.lockPointer) canvas.requestPointerLock();
+            Browser.isFullscreen = true;
+            if (Browser.resizeCanvas) {
+              Browser.setFullscreenCanvasSize();
+            } else {
+              Browser.updateCanvasDimensions(canvas);
+              Browser.updateResizeListeners();
+            }
+          } else {
+            // remove the full screen specific parent of the canvas again to restore the HTML structure from before going full screen
+            canvasContainer.parentNode.insertBefore(canvas, canvasContainer);
+            canvasContainer.parentNode.removeChild(canvasContainer);
+  
+            if (Browser.resizeCanvas) {
+              Browser.setWindowedCanvasSize();
+            } else {
+              Browser.updateCanvasDimensions(canvas);
+              Browser.updateResizeListeners();
+            }
+          }
+          if (Module['onFullScreen']) Module['onFullScreen'](Browser.isFullscreen);
+          if (Module['onFullscreen']) Module['onFullscreen'](Browser.isFullscreen);
+        }
+  
+        if (!Browser.fullscreenHandlersInstalled) {
+          Browser.fullscreenHandlersInstalled = true;
+          document.addEventListener('fullscreenchange', fullscreenChange, false);
+          document.addEventListener('mozfullscreenchange', fullscreenChange, false);
+          document.addEventListener('webkitfullscreenchange', fullscreenChange, false);
+          document.addEventListener('MSFullscreenChange', fullscreenChange, false);
+        }
+  
+        // create a new parent to ensure the canvas has no siblings. this allows browsers to optimize full screen performance when its parent is the full screen root
+        var canvasContainer = document.createElement("div");
+        canvas.parentNode.insertBefore(canvasContainer, canvas);
+        canvasContainer.appendChild(canvas);
+  
+        // use parent of canvas as full screen root to allow aspect ratio correction (Firefox stretches the root to screen size)
+        canvasContainer.requestFullscreen = canvasContainer['requestFullscreen'] ||
+          canvasContainer['mozRequestFullScreen'] ||
+          canvasContainer['msRequestFullscreen'] ||
+          (canvasContainer['webkitRequestFullscreen'] ? () => canvasContainer['webkitRequestFullscreen'](Element['ALLOW_KEYBOARD_INPUT']) : null) ||
+          (canvasContainer['webkitRequestFullScreen'] ? () => canvasContainer['webkitRequestFullScreen'](Element['ALLOW_KEYBOARD_INPUT']) : null);
+  
+        canvasContainer.requestFullscreen();
+      },
+  updateCanvasDimensions(canvas, wNative, hNative) {
+        const scale = GLFW.getHiDPIScale();
+  
+        if (wNative && hNative) {
+          canvas.widthNative = wNative;
+          canvas.heightNative = hNative;
+        } else {
+          wNative = canvas.widthNative;
+          hNative = canvas.heightNative;
+        }
+        var w = wNative;
+        var h = hNative;
+        if (Module['forcedAspectRatio'] && Module['forcedAspectRatio'] > 0) {
+          if (w/h < Module['forcedAspectRatio']) {
+            w = Math.round(h * Module['forcedAspectRatio']);
+          } else {
+            h = Math.round(w / Module['forcedAspectRatio']);
+          }
+        }
+        if (((document['fullscreenElement'] || document['mozFullScreenElement'] ||
+          document['msFullscreenElement'] || document['webkitFullscreenElement'] ||
+          document['webkitCurrentFullScreenElement']) === canvas.parentNode) && (typeof screen != 'undefined')) {
+          var factor = Math.min(screen.width / w, screen.height / h);
+          w = Math.round(w * factor);
+          h = Math.round(h * factor);
+        }
+        if (Browser.resizeCanvas) {
+          wNative = w;
+          hNative = h;
+        }
+        const wNativeScaled = Math.floor(wNative * scale);
+        const hNativeScaled = Math.floor(hNative * scale);
+        if (canvas.width  != wNativeScaled) canvas.width  = wNativeScaled;
+        if (canvas.height != hNativeScaled) canvas.height = hNativeScaled;
+        if (typeof canvas.style != 'undefined') {
+          if (wNativeScaled != wNative || hNativeScaled != hNative) {
+            canvas.style.setProperty( "width", wNative + "px", "important");
+            canvas.style.setProperty("height", hNative + "px", "important");
+          } else {
+            canvas.style.removeProperty( "width");
+            canvas.style.removeProperty("height");
+          }
+        }
+      },
+  calculateMouseCoords(pageX, pageY) {
+        // Calculate the movement based on the changes
+        // in the coordinates.
+        var rect = Module["canvas"].getBoundingClientRect();
+        var cw = Module["canvas"].clientWidth;
+        var ch = Module["canvas"].clientHeight;
+  
+        // Neither .scrollX or .pageXOffset are defined in a spec, but
+        // we prefer .scrollX because it is currently in a spec draft.
+        // (see: http://www.w3.org/TR/2013/WD-cssom-view-20131217/)
+        var scrollX = ((typeof window.scrollX != 'undefined') ? window.scrollX : window.pageXOffset);
+        var scrollY = ((typeof window.scrollY != 'undefined') ? window.scrollY : window.pageYOffset);
+        // If this assert lands, it's likely because the browser doesn't support scrollX or pageXOffset
+        // and we have no viable fallback.
+        assert((typeof scrollX != 'undefined') && (typeof scrollY != 'undefined'), 'Unable to retrieve scroll position, mouse positions likely broken.');
+        var adjustedX = pageX - (scrollX + rect.left);
+        var adjustedY = pageY - (scrollY + rect.top);
+  
+        // the canvas might be CSS-scaled compared to its backbuffer;
+        // SDL-using content will want mouse coordinates in terms
+        // of backbuffer units.
+        adjustedX = adjustedX * (cw / rect.width);
+        adjustedY = adjustedY * (ch / rect.height);
+  
+        return { x: adjustedX, y: adjustedY };
+      },
+  setWindowAttrib:(winid, attrib, value) => {
+        var win = GLFW.WindowFromId(winid);
+        if (!win) return;
+        const isHiDPIAware = GLFW.isHiDPIAware();
+        win.attributes[attrib] = value;
+        if (isHiDPIAware !== GLFW.isHiDPIAware())
+          GLFW.adjustCanvasDimensions();
+      },
+  getDevicePixelRatio() {
+        return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
+      },
+  isHiDPIAware() {
+        if (GLFW.active)
+          return GLFW.active.attributes[0x0002200C] > 0; // GLFW_SCALE_TO_MONITOR
+        else
+          return false;
+      },
+  adjustCanvasDimensions() {
+        const canvas = Module['canvas'];
+        Browser.updateCanvasDimensions(canvas, canvas.clientWidth, canvas.clientHeight);
+        Browser.updateResizeListeners();
+      },
+  getHiDPIScale() {
+        return GLFW.isHiDPIAware() ? GLFW.scale : 1.0;
+      },
+  onDevicePixelRatioChange() {
+        GLFW.onWindowContentScaleChanged(GLFW.getDevicePixelRatio());
+        GLFW.adjustCanvasDimensions();
       },
   GLFW2ParamToGLFW3Param:(param) => {
         var table = {
@@ -9438,8 +9603,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
       var win = GLFW.WindowFromId(winid);
       if (win) {
-        ww = win.width;
-        wh = win.height;
+        ww = win.framebufferWidth;
+        wh = win.framebufferHeight;
       }
   
       if (width) {
@@ -9538,20 +9703,16 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 
   var _glfwGetWindowSize = (winid, width, height) => GLFW.getWindowSize(winid, width, height);
 
-  var _emscripten_get_device_pixel_ratio = () => {
-      return (typeof devicePixelRatio == 'number' && devicePixelRatio) || 1.0;
-    };
-  
   
   
   var _glfwInit = () => {
       if (GLFW.windows) return 1; // GL_TRUE
   
       GLFW.initialTime = GLFW.getTime();
-      GLFW.hints = GLFW.defaultHints;
+      GLFW.defaultWindowHints();
       GLFW.windows = new Array()
       GLFW.active = null;
-      GLFW.scale  = _emscripten_get_device_pixel_ratio();
+      GLFW.scale  = GLFW.getDevicePixelRatio();
   
       window.addEventListener("gamepadconnected", GLFW.onGamepadConnected, true);
       window.addEventListener("gamepaddisconnected", GLFW.onGamepadDisconnected, true);
@@ -9559,13 +9720,11 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       window.addEventListener("keypress", GLFW.onKeyPress, true);
       window.addEventListener("keyup", GLFW.onKeyup, true);
       window.addEventListener("blur", GLFW.onBlur, true);
-      // from https://stackoverflow.com/a/70514686/7484780 . maybe add this to browser.js?
-      // no idea how to remove this listener.
-      (function updatePixelRatio(){
-        window.matchMedia("(resolution: " + window.devicePixelRatio + "dppx)")
-        .addEventListener('change', updatePixelRatio, {once: true});
-        GLFW.onWindowContentScaleChanged(_emscripten_get_device_pixel_ratio());
-        })();
+  
+      // watch for devicePixelRatio changes
+      GLFW.devicePixelRatioMQL = window.matchMedia('(resolution: ' + GLFW.getDevicePixelRatio() + 'dppx)');
+      GLFW.devicePixelRatioMQL.addEventListener('change', GLFW.onDevicePixelRatioChange);
+  
       Module["canvas"].addEventListener("touchmove", GLFW.onMousemove, true);
       Module["canvas"].addEventListener("touchstart", GLFW.onMouseButtonDown, true);
       Module["canvas"].addEventListener("touchcancel", GLFW.onMouseButtonUp, true);
@@ -9580,9 +9739,20 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       Module["canvas"].addEventListener('drop', GLFW.onDrop, true);
       Module["canvas"].addEventListener('dragover', GLFW.onDragover, true);
   
+      // Overriding implementation to account for HiDPI
+      Browser.requestFullscreen = GLFW.requestFullscreen;
+      Browser.calculateMouseCoords = GLFW.calculateMouseCoords;
+      Browser.updateCanvasDimensions = GLFW.updateCanvasDimensions;
+  
       Browser.resizeListeners.push((width, height) => {
-         GLFW.onCanvasResize(width, height);
+        if (GLFW.isHiDPIAware()) {
+          var canvas = Module['canvas'];
+          GLFW.onCanvasResize(canvas.clientWidth, canvas.clientHeight, width, height);
+        } else {
+          GLFW.onCanvasResize(width, height, width, height);
+        }
       });
+  
       return 1; // GL_TRUE
     };
 
@@ -9689,6 +9859,9 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       Module["canvas"].removeEventListener('mouseleave', GLFW.onMouseleave, true);
       Module["canvas"].removeEventListener('drop', GLFW.onDrop, true);
       Module["canvas"].removeEventListener('dragover', GLFW.onDragover, true);
+  
+      if (GLFW.devicePixelRatioMQL)
+        GLFW.devicePixelRatioMQL.removeEventListener('change', GLFW.onDevicePixelRatioChange);
   
       Module["canvas"].width = Module["canvas"].height = 1;
       GLFW.windows = null;
@@ -9898,7 +10071,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
           return getWeekBasedYear(date).toString().substring(2);
         },
-        '%G': (date) => getWeekBasedYear(date),
+        '%G': getWeekBasedYear,
         '%H': (date) => leadingNulls(date.tm_hour, 2),
         '%I': (date) => {
           var twelveHour = date.tm_hour;
@@ -10034,18 +10207,22 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           return undefined;
         }
   
-        var loadOpInt = HEAPU32[(((caPtr)+(12))>>2)];
+        var depthSlice = HEAP32[(((caPtr)+(8))>>2)];
+        if (depthSlice == -1) depthSlice = undefined;
+  
+        var loadOpInt = HEAPU32[(((caPtr)+(16))>>2)];
             assert(loadOpInt !== 0);
   
-        var storeOpInt = HEAPU32[(((caPtr)+(16))>>2)];
+        var storeOpInt = HEAPU32[(((caPtr)+(20))>>2)];
             assert(storeOpInt !== 0);
   
         var clearValue = WebGPU.makeColor(caPtr + 24);
   
         return {
           "view": WebGPU.mgrTextureView.get(viewPtr),
+          "depthSlice": depthSlice,
           "resolveTarget": WebGPU.mgrTextureView.get(
-            HEAPU32[(((caPtr)+(8))>>2)]),
+            HEAPU32[(((caPtr)+(12))>>2)]),
           "clearValue": clearValue,
           "loadOp":  WebGPU.LoadOp[loadOpInt],
           "storeOp": WebGPU.StoreOp[storeOpInt],
@@ -10071,13 +10248,13 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             HEAPU32[(((dsaPtr)+(4))>>2)]],
           "depthStoreOp": WebGPU.StoreOp[
             HEAPU32[(((dsaPtr)+(8))>>2)]],
-          "depthReadOnly": (HEAP8[(((dsaPtr)+(16))>>0)] !== 0),
+          "depthReadOnly": !!(HEAPU32[(((dsaPtr)+(16))>>2)]),
           "stencilClearValue": HEAPU32[(((dsaPtr)+(28))>>2)],
           "stencilLoadOp": WebGPU.LoadOp[
             HEAPU32[(((dsaPtr)+(20))>>2)]],
           "stencilStoreOp": WebGPU.StoreOp[
             HEAPU32[(((dsaPtr)+(24))>>2)]],
-          "stencilReadOnly": (HEAP8[(((dsaPtr)+(32))>>0)] !== 0),
+          "stencilReadOnly": !!(HEAPU32[(((dsaPtr)+(32))>>2)]),
         };
       }
   
@@ -10136,8 +10313,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
       return WebGPU.mgrCommandBuffer.create(commandEncoder["finish"]());
     };
-
-  var _wgpuCreateInstance = (descriptor) => 1;
 
   
   
@@ -10218,7 +10393,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         return {
           "type": WebGPU.BufferBindingType[typeInt],
           "hasDynamicOffset":
-            (HEAP8[(((entryPtr)+(8))>>0)] !== 0),
+            !!(HEAPU32[(((entryPtr)+(8))>>2)]),
           "minBindingSize":
             HEAPU32[((((entryPtr + 4))+(16))>>2)] * 0x100000000 + HEAPU32[(((entryPtr)+(16))>>2)],
         };
@@ -10248,7 +10423,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           "viewDimension": WebGPU.TextureViewDimension[
             HEAPU32[(((entryPtr)+(8))>>2)]],
           "multisampled":
-            (HEAP8[(((entryPtr)+(12))>>0)] !== 0),
+            !!(HEAPU32[(((entryPtr)+(12))>>2)]),
         };
       }
   
@@ -10309,7 +10484,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   var _wgpuDeviceCreateBuffer = (deviceId, descriptor) => {
       assert(descriptor);assert(HEAPU32[((descriptor)>>2)] === 0);
   
-      var mappedAtCreation = (HEAP8[(((descriptor)+(24))>>0)] !== 0);
+      var mappedAtCreation = !!(HEAPU32[(((descriptor)+(24))>>2)]);
   
       var desc = {
         "label": undefined,
@@ -10371,7 +10546,15 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       assert(descriptor);assert(HEAPU32[((descriptor)>>2)] === 0);
       function makePrimitiveState(rsPtr) {
         if (!rsPtr) return undefined;
-        assert(rsPtr);assert(HEAPU32[((rsPtr)>>2)] === 0);
+        assert(rsPtr);
+  
+        // TODO: This small hack assumes that there's only one type that can be in the chain of
+        // WGPUPrimitiveState. The correct thing would be to traverse the chain, but unclippedDepth
+        // is going to move into the core object soon, so we'll just do this for now. See:
+        // https://github.com/webgpu-native/webgpu-headers/issues/212#issuecomment-1682801259
+        var nextInChainPtr = HEAPU32[((rsPtr)>>2)];
+        var sType = nextInChainPtr ? HEAPU32[(((nextInChainPtr)+(4))>>2)] : 0;
+        
         return {
           "topology": WebGPU.PrimitiveTopology[
             HEAPU32[(((rsPtr)+(4))>>2)]],
@@ -10381,6 +10564,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
             HEAPU32[(((rsPtr)+(12))>>2)]],
           "cullMode": WebGPU.CullMode[
             HEAPU32[(((rsPtr)+(16))>>2)]],
+          "unclippedDepth": sType === 7 && !!(HEAPU32[(((nextInChainPtr)+(8))>>2)]),
         };
       }
   
@@ -10398,7 +10582,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
       function makeBlendState(bsPtr) {
         if (!bsPtr) return undefined;
-        assert(bsPtr);assert(HEAPU32[((bsPtr)>>2)] === 0);
         return {
           "alpha": makeBlendComponent(bsPtr + 12),
           "color": makeBlendComponent(bsPtr + 0),
@@ -10444,7 +10627,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         return {
           "format": WebGPU.TextureFormat[
             HEAPU32[(((dssPtr)+(4))>>2)]],
-          "depthWriteEnabled": (HEAP8[(((dssPtr)+(8))>>0)] !== 0),
+          "depthWriteEnabled": !!(HEAPU32[(((dssPtr)+(8))>>2)]),
           "depthCompare": WebGPU.CompareFunction[
             HEAPU32[(((dssPtr)+(12))>>2)]],
           "stencilFront": makeStencilStateFace(dssPtr + 16),
@@ -10478,7 +10661,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       function makeVertexBuffer(vbPtr) {
         if (!vbPtr) return undefined;
         var stepModeInt = HEAPU32[(((vbPtr)+(8))>>2)];
-        return stepModeInt === 2 ? null : {
+        return stepModeInt === 1 ? null : {
           "arrayStride": HEAPU32[(((vbPtr + 4))>>2)] * 0x100000000 + HEAPU32[((vbPtr)>>2)],
           "stepMode": WebGPU.VertexStepMode[stepModeInt],
           "attributes": makeVertexAttributes(
@@ -10521,7 +10704,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
         return {
           "count": HEAPU32[(((msPtr)+(4))>>2)],
           "mask": HEAPU32[(((msPtr)+(8))>>2)],
-          "alphaToCoverageEnabled": (HEAP8[(((msPtr)+(12))>>0)] !== 0),
+          "alphaToCoverageEnabled": !!(HEAPU32[(((msPtr)+(12))>>2)]),
         };
       }
   
@@ -10643,7 +10826,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       var device = WebGPU.mgrDevice.get(deviceId);
       var context = WebGPU.mgrSurface.get(surfaceId);
   
-      assert(2 ===
+      assert(1 ===
         HEAPU32[(((descriptor)+(24))>>2)]);
   
       var canvasSize = [
@@ -10692,7 +10875,8 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       var viewFormatCount = HEAPU32[(((descriptor)+(40))>>2)];
       if (viewFormatCount) {
         var viewFormatsPtr = HEAPU32[(((descriptor)+(44))>>2)];
-        desc["viewFormats"] = Array.from(HEAP32.subarray((viewFormatsPtr)>>2, (viewFormatsPtr + viewFormatCount * 4)>>2),
+        // viewFormatsPtr pointer to an array of TextureFormat which is an enum of size uint32_t
+        desc["viewFormats"] = Array.from(HEAP32.subarray((((viewFormatsPtr)>>2)), ((viewFormatsPtr + viewFormatCount * 4)>>2)),
           function(format) { return WebGPU.TextureFormat[format]; });
       }
   
@@ -10722,13 +10906,14 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
           assert(typeof GPUOutOfMemoryError != 'undefined');
           if (ev.error instanceof GPUValidationError) type = Validation;
           else if (ev.error instanceof GPUOutOfMemoryError) type = OutOfMemory;
+          // TODO: Implement GPUInternalError
   
           WebGPU.errorCallback(callback, type, ev.error.message, userdata);
         });
       };
     };
 
-  var findCanvasEventTarget = (target) => findEventTarget(target);
+  var findCanvasEventTarget = findEventTarget;
   
   
   var _wgpuInstanceCreateSurface = (instanceId, descriptor) => {
@@ -10754,10 +10939,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return WebGPU.mgrSurface.create(context);
     };
 
-  var _wgpuInstanceReference = (instance) => {};
-
-  var _wgpuInstanceRelease = (instance) => {};
-
   var _wgpuPipelineLayoutRelease = (id) => WebGPU.mgrPipelineLayout.release(id);
 
   var _wgpuQueueRelease = (id) => WebGPU.mgrQueue.release(id);
@@ -10765,7 +10946,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   var _wgpuQueueSubmit = (queueId, commandCount, commands) => {
       assert(commands % 4 === 0);
       var queue = WebGPU.mgrQueue.get(queueId);
-      var cmds = Array.from(HEAP32.subarray((commands)>>2, (commands + commandCount * 4)>>2),
+      var cmds = Array.from(HEAP32.subarray((((commands)>>2)), ((commands + commandCount * 4)>>2)),
         function(id) { return WebGPU.mgrCommandBuffer.get(id); });
       queue["submit"](cmds);
     };
@@ -10877,7 +11058,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 
   var _wgpuSurfaceGetPreferredFormat = (surfaceId, adapterId) => {
       var format = navigator["gpu"]["getPreferredCanvasFormat"]();
-      return WebGPU.PreferredFormat[format];
+      return WebGPU.Int_PreferredFormat[format];
     };
 
   var _wgpuSurfaceRelease = (id) => WebGPU.mgrSurface.release(id);
@@ -10980,7 +11161,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 embind_init_charCodes();
 BindingError = Module['BindingError'] = class BindingError extends Error { constructor(message) { super(message); this.name = 'BindingError'; }};
 InternalError = Module['InternalError'] = class InternalError extends Error { constructor(message) { super(message); this.name = 'InternalError'; }};
-handleAllocatorInit();
 init_emval();;
 
       // exports
@@ -11433,8 +11613,6 @@ var wasmImports = {
   /** @export */
   wgpuCommandEncoderFinish: _wgpuCommandEncoderFinish,
   /** @export */
-  wgpuCreateInstance: _wgpuCreateInstance,
-  /** @export */
   wgpuDeviceCreateBindGroup: _wgpuDeviceCreateBindGroup,
   /** @export */
   wgpuDeviceCreateBindGroupLayout: _wgpuDeviceCreateBindGroupLayout,
@@ -11460,10 +11638,6 @@ var wasmImports = {
   wgpuDeviceSetUncapturedErrorCallback: _wgpuDeviceSetUncapturedErrorCallback,
   /** @export */
   wgpuInstanceCreateSurface: _wgpuInstanceCreateSurface,
-  /** @export */
-  wgpuInstanceReference: _wgpuInstanceReference,
-  /** @export */
-  wgpuInstanceRelease: _wgpuInstanceRelease,
   /** @export */
   wgpuPipelineLayoutRelease: _wgpuPipelineLayoutRelease,
   /** @export */
@@ -11516,20 +11690,10 @@ var wasmImports = {
 Asyncify.instrumentWasmImports(wasmImports);
 var wasmExports = createWasm();
 var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors');
-var _fflush = Module['_fflush'] = createExportWrapper('fflush');
+var _fflush = createExportWrapper('fflush');
 var _malloc = Module['_malloc'] = createExportWrapper('malloc');
 var _free = Module['_free'] = createExportWrapper('free');
 var _main = Module['_main'] = createExportWrapper('__main_argc_argv');
-var _GAPI_Init_Client = Module['_GAPI_Init_Client'] = createExportWrapper('GAPI_Init_Client');
-var _CreateTexture = Module['_CreateTexture'] = createExportWrapper('CreateTexture');
-var _GetClipboardContent = Module['_GetClipboardContent'] = createExportWrapper('GetClipboardContent');
-var _CopyClipboardContent = Module['_CopyClipboardContent'] = createExportWrapper('CopyClipboardContent');
-var _CutClipboardContent = Module['_CutClipboardContent'] = createExportWrapper('CutClipboardContent');
-var _TouchStart = Module['_TouchStart'] = createExportWrapper('TouchStart');
-var _TouchEnd = Module['_TouchEnd'] = createExportWrapper('TouchEnd');
-var _TouchCancel = Module['_TouchCancel'] = createExportWrapper('TouchCancel');
-var _TouchMove = Module['_TouchMove'] = createExportWrapper('TouchMove');
-var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = createExportWrapper('TouchExtraKeyEvents');
 var _ShowInputDebugger = Module['_ShowInputDebugger'] = createExportWrapper('ShowInputDebugger');
 var _LoadProject = Module['_LoadProject'] = createExportWrapper('LoadProject');
 var _SaveProject = Module['_SaveProject'] = createExportWrapper('SaveProject');
@@ -11539,6 +11703,16 @@ var _LoadFileFromGoogleDrive = Module['_LoadFileFromGoogleDrive'] = createExport
 var _LoadCompletedFromGoogleDrive = Module['_LoadCompletedFromGoogleDrive'] = createExportWrapper('LoadCompletedFromGoogleDrive');
 var _LoadCanceledFromGoogleDrive = Module['_LoadCanceledFromGoogleDrive'] = createExportWrapper('LoadCanceledFromGoogleDrive');
 var _main = Module['_main'] = createExportWrapper('main');
+var _GAPI_Init_Client = Module['_GAPI_Init_Client'] = createExportWrapper('GAPI_Init_Client');
+var _TouchStart = Module['_TouchStart'] = createExportWrapper('TouchStart');
+var _TouchEnd = Module['_TouchEnd'] = createExportWrapper('TouchEnd');
+var _TouchCancel = Module['_TouchCancel'] = createExportWrapper('TouchCancel');
+var _TouchMove = Module['_TouchMove'] = createExportWrapper('TouchMove');
+var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = createExportWrapper('TouchExtraKeyEvents');
+var _CreateTexture = Module['_CreateTexture'] = createExportWrapper('CreateTexture');
+var _GetClipboardContent = Module['_GetClipboardContent'] = createExportWrapper('GetClipboardContent');
+var _CopyClipboardContent = Module['_CopyClipboardContent'] = createExportWrapper('CopyClipboardContent');
+var _CutClipboardContent = Module['_CutClipboardContent'] = createExportWrapper('CutClipboardContent');
 var _AudioOnEnded = Module['_AudioOnEnded'] = createExportWrapper('AudioOnEnded');
 var _AudioOnPause = Module['_AudioOnPause'] = createExportWrapper('AudioOnPause');
 var _AudioOnPlay = Module['_AudioOnPlay'] = createExportWrapper('AudioOnPlay');
@@ -11554,7 +11728,6 @@ var _SavePreferences = Module['_SavePreferences'] = createExportWrapper('SavePre
 var _LoadLayout = Module['_LoadLayout'] = createExportWrapper('LoadLayout');
 var _SaveLayout = Module['_SaveLayout'] = createExportWrapper('SaveLayout');
 var ___getTypeName = createExportWrapper('__getTypeName');
-var ___errno_location = createExportWrapper('__errno_location');
 var _memalign = createExportWrapper('memalign');
 var setTempRet0 = createExportWrapper('setTempRet0');
 var _emscripten_stack_init = () => (_emscripten_stack_init = wasmExports['emscripten_stack_init'])();
@@ -11566,16 +11739,16 @@ var stackRestore = createExportWrapper('stackRestore');
 var stackAlloc = createExportWrapper('stackAlloc');
 var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports['emscripten_stack_get_current'])();
 var ___cxa_is_pointer_type = createExportWrapper('__cxa_is_pointer_type');
-var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii');
-var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd');
-var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii');
-var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii');
 var dynCall_ii = Module['dynCall_ii'] = createExportWrapper('dynCall_ii');
+var dynCall_vii = Module['dynCall_vii'] = createExportWrapper('dynCall_vii');
 var dynCall_iiii = Module['dynCall_iiii'] = createExportWrapper('dynCall_iiii');
-var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
-var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
+var dynCall_viiii = Module['dynCall_viiii'] = createExportWrapper('dynCall_viiii');
 var dynCall_viii = Module['dynCall_viii'] = createExportWrapper('dynCall_viii');
 var dynCall_iii = Module['dynCall_iii'] = createExportWrapper('dynCall_iii');
+var dynCall_vidd = Module['dynCall_vidd'] = createExportWrapper('dynCall_vidd');
+var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_viiiii');
+var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
+var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v');
 var dynCall_jiji = Module['dynCall_jiji'] = createExportWrapper('dynCall_jiji');
 var dynCall_iidiiii = Module['dynCall_iidiiii'] = createExportWrapper('dynCall_iidiiii');
@@ -11594,9 +11767,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923040;
-var ___start_em_js = Module['___start_em_js'] = 3957632;
-var ___stop_em_js = Module['___stop_em_js'] = 3982765;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923284;
+var ___start_em_js = Module['___start_em_js'] = 3957872;
+var ___stop_em_js = Module['___stop_em_js'] = 3983005;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
@@ -11624,18 +11797,17 @@ var missingLibrarySymbols = [
   'inetNtop6',
   'readSockaddr',
   'writeSockaddr',
-  'getHostByName',
   'getCallstack',
   'emscriptenLog',
   'convertPCtoSourceLocation',
   'runMainThreadEmAsm',
-  'jstoi_s',
   'listenOnce',
   'autoResumeAudioContext',
   'dynCallLegacy',
   'getDynCaller',
   'dynCall',
   'asmjsMangle',
+  'HandleAllocator',
   'getNativeTypeSize',
   'STACK_SIZE',
   'STACK_ALIGN',
@@ -11709,6 +11881,7 @@ var missingLibrarySymbols = [
   'idsToPromises',
   'makePromiseCallback',
   'findMatchingCatch',
+  'Browser_asyncPrepareDataCounter',
   'getSocketFromFD',
   'getSocketAddress',
   'FS_mkdirTree',
@@ -11727,9 +11900,14 @@ var missingLibrarySymbols = [
   'allocate',
   'writeStringToMemory',
   'writeAsciiToMemory',
+  'setErrNo',
+  'demangle',
   'getFunctionName',
   'getFunctionArgsName',
   'heap32VectorToArray',
+  'usesDestructorStack',
+  'createJsInvokerSignature',
+  'createJsInvoker',
   'init_embind',
   'throwUnboundTypeError',
   'ensureOverloadTable',
@@ -11819,7 +11997,6 @@ var unexportedSymbols = [
   'addDays',
   'ERRNO_CODES',
   'ERRNO_MESSAGES',
-  'setErrNo',
   'DNS',
   'Protocols',
   'Sockets',
@@ -11832,6 +12009,7 @@ var unexportedSymbols = [
   'readEmAsmArgs',
   'runEmAsmFunction',
   'jstoi_q',
+  'jstoi_s',
   'getExecutableName',
   'handleException',
   'keepRuntimeAlive',
@@ -11842,8 +12020,6 @@ var unexportedSymbols = [
   'asyncLoad',
   'alignMemory',
   'mmapAlloc',
-  'handleAllocatorInit',
-  'HandleAllocator',
   'wasmTable',
   'noExitRuntime',
   'sigToWasmTypes',
@@ -11881,8 +12057,6 @@ var unexportedSymbols = [
   'registerWheelEventCallback',
   'currentFullscreenStrategy',
   'restoreOldWindowedStyle',
-  'demangle',
-  'demangleAll',
   'ExitStatus',
   'getEnvStrings',
   'doReadv',
@@ -11895,6 +12069,7 @@ var unexportedSymbols = [
   'ExceptionInfo',
   'Browser',
   'setMainLoop',
+  'getPreloadedImageData__data',
   'wget',
   'SYSCALLS',
   'preloadPlugins',
@@ -11911,7 +12086,7 @@ var unexportedSymbols = [
   'miniTempWebGLFloatBuffers',
   'miniTempWebGLIntBuffers',
   'heapObjectForWebGLType',
-  'heapAccessShiftForWebGLHeap',
+  'toTypedArrayIndex',
   'webgl_enable_ANGLE_instanced_arrays',
   'webgl_enable_OES_vertex_array_object',
   'webgl_enable_WEBGL_draw_buffers',
@@ -11921,11 +12096,9 @@ var unexportedSymbols = [
   'computeUnpackAlignedImageSize',
   'colorChannelsInGlTextureFormat',
   'emscriptenWebGLGetTexPixelData',
-  '__glGenObject',
   'webglGetUniformLocation',
   'webglPrepareUniformLocationsBeforeFirstUse',
   'webglGetLeftBracePos',
-  'emscripten_webgl_power_preferences',
   'AL',
   'GLUT',
   'EGL',
@@ -11962,19 +12135,20 @@ var unexportedSymbols = [
   'UnboundTypeError',
   'PureVirtualError',
   'GenericWireTypeSize',
+  'EmValType',
   'embindRepr',
   'registeredInstances',
   'registeredPointers',
   'registerType',
   'integerReadValueFromPointer',
   'floatReadValueFromPointer',
-  'simpleReadValueFromPointer',
   'readPointer',
   'runDestructors',
   'finalizationRegistry',
   'detachFinalizer_deps',
   'deletionQueue',
   'delayFunction',
+  'emval_freelist',
   'emval_handles',
   'emval_symbols',
   'init_emval',
@@ -12106,7 +12280,7 @@ function checkUnflushedContent() {
       var stream = info.object;
       var rdev = stream.rdev;
       var tty = TTY.ttys[rdev];
-      if (tty && tty.output && tty.output.length) {
+      if (tty?.output?.length) {
         has = true;
       }
     });
