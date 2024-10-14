@@ -388,12 +388,15 @@ void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
     ImGui::Text(Serialization::KaraokeDocument::TimeToString(myProgress).c_str());
     ImGui::SameLine();
     float width = aDrawUntil - ImGui::GetCursorPosX();
+    bool disable = myWaitingToPlay || !myHasAudio;
+    if(disable) ImGui::BeginDisabled();
     ImGui::SetNextItemWidth(width - 20);
     if(ImGui::SliderInt("##ProgressBar", (int*)&myProgress, (int)0, (int)myDuration, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
         myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
         set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
     }
+    if(disable) ImGui::EndDisabled();
 }
 
 void AudioPlayback::DrawPlaybackSpeed()
@@ -401,6 +404,8 @@ void AudioPlayback::DrawPlaybackSpeed()
     ImGui::Text("%i0%%", mySpeed);
     ImGui::SameLine();
     float width = ImGui::GetWindowSize().x - ImGui::GetCursorPosX();
+    bool disable = myWaitingToPlay || !myHasAudio;
+    if(disable) ImGui::BeginDisabled();
     ImGui::SetNextItemWidth(width - 20);
     if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
@@ -442,4 +447,5 @@ void AudioPlayback::DrawPlaybackSpeed()
             //get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("VexWarp"), VAR_TO_JS("RubberBand"));
         }
     }
+    if(disable) ImGui::EndDisabled();
 }
