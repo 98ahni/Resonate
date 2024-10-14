@@ -143,7 +143,7 @@ void Settings::OnImGuiDraw()
         ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(true);
     }
     ImGui::SeparatorText("Audio Processor");
-    if(ImGui::RadioButton("Default", AudioPlayback::GetEngine() == AudioPlayback::Default))
+    if(ImGui::RadioButton("VexWarp (Default)", AudioPlayback::GetEngine() == AudioPlayback::Default))
     {
         AudioPlayback::SetEngine(AudioPlayback::Default);
     }

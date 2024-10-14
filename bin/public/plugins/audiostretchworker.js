@@ -114,23 +114,35 @@ onmessage = async function (msg)
                 vocode:false,
                 stftBins:(
                     5 < stretchIndex ? 8192 :(
-                    4 < stretchIndex ? 8192 :(
-                    3 < stretchIndex ? 6144 :
-                    5120))),
+                    4 < stretchIndex ? 6140 :(
+                    3 < stretchIndex ? 4096 :
+                    1576))),
                 stftHop:1 / (
                     5 < stretchIndex ? 3 :(
-                    4 < stretchIndex ? 4.7 :(
-                    3 < stretchIndex ? 4.8 :
+                    4 < stretchIndex ? 4.8 :(
+                    3 < stretchIndex ? 5 :
                     6))),
                 stretchFactor:1 / (stretchIndex * 0.1),
-                sampleRate:worker_sampleRate});
+                sampleRate:worker_sampleRate * (5 < stretchIndex ? 1 : (3 < stretchIndex ? .5 : .25))});
             let output = [];
             for(let ch = 0; ch < worker_channelDataArray.length; ch++){
-                VexWarp.setBuffer(worker_channelDataArray[ch], worker_sampleRate);
+                if(5 < stretchIndex){
+                    VexWarp.setBuffer(worker_channelDataArray[ch], worker_sampleRate);
+                }
+                else if(3 < stretchIndex){
+                    console.log("Halving sample rate.");
+                    let resample = worker_channelDataArray[ch].filter((e, i) => i % 2 === 0);
+                    VexWarp.setBuffer(resample, worker_sampleRate * .5);
+                }
+                else{
+                    console.log("Quartering sample rate.");
+                    let resample = worker_channelDataArray[ch].filter((e, i) => i % 4 === 0);
+                    VexWarp.setBuffer(resample, worker_sampleRate * .25);
+                }
                 VexWarp.stretch();
                 output[ch] = VexWarp.getStretchedBuffer();
             }
-            outblob = Module.audioDataArrayToBlob(output, worker_sampleRate);
+            outblob = Module.audioDataArrayToBlob(output, worker_sampleRate * (5 < stretchIndex ? 1 : (3 < stretchIndex ? .5 : .25)));
             postMessage([outblob, stretchIndex]);
         }
         else if(engine === 'PaulStretch'){
