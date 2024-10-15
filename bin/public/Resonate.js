@@ -999,26 +999,27 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3982765: ($0) => { init_gapi_with_key($0); },  
- 3982791: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 3982831: () => { Module.hide_loading_screen(); },  
- 3982861: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3982984: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3983086: () => { return Date.now(); },  
- 3983107: () => { location.reload() },  
- 3983125: () => { location.reload(); },  
- 3983144: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3983207: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3983300: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3983396: () => { return global_audio_element.paused ? 1 : 0; },  
- 3983440: () => { return global_audio_element.paused ? 1 : 0; },  
- 3983484: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3983534: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3983790: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3984059: () => { audio_element_pause(); },  
- 3984082: () => { audio_element_play(); },  
- 3984104: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3983819: ($0) => { init_gapi_with_key($0); },  
+ 3983845: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 3983885: () => { Module.hide_loading_screen(); },  
+ 3983915: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3984038: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3984140: () => { return Date.now(); },  
+ 3984161: () => { location.reload() },  
+ 3984179: () => { location.reload(); },  
+ 3984198: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3984261: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3984354: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3984450: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3984494: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3984538: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3984588: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3984844: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3985113: () => { audio_element_pause(); },  
+ 3985136: () => { audio_element_play(); },  
+ 3985158: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
+function db_open_chooser(file_callback_name,done_callback_name,cancel_callback_name,use_iframe) { const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const options = { success: (files)=>{ let loadPromises = []; files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ console.log('Loading file "' + file.name + '" from Dropbox.'); fetch(file.link).then(res => res.blob()).then(blob => { FS.writeFile("/Dropbox/" + file.name, blob); callback_func(Emval.toHandle("/Dropbox/" + file.name), Emval.toHandle(file.id)); resolve(); }); })); }); Promise.all(loadPromises).then(()=>{console.log('Done loading from Dropbox!');done_callback_func();}); }, cancel: cancel_callback_func, extensions: ['<no extension>'], linkType: 'direct', multiselect: true }; if(use_iframe){ options.iframe = true; } Dropbox.choose(options); }
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path,mime_type) { const docPath = Emval.toValue(path); const mime = Emval.toValue(mime_type); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.type = mime; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -11594,9 +11595,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923040;
-var ___start_em_js = Module['___start_em_js'] = 3957632;
-var ___stop_em_js = Module['___stop_em_js'] = 3982765;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923056;
+var ___start_em_js = Module['___start_em_js'] = 3957648;
+var ___stop_em_js = Module['___stop_em_js'] = 3983819;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
