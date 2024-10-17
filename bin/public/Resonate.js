@@ -999,27 +999,34 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3983819: ($0) => { init_gapi_with_key($0); },  
- 3983845: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 3983885: () => { Module.hide_loading_screen(); },  
- 3983915: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3984038: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3984140: () => { return Date.now(); },  
- 3984161: () => { location.reload() },  
- 3984179: () => { location.reload(); },  
- 3984198: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3984261: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3984354: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3984450: () => { return global_audio_element.paused ? 1 : 0; },  
- 3984494: () => { return global_audio_element.paused ? 1 : 0; },  
- 3984538: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3984588: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3984844: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3985113: () => { audio_element_pause(); },  
- 3985136: () => { audio_element_play(); },  
- 3985158: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3986030: ($0) => { init_gapi_with_key($0); },  
+ 3986056: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 3986096: () => { Module.hide_loading_screen(); },  
+ 3986126: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3986249: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3986351: () => { return Date.now(); },  
+ 3986372: () => { return Date.now(); },  
+ 3986393: () => { return Date.now(); },  
+ 3986414: () => { return Date.now(); },  
+ 3986435: () => { location.reload() },  
+ 3986453: () => { location.reload(); },  
+ 3986472: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3986535: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3986628: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3986724: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3986768: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3986812: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3986862: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3987118: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3987387: () => { audio_element_pause(); },  
+ 3987410: () => { audio_element_play(); },  
+ 3987432: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
-function db_open_chooser(file_callback_name,done_callback_name,cancel_callback_name,use_iframe) { const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const options = { success: (files)=>{ let loadPromises = []; files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ console.log('Loading file "' + file.name + '" from Dropbox.'); fetch(file.link).then(res => res.blob()).then(blob => { FS.writeFile("/Dropbox/" + file.name, blob); callback_func(Emval.toHandle("/Dropbox/" + file.name), Emval.toHandle(file.id)); resolve(); }); })); }); Promise.all(loadPromises).then(()=>{console.log('Done loading from Dropbox!');done_callback_func();}); }, cancel: cancel_callback_func, extensions: ['<no extension>'], linkType: 'direct', multiselect: true }; if(use_iframe){ options.iframe = true; } Dropbox.choose(options); }
+function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt())); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
+function db_refresh_token(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));}); }
+function has_db_token() { return global_db_auth.getAccessToken() !== undefined; }
+function db_open_chooser(file_callback_name,done_callback_name,cancel_callback_name,use_iframe) { const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const options = { success: (files)=>{ if(!FS.analyzePath("/Dropbox").exists){ FS.mkdir("/Dropbox"); } let loadPromises = []; files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ console.log('Loading file "' + file.name + '" from Dropbox.'); fetch(file.link).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => { FS.writeFile("/Dropbox/" + file.name, new Uint8Array(buffer)); callback_func(Emval.toHandle("/Dropbox/" + file.name), Emval.toHandle(file.id)); resolve(); }); })); }); Promise.all(loadPromises).then(()=>{console.log('Done loading from Dropbox!');done_callback_func();}); }, cancel: cancel_callback_func, extensions: ['<no extension>'], linkType: 'direct', multiselect: true }; if(use_iframe){ options.iframe = true; } Dropbox.choose(options); }
+function __asyncjs__db_update_file(file_id,fs_path) { return Asyncify.handleAsync(async () => { const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'}); const response = await global_db_api.filesUpload({path: Emval.toValue(file_id), "mode": "overwrite", contents: fileData}); console.log(JSON.stringify(response)); }); }
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path,mime_type) { const docPath = Emval.toValue(path); const mime = Emval.toValue(mime_type); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.type = mime; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -11008,6 +11015,8 @@ var wasmImports = {
   /** @export */
   __assert_fail: ___assert_fail,
   /** @export */
+  __asyncjs__db_update_file: __asyncjs__db_update_file,
+  /** @export */
   __asyncjs__destroy_element_async: __asyncjs__destroy_element_async,
   /** @export */
   __asyncjs__get_audio_samples_setup: __asyncjs__get_audio_samples_setup,
@@ -11119,6 +11128,12 @@ var wasmImports = {
   create_button: create_button,
   /** @export */
   create_picker: create_picker,
+  /** @export */
+  db_open_auth_popup: db_open_auth_popup,
+  /** @export */
+  db_open_chooser: db_open_chooser,
+  /** @export */
+  db_refresh_token: db_refresh_token,
   /** @export */
   destroy_element: destroy_element,
   /** @export */
@@ -11364,6 +11379,8 @@ var wasmImports = {
   /** @export */
   glfwWindowHint: _glfwWindowHint,
   /** @export */
+  has_db_token: has_db_token,
+  /** @export */
   has_gapi_token: has_gapi_token,
   /** @export */
   has_physical_touch: has_physical_touch,
@@ -11536,9 +11553,12 @@ var _LoadProject = Module['_LoadProject'] = createExportWrapper('LoadProject');
 var _SaveProject = Module['_SaveProject'] = createExportWrapper('SaveProject');
 var _GoogleTokenExpirationCallback = Module['_GoogleTokenExpirationCallback'] = createExportWrapper('GoogleTokenExpirationCallback');
 var _LogInToGoogle = Module['_LogInToGoogle'] = createExportWrapper('LogInToGoogle');
-var _LoadFileFromGoogleDrive = Module['_LoadFileFromGoogleDrive'] = createExportWrapper('LoadFileFromGoogleDrive');
-var _LoadCompletedFromGoogleDrive = Module['_LoadCompletedFromGoogleDrive'] = createExportWrapper('LoadCompletedFromGoogleDrive');
-var _LoadCanceledFromGoogleDrive = Module['_LoadCanceledFromGoogleDrive'] = createExportWrapper('LoadCanceledFromGoogleDrive');
+var _DropboxTokenExpirationCallback = Module['_DropboxTokenExpirationCallback'] = createExportWrapper('DropboxTokenExpirationCallback');
+var _LogInToDropbox = Module['_LogInToDropbox'] = createExportWrapper('LogInToDropbox');
+var _OpenDropboxChooser = Module['_OpenDropboxChooser'] = createExportWrapper('OpenDropboxChooser');
+var _LoadFileFromCloudDrive = Module['_LoadFileFromCloudDrive'] = createExportWrapper('LoadFileFromCloudDrive');
+var _LoadCompletedFromCloudDrive = Module['_LoadCompletedFromCloudDrive'] = createExportWrapper('LoadCompletedFromCloudDrive');
+var _LoadCanceledFromCloudDrive = Module['_LoadCanceledFromCloudDrive'] = createExportWrapper('LoadCanceledFromCloudDrive');
 var _main = Module['_main'] = createExportWrapper('main');
 var _AudioOnEnded = Module['_AudioOnEnded'] = createExportWrapper('AudioOnEnded');
 var _AudioOnPause = Module['_AudioOnPause'] = createExportWrapper('AudioOnPause');
@@ -11595,9 +11615,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923056;
-var ___start_em_js = Module['___start_em_js'] = 3957648;
-var ___stop_em_js = Module['___stop_em_js'] = 3983819;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923216;
+var ___start_em_js = Module['___start_em_js'] = 3957808;
+var ___stop_em_js = Module['___stop_em_js'] = 3986030;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
