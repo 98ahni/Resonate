@@ -91,7 +91,7 @@ void TimingEditor::OnImGuiDraw()
         {
             myDisableInput = false;
         }
-        if(!myDisableInput)
+        if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
         {
             bool charMode = false;
             if(ImGui::IsKeyDown(ImGuiKey_ModCtrl))
@@ -133,6 +133,10 @@ void TimingEditor::OnImGuiDraw()
         }
     }
     Gui_End();
+    if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
+    {
+
+    }
 }
 
 void TimingEditor::SetFont(ImFont *aFont)
