@@ -281,6 +281,14 @@ int AudioPlayback::GetPlaybackSpeed()
     return ourInstance->mySpeed;
 }
 
+void AudioPlayback::SetPlaybackSpeed(int aSpeed)
+{
+    aSpeed = aSpeed < 1 ? 1 : aSpeed > 10 ? 10 : aSpeed;
+    if(ourInstance->mySpeed == aSpeed) { return; }
+    ourInstance->mySpeed = aSpeed;
+    ourInstance->myWantToSetSpeed = true;
+}
+
 bool AudioPlayback::GetIsPlaying()
 {
     return ourInstance->myIsPlaying;
@@ -407,7 +415,7 @@ void AudioPlayback::DrawPlaybackSpeed()
     bool disable = myWaitingToPlay || !myHasAudio;
     if(disable) ImGui::BeginDisabled();
     ImGui::SetNextItemWidth(width - 20);
-    if(ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) && myHasAudio)
+    if((ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) || (myWantToSetSpeed && !disable)) && myHasAudio)
     {
         if(myEngine == ProcessEngine::Browser)
         {
@@ -432,7 +440,7 @@ void AudioPlayback::DrawPlaybackSpeed()
             }
         }
     }
-    if(ImGui::IsItemDeactivatedAfterEdit() && EM_ASM_INT(return global_audio_completion[($0) - 1] ? 1 : 0;, mySpeed) == false)
+    if((ImGui::IsItemDeactivatedAfterEdit() || (myWantToSetSpeed && !disable)) && EM_ASM_INT(return global_audio_completion[($0) - 1] ? 1 : 0;, mySpeed) == false)
     {
         if(myEngine == ProcessEngine::Default)
         {
@@ -447,5 +455,6 @@ void AudioPlayback::DrawPlaybackSpeed()
             //get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("VexWarp"), VAR_TO_JS("RubberBand"));
         }
     }
+    myWantToSetSpeed = false;
     if(disable) ImGui::EndDisabled();
 }

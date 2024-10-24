@@ -24,6 +24,7 @@ public:
     static uint GetPlaybackProgress();
     static void SetPlaybackProgress(uint someProgress);
     static int GetPlaybackSpeed();
+    static void SetPlaybackSpeed(int aSpeed);
     static bool GetIsPlaying();
     static bool GetIsWaitingToPlay(bool aShouldReset = false);
     static void SaveLocalBackup();
@@ -42,6 +43,7 @@ private:            // Is defined as public in AudioPlayback.cpp
     bool myHasAudio = false;
     bool myIsPlaying = false;
     bool myWaitingToPlay = false;
+    bool myWantToSetSpeed = false;
     std::string myPath = "";
     int mySpeed;
     uint myProgress;
