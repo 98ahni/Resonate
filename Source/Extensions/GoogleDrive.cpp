@@ -26,6 +26,13 @@ var global_gis_inited = false;
 );
 
 EM_JS(bool, gis_loaded, (), {
+    if(global_gis_inited){
+        return true;
+    }
+    if(google === undefined){
+        console.log('GSI is slow to load.');
+        return false;
+    }
     global_client_token = google.accounts.oauth2.initTokenClient({
         client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com',
         scope: 'https://www.googleapis.com/auth/drive',
@@ -166,6 +173,7 @@ EM_ASYNC_JS(void, save_to_drive, (emscripten::EM_VAL file_id, emscripten::EM_VAL
 
 bool GoogleDrive::Ready()
 {
+    gis_loaded();
     return gapi_ready();
 }
 
