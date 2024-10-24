@@ -323,6 +323,100 @@ void loop(void* window){
                 TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
                 doc.RemoveLine(timing->GetMarkedLine());
             }
+            ImGui::Separator();
+            ImGui::SeparatorText("Word Case");
+            if(ImGui::MenuItem("Majiscule", "EX,AM,PLE"))
+            {
+                int markedLine = TimingEditor::Get().GetMarkedLine();
+                // Find first token of word
+                int leadingSpaceInd = TimingEditor::Get().GetMarkedToken() - 1;
+                while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
+                {
+                    leadingSpaceInd--;
+                }
+                // Find last token of word
+                int trailingSpaceInd = TimingEditor::Get().GetMarkedToken();
+                while(trailingSpaceInd < doc.GetLine(markedLine).size() && !doc.GetToken(markedLine, trailingSpaceInd).myValue.contains(' '))
+                {
+                    trailingSpaceInd++;
+                }
+                // Replace letters
+                if(leadingSpaceInd >= 0) for(int i = doc.GetToken(markedLine, leadingSpaceInd).myValue.find_last_of(' '); i < doc.GetToken(markedLine, leadingSpaceInd).myValue.size(); i++)
+                {
+                    doc.GetToken(markedLine, leadingSpaceInd).myValue[i] = std::toupper(doc.GetToken(markedLine, leadingSpaceInd).myValue[i]);
+                }
+                for(int i = leadingSpaceInd + 1; i < trailingSpaceInd; i++)
+                {
+                    for(int j = 0; j < doc.GetToken(markedLine, i).myValue.size(); j++)
+                    {
+                        doc.GetToken(markedLine, i).myValue[j] = std::toupper(doc.GetToken(markedLine, i).myValue[j]);
+                    }
+                }
+                for(int i = 0; i < doc.GetToken(markedLine, trailingSpaceInd).myValue.size(); i++)
+                {
+                    if(doc.GetToken(markedLine, trailingSpaceInd).myValue[i] == ' ') { break; }
+                    doc.GetToken(markedLine, trailingSpaceInd).myValue[i] = std::toupper(doc.GetToken(markedLine, trailingSpaceInd).myValue[i]);
+                }
+            }
+            if(ImGui::MenuItem("Minuscule", "ex,am,ple"))
+            {
+                int markedLine = TimingEditor::Get().GetMarkedLine();
+                // Find first token of word
+                int leadingSpaceInd = TimingEditor::Get().GetMarkedToken();
+                while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
+                {
+                    leadingSpaceInd--;
+                }
+                // Find last token of word
+                int trailingSpaceInd = TimingEditor::Get().GetMarkedToken();
+                while(trailingSpaceInd < doc.GetLine(markedLine).size() && !doc.GetToken(markedLine, trailingSpaceInd).myValue.contains(' '))
+                {
+                    trailingSpaceInd++;
+                }
+                // Replace letters
+                if(leadingSpaceInd >= 0) for(int i = doc.GetToken(markedLine, leadingSpaceInd).myValue.find_last_of(' '); i < doc.GetToken(markedLine, leadingSpaceInd).myValue.size(); i++)
+                {
+                    doc.GetToken(markedLine, leadingSpaceInd).myValue[i] = std::tolower(doc.GetToken(markedLine, leadingSpaceInd).myValue[i]);
+                }
+                for(int i = leadingSpaceInd + 1; i < trailingSpaceInd; i++)
+                {
+                    for(int j = 0; j < doc.GetToken(markedLine, i).myValue.size(); j++)
+                    {
+                        doc.GetToken(markedLine, i).myValue[j] = std::tolower(doc.GetToken(markedLine, i).myValue[j]);
+                    }
+                }
+                for(int i = 0; i < doc.GetToken(markedLine, trailingSpaceInd).myValue.size(); i++)
+                {
+                    if(doc.GetToken(markedLine, trailingSpaceInd).myValue[i] == ' ') { break; }
+                    doc.GetToken(markedLine, trailingSpaceInd).myValue[i] = std::tolower(doc.GetToken(markedLine, trailingSpaceInd).myValue[i]);
+                }
+            }
+            if(ImGui::MenuItem("Capital", "Ex,am,ple"))
+            {
+                int markedLine = TimingEditor::Get().GetMarkedLine();
+                // Find first token of word
+                int leadingSpaceInd = TimingEditor::Get().GetMarkedToken() - 1;
+                while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
+                {
+                    leadingSpaceInd--;
+                }
+                // Replace letters
+                size_t spaceCharInd = doc.GetToken(markedLine, leadingSpaceInd).myValue.find_last_of(' ');
+                if(leadingSpaceInd >= 0 && spaceCharInd < doc.GetLine(markedLine).size() - 1)
+                {
+                    doc.GetToken(markedLine, leadingSpaceInd).myValue[spaceCharInd + 1] = std::toupper(doc.GetToken(markedLine, leadingSpaceInd).myValue[spaceCharInd + 1]);
+                }
+                else
+                {
+                    doc.GetToken(markedLine, leadingSpaceInd + 1).myValue[0] = std::toupper(doc.GetToken(markedLine, leadingSpaceInd + 1).myValue[0]);
+                }
+            }
+            if(ImGui::MenuItem("Toggle Letter Case"))
+            {
+                char markedChar = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue[TimingEditor::Get().GetMarkedChar()];
+                doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue[TimingEditor::Get().GetMarkedChar()] =
+                    std::isupper(markedChar) ? std::tolower(markedChar) : std::toupper(markedChar);
+            }
             ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("Effects", !g_isSafeMode))
