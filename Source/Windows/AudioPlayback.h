@@ -25,6 +25,9 @@ public:
     static void SetPlaybackProgress(uint someProgress);
     static int GetPlaybackSpeed();
     static void SetPlaybackSpeed(int aSpeed);
+    static void Play();
+    static void Pause();
+    static void Stop();
     static bool GetIsPlaying();
     static bool GetIsWaitingToPlay(bool aShouldReset = false);
     static void SaveLocalBackup();

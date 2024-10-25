@@ -289,6 +289,31 @@ void AudioPlayback::SetPlaybackSpeed(int aSpeed)
     ourInstance->myWantToSetSpeed = true;
 }
 
+void AudioPlayback::Play()
+{
+    if(VAR_FROM_JS(is_audio_stretched(VAR_TO_JS(ourInstance->mySpeed))).as<bool>())
+    {
+        ourInstance->myDuration = 100 * ourInstance->myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
+        audio_element_play();
+    }
+    else
+    {
+        ourInstance->myWaitingToPlay = true;
+        ImGui::BeginDisabled();
+    }
+}
+
+void AudioPlayback::Pause()
+{
+    audio_element_pause();
+}
+
+void AudioPlayback::Stop()
+{
+    audio_element_pause();
+    SetPlaybackProgress(0);
+}
+
 bool AudioPlayback::GetIsPlaying()
 {
     return ourInstance->myIsPlaying;

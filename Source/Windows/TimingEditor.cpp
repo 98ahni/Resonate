@@ -133,9 +133,39 @@ void TimingEditor::OnImGuiDraw()
         }
     }
     Gui_End();
-    if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
+    if(!myDisableInput && ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
     {
-
+        if(ImGui::IsKeyPressed(ImGuiKey_Space, false))
+        {
+            if(AudioPlayback::GetIsPlaying())
+            {
+                AudioPlayback::Pause();
+            }
+            else
+            {
+                AudioPlayback::Play();
+            }
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_Enter, false))
+        {
+            AudioPlayback::Stop();
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+        {
+            AudioPlayback::SetPlaybackSpeed(AudioPlayback::GetPlaybackSpeed() + 1);
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+        {
+            AudioPlayback::SetPlaybackSpeed(AudioPlayback::GetPlaybackSpeed() - 1);
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+        {
+            AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() - (500.f * (AudioPlayback::GetPlaybackSpeed() * .1f)));
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+        {
+            AudioPlayback::SetPlaybackProgress(AudioPlayback::GetPlaybackProgress() + (500.f * (AudioPlayback::GetPlaybackSpeed() * .1f)));
+        }
     }
 }
 
