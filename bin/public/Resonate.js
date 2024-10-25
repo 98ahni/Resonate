@@ -999,30 +999,29 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3986227: ($0) => { init_gapi_with_key($0); },  
- 3986253: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 3986293: () => { Module.hide_loading_screen(); },  
- 3986323: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3986446: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3986548: () => { return Date.now(); },  
- 3986569: () => { return Date.now(); },  
- 3986590: () => { return Date.now(); },  
- 3986611: () => { return Date.now(); },  
- 3986632: () => { location.reload() },  
- 3986650: () => { location.reload(); },  
- 3986669: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3986732: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3986825: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3986921: () => { return global_audio_element.paused ? 1 : 0; },  
- 3986965: () => { return global_audio_element.paused ? 1 : 0; },  
- 3987009: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3987059: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3987315: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3987584: () => { audio_element_pause(); },  
- 3987607: () => { audio_element_play(); },  
- 3987629: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3986843: ($0) => { init_gapi_with_key($0); },  
+ 3986869: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 3986909: () => { Module.hide_loading_screen(); },  
+ 3986939: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3987062: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3987164: () => { return Date.now(); },  
+ 3987185: () => { return Date.now(); },  
+ 3987206: () => { return Date.now(); },  
+ 3987227: () => { location.reload() },  
+ 3987245: () => { location.reload(); },  
+ 3987264: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3987327: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3987420: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3987516: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3987560: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3987604: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3987654: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3987910: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3988179: () => { audio_element_pause(); },  
+ 3988202: () => { audio_element_play(); },  
+ 3988224: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
-function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt())); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
+function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['account_info.read', 'files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); global_db_api.usersGetCurrentAccount().then((user_res)=>{ callback_func( Emval.toHandle(Date.now() + (global_db_auth.getAccessTokenExpiresAt() * 1000)), Emval.toHandle(user_res.result.name.display_name), Emval.toHandle(user_res.result.profile_photo_url || '')); }); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
 function db_refresh_token(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));}); }
 function has_db_token() { return global_db_auth.getAccessToken() !== undefined; }
 function db_open_chooser(file_callback_name,done_callback_name,cancel_callback_name,use_iframe) { const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const options = { success: (files)=>{ if(!FS.analyzePath("/Dropbox").exists){ FS.mkdir("/Dropbox"); } let loadPromises = []; files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ console.log('Loading file "' + file.name + '" from Dropbox.'); fetch(file.link).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => { FS.writeFile("/Dropbox/" + file.name, new Uint8Array(buffer)); callback_func(Emval.toHandle("/Dropbox/" + file.name), Emval.toHandle(file.id)); resolve(); }); })); }); Promise.all(loadPromises).then(()=>{console.log('Done loading from Dropbox!');done_callback_func();}); }, cancel: cancel_callback_func, extensions: ['<no extension>'], linkType: 'direct', multiselect: true }; if(use_iframe){ options.iframe = true; } Dropbox.choose(options); }
@@ -1037,10 +1036,10 @@ function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); 
 function clear_local_storage() { localStorage.clear(); }
 function gapi_loaded() { gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
 function gapi_ready() { return global_gapi_inited && global_gis_inited; } var global_gapi_inited = false; var global_gis_inited = false;
-function gis_loaded() { if(global_gis_inited){ return true; } if(google === undefined){ console.log('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
-function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(APIKey), discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] }).then(()=>{global_gapi_inited = true;}); }
-function has_gapi_token() { if(gapi.client.getToken() !== null){ console.log('Already logged in'); }else{ console.log('Not logged in'); } return gapi.client.getToken() !== null; }
-function request_client_token(prompt,token_callback) { var client_token_callback = Module[Emval.toValue(token_callback)]; global_client_token.callback = (token_data) =>{client_token_callback(Emval.toHandle(Date.now() + (token_data.expires_in * 1000)));}; global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)}); }
+function gis_loaded() { if(global_gis_inited){ return true; } if(google === undefined){ console.log('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
+function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(APIKey), discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest', 'https://people.googleapis.com/$discovery/rest?version=v1'] }).then(()=>{global_gapi_inited = true;}); }
+function has_gapi_token() { return gapi.client.getToken() !== null; }
+function request_client_token(prompt,token_callback) { var client_token_callback = Module[Emval.toValue(token_callback)]; global_client_token.callback = (token_data) => { gapi.client.people.people.get({ "resourceName": "people/me", "requestMask.includeField": "person.names,person.photos", "sources": [ "READ_SOURCE_TYPE_PROFILE" ] }).then((user_data)=>{ client_token_callback( Emval.toHandle(Date.now() + (token_data.expires_in * 1000)), Emval.toHandle(user_data.result.names.length != 0 ? user_data.result.names[0].displayName : '(Anon)'), Emval.toHandle(user_data.result.photos.length != 0 ? user_data.result.photos[0].url : '') ); }); }; global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)}); }
 function revoke_client_token() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } }
 function create_picker(APIKey,mime_types,file_callback_name,done_callback_name,cancel_callback_name) { const view = new google.picker.DocsView() .setIncludeFolders(true) .setMimeTypes(Emval.toValue(mime_types)) .setSelectFolderEnabled(true); const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const picker = new google.picker.PickerBuilder() .setDeveloperKey(Emval.toValue(APIKey)) .setAppId(824603127976) .setOAuthToken(gapi.client.getToken().access_token) .setTitle('Choose a folder') .addView(view) .addView(new google.picker.DocsUploadView()) .setCallback(async(data) => {if (data.action === google.picker.Action.CANCEL){cancel_callback_func();} if (data.action === google.picker.Action.PICKED){ const documents = data[google.picker.Response.DOCUMENTS]; if(!FS.analyzePath("/GoogleDrive").exists){ FS.mkdir("/GoogleDrive"); } let loadPromises = []; for(const document of documents){ const fileId = document[google.picker.Document.ID]; console.log(fileId); const files = []; const res = await gapi.client.drive.files.list({ q: "'" + fileId + "' in parents", fields: 'nextPageToken, files(id, name, trashed)', spaces: 'drive' }); console.log(JSON.stringify(res.result.files)); Array.prototype.push.apply(files, res.result.files); console.log(files); files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ if(file.trashed){ console.log('Found trashed file:', file.name, file.id, ', Skipping'); resolve(); return; } console.log('Found file:', file.name, file.id); const fres = await gapi.client.drive.files.get({ 'fileId': file.id, 'alt': 'media' }); var bytes = []; for (var i = 0; i < fres.body.length; ++i) { bytes.push(fres.body.charCodeAt(i)); } FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes)); callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); resolve(); })); }); } Promise.all(loadPromises).then(()=>{console.log('Done loading from Google Drive!');done_callback_func();}); }}) .build(); picker.setVisible(true); }
 function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync(async () => { const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'}); await gapi.client.request({ path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id), method: 'PATCH', body: fileData, params: { uploadType: 'media', fields: 'id,version,name', }, }); }); }
@@ -11173,8 +11172,6 @@ var wasmImports = {
   /** @export */
   gapi_loaded: gapi_loaded,
   /** @export */
-  gapi_ready: gapi_ready,
-  /** @export */
   get_audio_context_time: get_audio_context_time,
   /** @export */
   get_audio_duration: get_audio_duration,
@@ -11415,6 +11412,8 @@ var wasmImports = {
   /** @export */
   resize_canvas: resize_canvas,
   /** @export */
+  revoke_client_token: revoke_client_token,
+  /** @export */
   set_audio_playback_buffer: set_audio_playback_buffer,
   /** @export */
   set_audio_playback_progress: set_audio_playback_progress,
@@ -11615,9 +11614,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923296;
-var ___start_em_js = Module['___start_em_js'] = 3957888;
-var ___stop_em_js = Module['___stop_em_js'] = 3986227;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923312;
+var ___start_em_js = Module['___start_em_js'] = 3957904;
+var ___stop_em_js = Module['___stop_em_js'] = 3986843;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

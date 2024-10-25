@@ -7,7 +7,7 @@ namespace GoogleDrive
 {
     bool Ready();
     bool HasToken();
-    /// @param aTokenCallback The name of a javascript accessible function which takes an Emval float containing the expiration time for the token.
+    /// @param aTokenCallback The name of a javascript accessible function which takes an Emval float containing the expiration time for the token, an Emval string of the user name and an Emval string with a URL to the profile picture.
     void RequestToken(bool aShowPopup, std::string aTokenCallback);
     void LogOut();
 

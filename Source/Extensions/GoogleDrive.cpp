@@ -35,7 +35,7 @@ EM_JS(bool, gis_loaded, (), {
     }
     global_client_token = google.accounts.oauth2.initTokenClient({
         client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com',
-        scope: 'https://www.googleapis.com/auth/drive',
+        scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile',
         prompt: '',
         callback: '', // defined later
     });
@@ -61,16 +61,16 @@ extern"C" EMSCRIPTEN_KEEPALIVE void GAPI_Init_Client()
 EM_JS(void, init_gapi_with_key, (emscripten::EM_VAL APIKey), {
     gapi.client.init({
         apiKey: Emval.toValue(APIKey),
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest', 'https://people.googleapis.com/$discovery/rest?version=v1']
     }).then(()=>{global_gapi_inited = true;});
 });
 
 EM_JS(bool, has_gapi_token, (), {
-    if(gapi.client.getToken() !== null){
-        console.log('Already logged in');
-    }else{
-        console.log('Not logged in');
-    }
+    //if(gapi.client.getToken() !== null){
+    //    console.log('Already logged in');
+    //}else{
+    //    console.log('Not logged in');
+    //}
     return gapi.client.getToken() !== null;
     //return gapi.auth2.getAuthInstance().isSignedIn.get();
 });
@@ -79,7 +79,21 @@ EM_JS(void, request_client_token, (emscripten::EM_VAL prompt, emscripten::EM_VAL
     // Prompt the user to select a Google Account and ask for consent to share their data
     // when establishing a new session.
     var client_token_callback = Module[Emval.toValue(token_callback)];
-    global_client_token.callback = (token_data) =>{client_token_callback(Emval.toHandle(Date.now() + (token_data.expires_in * 1000)));};
+    global_client_token.callback = (token_data) => {
+        gapi.client.people.people.get({
+            "resourceName": "people/me",
+            "requestMask.includeField": "person.names,person.photos",
+            "sources": [
+                "READ_SOURCE_TYPE_PROFILE"
+            ]
+        }).then((user_data)=>{
+            client_token_callback(
+                Emval.toHandle(Date.now() + (token_data.expires_in * 1000)),
+                Emval.toHandle(user_data.result.names.length != 0 ? user_data.result.names[0].displayName : '(Anon)'),
+                Emval.toHandle(user_data.result.photos.length != 0 ? user_data.result.photos[0].url : '')
+            );
+        });
+    };
     global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)});
     //global_client_token.requestAccessToken();
 });

@@ -38,6 +38,7 @@ char* g_testStr = new char[50];
 extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger = true; }
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
+std::string g_userName = "(Anon)";
 bool g_hasGoogleAcc = false;
 bool g_hasDropboxAcc = false;
 bool g_fileTabOpenedThisFrame = true; // Only use in File tab!
@@ -79,29 +80,29 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
     ImGui::Ext::StopLoadingScreen();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::EM_VAL aTime)
+extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::EM_VAL aTime, emscripten::EM_VAL aUserName, emscripten::EM_VAL aProfilePhotoURL)
 {
     Serialization::Preferences::SetDouble("Google/ExpirationDate", VAR_FROM_JS(aTime).as<double>());
     Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
+    g_userName = VAR_FROM_JS(aUserName).as<std::string>();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LogInToGoogle()
 {
     float expiration = Serialization::Preferences::HasKey("Google/ExpirationDate") ? Serialization::Preferences::GetDouble("Google/ExpirationDate") : 0;
     GoogleDrive::RequestToken(EM_ASM_DOUBLE({return Date.now();}) >= expiration, "_GoogleTokenExpirationCallback");
-    //GoogleDrive::RequestToken(!Serialization::Preferences::HasKey("Google/IsLoggedIn"));
     g_closeFileTab = true;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void DropboxTokenExpirationCallback(emscripten::EM_VAL aTime)
+extern "C" EMSCRIPTEN_KEEPALIVE void DropboxTokenExpirationCallback(emscripten::EM_VAL aTime, emscripten::EM_VAL aUserName, emscripten::EM_VAL aProfilePhotoURL)
 {
     Serialization::Preferences::SetDouble("Dropbox/ExpirationDate", VAR_FROM_JS(aTime).as<double>());
     Serialization::Preferences::SetBool("Dropbox/IsLoggedIn", true);
+    g_userName = VAR_FROM_JS(aUserName).as<std::string>();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LogInToDropbox()
 {
     float expiration = Serialization::Preferences::HasKey("Dropbox/ExpirationDate") ? Serialization::Preferences::GetDouble("Dropbox/ExpirationDate") : 0;
-    Dropbox::RequestToken(EM_ASM_DOUBLE({return Date.now();}) >= expiration, "_DropboxTokenExpirationCallback");
-    //Dropbox::RequestToken(!Serialization::Preferences::HasKey("Dropbox/IsLoggedIn"));
+    Dropbox::RequestToken(true || EM_ASM_DOUBLE({return Date.now();}) >= expiration, "_DropboxTokenExpirationCallback"); // TODO: fix token refresh
     g_closeFileTab = true;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void OpenDropboxChooser()
@@ -181,38 +182,40 @@ void loop(void* window){
         {
             if(g_fileTabOpenedThisFrame)
             {
-                g_hasGoogleAcc = GoogleDrive::HasToken() && EM_ASM_DOUBLE({return Date.now();}) >= Serialization::Preferences::GetDouble("Google/ExpirationDate");
+                g_hasGoogleAcc = GoogleDrive::HasToken() && EM_ASM_DOUBLE({return Date.now();}) <= Serialization::Preferences::GetDouble("Google/ExpirationDate");
                 g_hasDropboxAcc = Dropbox::HasToken() && 
                     //(!Serialization::Preferences::HasKey("Dropbox/ExpirationDate") ||
-                    EM_ASM_DOUBLE({return Date.now();}) >= Serialization::Preferences::GetDouble("Dropbox/ExpirationDate");
+                    EM_ASM_DOUBLE({return Date.now();}) <= Serialization::Preferences::GetDouble("Dropbox/ExpirationDate");
             }
-            ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
-            if(!g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
-            ImGui::MenuItem("Save Document");
-            ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
-            ImGui::Separator();
-            if(ImGui::BeginMenu("Google Drive", GoogleDrive::Ready()))
+            if(!g_hasGoogleAcc && !g_hasDropboxAcc)
             {
-                if(!g_hasGoogleAcc)
+                ImGui::MenuItem("Log In With Google");
+                ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
+                ImGui::MenuItem("Log In to Dropbox");
+                ImGui::Ext::CreateHTMLButton("DropboxLogin", "click", "_LogInToDropbox");
+                ImGui::Separator();
+                ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
+                if(!g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
+                ImGui::MenuItem("Save Document");
+                ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
+            }
+            else if(g_hasGoogleAcc)
+            {
+                ImGui::SeparatorText("Google Drive");
+                // Profile info + logout
+                ImGui::Text(g_userName.data());
+                if(ImGui::MenuItem("Log Out"))
                 {
-                    if(ImGui::MenuItem("Log In With Google"))
-                    {
-                        //LogInToGoogle();
-                    }
-                    ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
-                }
-                else
-                {
-                    // Profile info + logout
+                    GoogleDrive::LogOut();
                 }
                 ImGui::Separator();
-                if(ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode && g_hasGoogleAcc))
+                if(ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode))
                 {
                     g_shouldDeleteOnLoad = true;
                     ImGui::Ext::StartLoadingScreen();
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromCloudDrive", "_LoadCompletedFromCloudDrive", "_LoadCanceledFromCloudDrive");
                 }
-                if(ImGui::MenuItem("Save Document", 0, false, g_hasGoogleAcc && doc.GetFileID() != ""))
+                if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileID() != ""))
                 {
                     ImGui::Ext::StartLoadingScreen();
                     GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
@@ -220,30 +223,20 @@ void loop(void* window){
                     FileHandler::SyncLocalFS();
                     ImGui::Ext::StopLoadingScreen();
                 }
-                ImGui::EndMenu();
             }
-            else
+            else if(g_hasDropboxAcc)
             {
-                ImGui::Ext::DestroyHTMLElement("GoogleLogin");
-            }
-            if(ImGui::BeginMenu("Dropbox"))
-            {
-                if(!g_hasDropboxAcc)
+                ImGui::SeparatorText("Dropbox");
+                // Profile info + logout
+                ImGui::Text(g_userName.data());
+                if(ImGui::MenuItem("Log Out"))
                 {
-                    if(ImGui::MenuItem("Log In to Dropbox"))
-                    {
-                        //LogInToDropbox();
-                    }
-                    ImGui::Ext::CreateHTMLButton("DropboxLogin", "click", "_LogInToDropbox");
-                }
-                else
-                {
-                    // Profile info + logout
+                    Dropbox::LogOut();
                 }
                 ImGui::Separator();
-                ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode && g_hasDropboxAcc);
-                if(!g_isSafeMode && g_hasDropboxAcc) {ImGui::Ext::CreateHTMLButton("OpenDBProject", "click", "_OpenDropboxChooser");}
-                if(ImGui::MenuItem("Save Document", 0, false, g_hasDropboxAcc && doc.GetFileID() != ""))
+                ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
+                if(!g_isSafeMode) {ImGui::Ext::CreateHTMLButton("OpenDBProject", "click", "_OpenDropboxChooser");}
+                if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileID() != ""))
                 {
                     ImGui::Ext::StartLoadingScreen();
                     Dropbox::SaveProject(doc.GetFileID(), doc.Save());
@@ -251,12 +244,6 @@ void loop(void* window){
                     FileHandler::SyncLocalFS();
                     ImGui::Ext::StopLoadingScreen();
                 }
-                ImGui::EndMenu();
-            }
-            else
-            {
-                ImGui::Ext::DestroyHTMLElement("DropboxLogin");
-                ImGui::Ext::DestroyHTMLElement("OpenDBProject");
             }
             ImGui::EndMenu();
             g_fileTabOpenedThisFrame = false;
@@ -325,7 +312,7 @@ void loop(void* window){
             }
             ImGui::Separator();
             ImGui::SeparatorText("Word Case");
-            if(ImGui::MenuItem("Majiscule", "EX,AM,PLE"))
+            if(ImGui::MenuItem("Majuscule", "EX,AM,PLE"))
             {
                 int markedLine = TimingEditor::Get().GetMarkedLine();
                 // Find first token of word

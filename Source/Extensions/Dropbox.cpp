@@ -11,7 +11,7 @@
 
 EM_JS(bool, db_open_auth_popup, (emscripten::EM_VAL token_callback), {
     const callback_func = Module[Emval.toValue(token_callback)];
-    global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['files.content.write', 'files.content.read'], undefined, true).then(authUrl => {
+    global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['account_info.read', 'files.content.write', 'files.content.read'], undefined, true).then(authUrl => {
         const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600');
         const message_func = function(msg){
             popup.close();
@@ -20,7 +20,12 @@ EM_JS(bool, db_open_auth_popup, (emscripten::EM_VAL token_callback), {
                 global_db_auth.setRefreshToken(res.result.refresh_token);
                 global_db_auth.setAccessTokenExpiresAt(res.result.expires_in);
                 global_db_api = new Dropbox.Dropbox({auth: global_db_auth});
-                callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));
+                global_db_api.usersGetCurrentAccount().then((user_res)=>{
+                    callback_func(
+                        Emval.toHandle(Date.now() + (global_db_auth.getAccessTokenExpiresAt() * 1000)),
+                        Emval.toHandle(user_res.result.name.display_name),
+                        Emval.toHandle(user_res.result.profile_photo_url || ''));
+                });
             });
         };
         window.addEventListener('message', message_func);
