@@ -392,6 +392,11 @@ void TimingEditor::SetInputUnsafe(bool anUnsafe)
     myDisableInput = anUnsafe ? true : myDisableInput;
 }
 
+bool TimingEditor::GetInputUnsafe()
+{
+    return myDisableInput;
+}
+
 void TimingEditor::SetLatencyOffset(int someCentiSeconds)
 {
     myLatencyOffset = someCentiSeconds;

@@ -24,6 +24,7 @@ public:
     void MoveMarkerRight(bool aIsCharmode = false);
     void CheckMarkerIsSafe(bool aIsMovingRight);
     void SetInputUnsafe(bool anUnsafe);
+    bool GetInputUnsafe();
     void SetLatencyOffset(int someCentiSeconds);
     int GetLatencyOffset();
 
