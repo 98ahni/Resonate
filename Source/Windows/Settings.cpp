@@ -115,11 +115,11 @@ void Settings::OnImGuiDraw()
         {
             if(timeRaw < 150)
             {
-                ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetLatencyOffset(timeRaw);
+                TimingEditor::Get().SetLatencyOffset(timeRaw);
             }
             else
             {
-                ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetLatencyOffset(timeRaw - 200);
+                TimingEditor::Get().SetLatencyOffset(timeRaw - 200);
             }
         }
 
@@ -128,7 +128,7 @@ void Settings::OnImGuiDraw()
     else if(myLatencyPopupOpenLastFrame)
     {
         stop_latency_metronome();
-        ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
+        TimingEditor::Get().SetInputUnsafe(false);
     }
     // Latency compensation
     if(!myTimingEditorExists) {ImGui::BeginDisabled();}
@@ -140,7 +140,7 @@ void Settings::OnImGuiDraw()
         ImGui::OpenPopup("Auto Latency");
         myLatencyPopup = true;
         myLatencyPopupOpenLastFrame = true;
-        ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(true);
+        TimingEditor::Get().SetInputUnsafe(true);
     }
     ImGui::SeparatorText("Audio Processor");
     if(ImGui::RadioButton("VexWarp (Default)", AudioPlayback::GetEngine() == AudioPlayback::Default))
@@ -214,11 +214,11 @@ void Settings::OnImGuiDraw()
 
 int Settings::DrawLatencyWidget()
 {
-    TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-    int latency = timing->GetLatencyOffset();
+    TimingEditor& timing = TimingEditor::Get();
+    int latency = timing.GetLatencyOffset();
     if(ImGui::Ext::StepInt("Latency (cs)", latency, 1, 5))
     {
-        timing->SetLatencyOffset(latency);
+        timing.SetLatencyOffset(latency);
     }
     return latency;
 }
