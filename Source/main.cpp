@@ -31,6 +31,7 @@
 #include "Serialization/Preferences.h"
 #include "StringTools.h"
 #include "Defines.h"
+#include "EditMenu.h"
 #include <filesystem>
 
 bool g_showInputDebugger = false;
@@ -258,151 +259,55 @@ void loop(void* window){
             ImGui::Ext::DestroyHTMLElement("DropboxLogin");
             ImGui::Ext::DestroyHTMLElement("OpenDBProject");
         }
+        Menu::Edit_CheckShortcuts();
         if(ImGui::BeginMenu("Edit", !g_isSafeMode))
         {
-            if(ImGui::MenuItem("Insert Line Break"))
+            if(ImGui::MenuItem("Insert Line Break", "Alt + Enter", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.InsertLineBreak(timing->GetMarkedLine(), timing->GetMarkedToken(), timing->GetMarkedChar());
+                Menu::Edit_InsertLinebreak();
             }
-            if(ImGui::MenuItem("Merge Line Up"))
+            if(ImGui::MenuItem("Merge Line Up", "Alt + Left", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                if(!(doc.GetLine(timing->GetMarkedLine() - 1).size() == 1 && (doc.GetToken(timing->GetMarkedLine() - 1, 0).myValue.starts_with("image") || (doc.GetLine(timing->GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing->GetMarkedLine() - 2, 0).myValue.starts_with("image")))))
-                {
-                    doc.RevoveLineBreak(timing->GetMarkedLine());
-                }
+                Menu::Edit_MergeLineUp();
             }
-            if(ImGui::MenuItem("Merge Line Down"))
+            if(ImGui::MenuItem("Merge Line Down", "Alt + Right", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                if(!(doc.GetLine(timing->GetMarkedLine() + 1).size() == 1 && doc.GetToken(timing->GetMarkedLine() + 1, 0).myValue.starts_with("image")))
-                {
-                    doc.RevoveLineBreak(timing->GetMarkedLine() + 1);
-                }
+                Menu::Edit_MergeLineDown();
             }
-            if(ImGui::MenuItem("Move Line Up"))
+            if(ImGui::MenuItem("Move Line Up", "Alt + Up", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.MoveLineUp(timing->GetMarkedLine());
-                if(timing->GetMarkedLine() > 1 && doc.GetLine(timing->GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing->GetMarkedLine() - 2, 0).myValue.starts_with("image"))
-                {
-                    doc.MoveLineUp(timing->GetMarkedLine() - 1);
-                }
+                Menu::Edit_MoveLineUp();
             }
-            if(ImGui::MenuItem("Move Line Down"))
+            if(ImGui::MenuItem("Move Line Down", "Alt + Down", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.MoveLineUp(timing->GetMarkedLine() + 1);
-                if(doc.GetLine(timing->GetMarkedLine() + 2).size() == 1 && doc.GetLine(timing->GetMarkedLine()).size() == 1 && doc.GetToken(timing->GetMarkedLine(), 0).myValue.starts_with("image"))
-                {
-                    doc.MoveLineUp(timing->GetMarkedLine() + 2);
-                }
+                Menu::Edit_MoveLineDown();
             }
-            if(ImGui::MenuItem("Duplicate Line"))
+            if(ImGui::MenuItem("Duplicate Line", "Alt + Space", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.DuplicateLine(timing->GetMarkedLine());
+                Menu::Edit_DuplicateLine();
             }
             ImGui::Separator();
-            if(ImGui::MenuItem("Remove Line"))
+            if(ImGui::MenuItem("Remove Line", "Alt + Backspace", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                TimingEditor* timing = (TimingEditor*)WindowManager::GetWindow("Timing");
-                doc.RemoveLine(timing->GetMarkedLine());
+                Menu::Edit_RemoveLine();
             }
             ImGui::Separator();
             ImGui::SeparatorText("Word Case");
-            if(ImGui::MenuItem("Majuscule", "EX,AM,PLE"))
+            if(ImGui::MenuItem("Majuscule", "(EX,AM,PLE) Alt + Shift + Up", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                int markedLine = TimingEditor::Get().GetMarkedLine();
-                // Find first token of word
-                int leadingSpaceInd = TimingEditor::Get().GetMarkedToken() - 1;
-                while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
-                {
-                    leadingSpaceInd--;
-                }
-                // Find last token of word
-                int trailingSpaceInd = TimingEditor::Get().GetMarkedToken();
-                while(trailingSpaceInd < doc.GetLine(markedLine).size() && !doc.GetToken(markedLine, trailingSpaceInd).myValue.contains(' '))
-                {
-                    trailingSpaceInd++;
-                }
-                // Replace letters
-                if(leadingSpaceInd >= 0) for(int i = doc.GetToken(markedLine, leadingSpaceInd).myValue.find_last_of(' '); i < doc.GetToken(markedLine, leadingSpaceInd).myValue.size(); i++)
-                {
-                    doc.GetToken(markedLine, leadingSpaceInd).myValue[i] = std::toupper(doc.GetToken(markedLine, leadingSpaceInd).myValue[i]);
-                }
-                for(int i = leadingSpaceInd + 1; i < trailingSpaceInd; i++)
-                {
-                    for(int j = 0; j < doc.GetToken(markedLine, i).myValue.size(); j++)
-                    {
-                        doc.GetToken(markedLine, i).myValue[j] = std::toupper(doc.GetToken(markedLine, i).myValue[j]);
-                    }
-                }
-                for(int i = 0; i < doc.GetToken(markedLine, trailingSpaceInd).myValue.size(); i++)
-                {
-                    if(doc.GetToken(markedLine, trailingSpaceInd).myValue[i] == ' ') { break; }
-                    doc.GetToken(markedLine, trailingSpaceInd).myValue[i] = std::toupper(doc.GetToken(markedLine, trailingSpaceInd).myValue[i]);
-                }
+                Menu::Edit_Majuscule();
             }
-            if(ImGui::MenuItem("Minuscule", "ex,am,ple"))
+            if(ImGui::MenuItem("Minuscule", "(ex,am,ple) Alt + Shift + Down", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                int markedLine = TimingEditor::Get().GetMarkedLine();
-                // Find first token of word
-                int leadingSpaceInd = TimingEditor::Get().GetMarkedToken();
-                while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
-                {
-                    leadingSpaceInd--;
-                }
-                // Find last token of word
-                int trailingSpaceInd = TimingEditor::Get().GetMarkedToken();
-                while(trailingSpaceInd < doc.GetLine(markedLine).size() && !doc.GetToken(markedLine, trailingSpaceInd).myValue.contains(' '))
-                {
-                    trailingSpaceInd++;
-                }
-                // Replace letters
-                if(leadingSpaceInd >= 0) for(int i = doc.GetToken(markedLine, leadingSpaceInd).myValue.find_last_of(' '); i < doc.GetToken(markedLine, leadingSpaceInd).myValue.size(); i++)
-                {
-                    doc.GetToken(markedLine, leadingSpaceInd).myValue[i] = std::tolower(doc.GetToken(markedLine, leadingSpaceInd).myValue[i]);
-                }
-                for(int i = leadingSpaceInd + 1; i < trailingSpaceInd; i++)
-                {
-                    for(int j = 0; j < doc.GetToken(markedLine, i).myValue.size(); j++)
-                    {
-                        doc.GetToken(markedLine, i).myValue[j] = std::tolower(doc.GetToken(markedLine, i).myValue[j]);
-                    }
-                }
-                for(int i = 0; i < doc.GetToken(markedLine, trailingSpaceInd).myValue.size(); i++)
-                {
-                    if(doc.GetToken(markedLine, trailingSpaceInd).myValue[i] == ' ') { break; }
-                    doc.GetToken(markedLine, trailingSpaceInd).myValue[i] = std::tolower(doc.GetToken(markedLine, trailingSpaceInd).myValue[i]);
-                }
+                Menu::Edit_Minuscule();
             }
-            if(ImGui::MenuItem("Capital", "Ex,am,ple"))
+            if(ImGui::MenuItem("Capital", "(Ex,am,ple) Alt + Shift + Left", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                int markedLine = TimingEditor::Get().GetMarkedLine();
-                // Find first token of word
-                int leadingSpaceInd = TimingEditor::Get().GetMarkedToken() - 1;
-                while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
-                {
-                    leadingSpaceInd--;
-                }
-                // Replace letters
-                size_t spaceCharInd = doc.GetToken(markedLine, leadingSpaceInd).myValue.find_last_of(' ');
-                if(leadingSpaceInd >= 0 && spaceCharInd < doc.GetLine(markedLine).size() - 1)
-                {
-                    doc.GetToken(markedLine, leadingSpaceInd).myValue[spaceCharInd + 1] = std::toupper(doc.GetToken(markedLine, leadingSpaceInd).myValue[spaceCharInd + 1]);
-                }
-                else
-                {
-                    doc.GetToken(markedLine, leadingSpaceInd + 1).myValue[0] = std::toupper(doc.GetToken(markedLine, leadingSpaceInd + 1).myValue[0]);
-                }
+                Menu::Edit_Capital();
             }
-            if(ImGui::MenuItem("Toggle Letter Case"))
+            if(ImGui::MenuItem("Toggle Letter Case", "Alt + Shift + Right", false, !TimingEditor::Get().GetInputUnsafe()))
             {
-                char markedChar = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue[TimingEditor::Get().GetMarkedChar()];
-                doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue[TimingEditor::Get().GetMarkedChar()] =
-                    std::isupper(markedChar) ? std::tolower(markedChar) : std::toupper(markedChar);
+                Menu::Edit_ToggleCase();
             }
             ImGui::EndMenu();
         }
@@ -430,9 +335,7 @@ void loop(void* window){
                     WindowManager::AddWindow<PropertiesWindow>("Properties");
                 }
             }
-            ImGui::BeginDisabled();
             ImGui::SeparatorText("Line Effects");
-            ImGui::EndDisabled();
             TimingEditor& timing = TimingEditor::Get();
             bool hasLineTag = false;
             bool hasNoEffectTag = false;
@@ -449,7 +352,7 @@ void loop(void* window){
                 int imgCount = PreviewWindow::GetBackgroundElementPaths().size();
                 for(int i = 0; i < imgCount; i++)
                 {
-                    if(ImGui::MenuItem(PreviewWindow::GetBackgroundElementPaths()[i].data()))
+                    if(ImGui::MenuItem(PreviewWindow::GetBackgroundElementPaths()[i].data(), 0, false, !TimingEditor::Get().GetInputUnsafe()))
                     {
                         uint imgTime = doc.GetThisOrNextTimedToken(timing.GetMarkedLine(), timing.GetMarkedToken()).myStartTime;
                         for(int line = timing.GetMarkedLine(); line < doc.GetData().size(); line++)
@@ -480,7 +383,7 @@ void loop(void* window){
                 }
                 ImGui::EndMenu();
             }
-            if(ImGui::MenuItem("No Effect", "<no effect>", hasNoEffectTag))
+            if(ImGui::MenuItem("No Effect", "<no effect>", hasNoEffectTag, !TimingEditor::Get().GetInputUnsafe()))
             {
                 if(hasNoEffectTag)
                 {
@@ -491,7 +394,7 @@ void loop(void* window){
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0), {"<no effect>", false, 0});
                 }
             }
-            if(ImGui::MenuItem("Display Line", "<line#>", hasLineTag))
+            if(ImGui::MenuItem("Display Line", "<line#>", hasLineTag, !TimingEditor::Get().GetInputUnsafe()))
             {
                 if(hasLineTag)
                 {
@@ -507,7 +410,7 @@ void loop(void* window){
             ImGui::EndDisabled();
             for(const auto& [alias, effect] : doc.GetEffectAliases())
             {
-                if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data()))
+                if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data(), false, !TimingEditor::Get().GetInputUnsafe()))
                 {
                     Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
@@ -536,7 +439,7 @@ void loop(void* window){
                 }
                 ImGui::EndMenu();
             }
-            if(ImGui::BeginMenu("Line"))
+            if(ImGui::BeginMenu("Line", !TimingEditor::Get().GetInputUnsafe()))
             {
                 for(auto&[code, name] : Serialization::GetAvailableLanguages())
                 {
