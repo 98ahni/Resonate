@@ -16,6 +16,8 @@ class PreviewWindow : public EditorWindow
         int myStartToken = -1;
         int myEndToken = -1;
         float myWidth = 0;
+        uint myStartTime = 0;
+        uint myEndTime = 0;
     };
     struct ImageFade
     {

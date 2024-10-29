@@ -149,12 +149,14 @@ void PreviewWindow::OnImGuiDraw()
         ImGui::Image(GetBackgroundTexture(myBackgroundQueue.front().myImagePath).myID, contentSize, {0, 0}, {1, 1}, {1, 1, 1, alpha});
     }
 
-	float laneHeight = ImGui::GetTextLineHeightWithSpacing();
+	//float lanePosY = ImGui::GetTextLineHeightWithSpacing();
+	float lanePosY = contentSize.y / (float)lanesShown;
+    float laneHeight = (lanePosY - ImGui::GetTextLineHeightWithSpacing()) * .5f;
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
     for(int lane = 0; lane < 7; lane++)
     {
         if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
-        ImGui::SetCursorPosY((laneHeight * lane) + ImGui::GetStyle().ItemSpacing.y + contentOffset.y);
+        ImGui::SetCursorPosY((lanePosY * lane) + laneHeight + contentOffset.y);
         float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * DPI_SCALED(textScale))) * .5f) + contentOffset.x;
         ImGui::SetCursorPosX(cursorStartX);
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
@@ -320,6 +322,21 @@ int PreviewWindow::AssembleLanes(float aWidth)
             }
         }
     }
+    uint lineStart = UINT_MAX;
+    uint lineEnd = 0;
+    for(int token = 0; token < doc.GetLine(myNextAddLineIndex).size(); token++)
+    {
+        if(!doc.GetToken(myNextAddLineIndex, token).myHasStart) { continue; }
+        if(lineStart > doc.GetToken(myNextAddLineIndex, token).myStartTime)
+        {
+            lineStart = doc.GetToken(myNextAddLineIndex, token).myStartTime;
+        }
+        if(lineEnd < doc.GetToken(myNextAddLineIndex, token).myStartTime)
+        {
+            lineEnd = doc.GetToken(myNextAddLineIndex, token).myStartTime;
+        }
+    }
+    lineStart = lineStart == UINT_MAX ? 0 : lineStart;
     int nextStartToken = 0;
     int lastSpaceToken = -1;
     for(int lane = 0; lane < 7; lane++)
@@ -337,6 +354,8 @@ int PreviewWindow::AssembleLanes(float aWidth)
         }
         myAssemblyLanes[lane].myLine = myNextAddLineIndex;
         myAssemblyLanes[lane].myStartToken = nextStartToken;
+        myAssemblyLanes[lane].myStartTime = lineStart;
+        myAssemblyLanes[lane].myEndTime = lineEnd;
         float currentTextWidth = 0;
         ImGui::PushFont(ourRulerFont);
         ourRulerFont->Scale = DPI_UNSCALED(((float)doc.GetFontSize() / 50.f));
@@ -407,7 +426,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
             foundPlace = i - nextLineNeeds;
             for(int j = 0; j < nextLineNeeds; j++)
             {
-                if(myBackLanes[foundPlace + j].myLine != -1)
+                if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
                 {
                     foundPlace = -1;
                 }
@@ -422,7 +441,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
             foundPlace = i;
             for(int j = 0; j < nextLineNeeds; j++)
             {
-                if(myBackLanes[foundPlace + j].myLine != -1)
+                if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
                 {
                     foundPlace = -1;
                 }
@@ -509,16 +528,17 @@ bool PreviewWindow::TryDisplayLanes()
 bool PreviewWindow::CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay)
 {
     if(myLanes[aLane].myLine == -1) {return false;}
-    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    if(doc.GetToken(myLanes[aLane].myLine, 0).myHasStart)
-    {
-        return doc.GetToken(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
-    }
-    else
-    {
-        return doc.GetTimedTokenAfter(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
-    }
-    return false;
+    //Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    //if(doc.GetToken(myLanes[aLane].myLine, 0).myHasStart)
+    //{
+    //    return doc.GetToken(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
+    //}
+    //else
+    //{
+    //    return doc.GetTimedTokenAfter(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
+    //}
+    //return false;
+    return myLanes[aLane].myStartTime <= someCurrentTime + aDelay;
 }
 
 bool PreviewWindow::RemoveOldLanes(uint someCurrentTime, uint aDelay)
@@ -528,7 +548,7 @@ bool PreviewWindow::RemoveOldLanes(uint someCurrentTime, uint aDelay)
     for(int lane = 0; lane < 7; lane++)
     {
 		if(myLanes[lane].myLine == -1 || doc.IsNull(doc.GetLine(myLanes[lane].myLine))) {continue;}
-        if(doc.GetLine(myLanes[lane].myLine).back().myStartTime + aDelay < someCurrentTime)
+        if(myLanes[lane].myEndTime + aDelay < someCurrentTime)
         {
             printf("Line %i is removed from lane %i\n", myLanes[lane].myLine, lane);
             myLanes[lane].myLine = -1;
