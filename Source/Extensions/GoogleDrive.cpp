@@ -12,6 +12,14 @@
 /// client_secret: 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
 
 EM_JS(bool, gapi_loaded, (), {
+    if(global_gis_inited){
+        return true;
+    }
+    if(!Object.hasOwn(window, 'gapi')){
+        alert('GAPI is slow to load.');
+        //console.log('GAPI is slow to load.');
+        return false;
+    }
     gapi.load('client', ()=>{
         gapi.load('client:picker', _GAPI_Init_Client);
     });
@@ -29,8 +37,9 @@ EM_JS(bool, gis_loaded, (), {
     if(global_gis_inited){
         return true;
     }
-    if(google === undefined){
-        console.log('GSI is slow to load.');
+    if(!Object.hasOwn(window, 'google')){
+        alert('GSI is slow to load.');
+        //console.log('GSI is slow to load.');
         return false;
     }
     global_client_token = google.accounts.oauth2.initTokenClient({
@@ -187,7 +196,8 @@ EM_ASYNC_JS(void, save_to_drive, (emscripten::EM_VAL file_id, emscripten::EM_VAL
 
 bool GoogleDrive::Ready()
 {
-    gis_loaded();
+    GAPIHasLoaded = gapi_loaded();
+    GiSHasLoaded = gis_loaded();
     return gapi_ready();
 }
 
