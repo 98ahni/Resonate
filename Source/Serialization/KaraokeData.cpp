@@ -53,7 +53,8 @@ namespace Serialization
     }
     KaraokeToken &KaraokeDocument::GetToken(size_t aLine, size_t aToken)
     {
-        if(myTokens.size() <= aLine && myTokens[aLine].size() <= aToken)
+        // This 'or' was an 'and'. It may well be the root of all memory corruption Resonate has had as it's the most used function in the project.
+        if(myTokens.size() <= aLine || myTokens[aLine].size() <= aToken)
         {
             return ourNullToken;
         }
