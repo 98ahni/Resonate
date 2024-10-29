@@ -2,12 +2,14 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include <string>
+#include <vector>
 
 namespace FileHandler
 {
     std::string OpenFolder(const char* aMode = "read");
     std::string OpenDocument(const char* aSaveFolder = ".", const char* aFileType = "*", const char* aMode = "read");
     void DownloadDocument(const char* aPath, const char *aFileType = "");
+    void DownloadZip(std::vector<std::string> aPathList, const char* aZipName);
     void SyncLocalFS();
     void SetLocalValue(std::string aName, std::string aValue);
     std::string GetLocalValue(std::string aName);

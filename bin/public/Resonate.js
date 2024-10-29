@@ -999,27 +999,27 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3987003: ($0) => { init_gapi_with_key($0); },  
- 3987029: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 3987069: () => { Module.hide_loading_screen(); },  
- 3987099: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3987222: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3987324: () => { return Date.now(); },  
- 3987345: () => { return Date.now(); },  
- 3987366: () => { return Date.now(); },  
- 3987387: () => { location.reload() },  
- 3987405: () => { location.reload(); },  
- 3987424: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3987487: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3987580: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3987676: () => { return global_audio_element.paused ? 1 : 0; },  
- 3987720: () => { return global_audio_element.paused ? 1 : 0; },  
- 3987764: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3987814: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3988070: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3988339: () => { audio_element_pause(); },  
- 3988362: () => { audio_element_play(); },  
- 3988384: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  3987641: ($0) => { init_gapi_with_key($0); },  
+ 3987667: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 3987707: () => { Module.hide_loading_screen(); },  
+ 3987737: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 3987860: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 3987962: () => { return Date.now(); },  
+ 3987983: () => { return Date.now(); },  
+ 3988004: () => { return Date.now(); },  
+ 3988025: () => { location.reload() },  
+ 3988043: () => { location.reload(); },  
+ 3988062: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 3988125: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3988218: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 3988314: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3988358: () => { return global_audio_element.paused ? 1 : 0; },  
+ 3988402: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 3988452: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 3988708: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 3988977: () => { audio_element_pause(); },  
+ 3989000: () => { audio_element_play(); },  
+ 3989022: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['account_info.read', 'files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); global_db_api.usersGetCurrentAccount().then((user_res)=>{ callback_func( Emval.toHandle(Date.now() + (global_db_auth.getAccessTokenExpiresAt() * 1000)), Emval.toHandle(user_res.result.name.display_name), Emval.toHandle(user_res.result.profile_photo_url || '')); }); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
 function db_refresh_token(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));}); }
@@ -1029,14 +1029,15 @@ function __asyncjs__db_update_file(file_id,fs_path) { return Asyncify.handleAsyn
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path,mime_type) { const docPath = Emval.toValue(path); const mime = Emval.toValue(mime_type); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.type = mime; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+function download_project_zip(zip_name,path_list) { const zipName = Emval.toValue(zip_name); const pathList = Emval.toValue(path_list); var fileBlobs = []; for(let i = 0; i < pathList.length; i++){ console.log(pathList[i]); } for(let i = 0; i < pathList.length; i++){ const docData = FS.readFile(pathList[i]); fileBlobs.push(new Blob([docData.buffer], {type: 'application/octet-binary'})); } const zip = new Zip(zipName); zip.files2zip(fileBlobs); zip.makeZip(); }
 function wait_for_sync_fs() { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ console.error('Unable to sync IndexDB!\n' + err); } resolve(); }); })); }
 function set_local_value(key,value_to_store) { localStorage.setItem(Emval.toValue(key), Emval.toValue(value_to_store)); }
 function get_local_value(key) { const keyname = Emval.toValue(key); if(!localStorage.getItem(keyname)){return Emval.toHandle("");} return Emval.toHandle(localStorage.getItem(keyname)); }
 function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); }
 function clear_local_storage() { localStorage.clear(); }
-function gapi_loaded() { gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
+function gapi_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'gapi')){ alert('GAPI is slow to load.'); return false; } gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
 function gapi_ready() { return global_gapi_inited && global_gis_inited; } var global_gapi_inited = false; var global_gis_inited = false;
-function gis_loaded() { if(global_gis_inited){ return true; } if(google === undefined){ console.log('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
+function gis_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'google')){ alert('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
 function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(APIKey), discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest', 'https://people.googleapis.com/$discovery/rest?version=v1'] }).then(()=>{global_gapi_inited = true;}); }
 function has_gapi_token() { return gapi.client.getToken() !== null; }
 function request_client_token(prompt,token_callback) { var client_token_callback = Module[Emval.toValue(token_callback)]; global_client_token.callback = (token_data) => { gapi.client.people.people.get({ "resourceName": "people/me", "requestMask.includeField": "person.names,person.photos", "sources": [ "READ_SOURCE_TYPE_PROFILE" ] }).then((user_data)=>{ client_token_callback( Emval.toHandle(Date.now() + (token_data.expires_in * 1000)), Emval.toHandle(user_data.result.names.length != 0 ? user_data.result.names[0].displayName : '(Anon)'), Emval.toHandle(user_data.result.photos.length != 0 ? user_data.result.photos[0].url : '') ); }); }; global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)}); }
@@ -5969,7 +5970,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
     };
   __emval_await.isAsync = true;
 
-
   var emval_symbols = {
   };
   
@@ -5980,6 +5980,115 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       }
       return symbol;
     };
+  
+  var emval_methodCallers = [];
+  
+  var __emval_call_method = (caller, objHandle, methodName, destructorsRef, args) => {
+      caller = emval_methodCallers[caller];
+      objHandle = Emval.toValue(objHandle);
+      methodName = getStringOrSymbol(methodName);
+      return caller(objHandle, objHandle[methodName], destructorsRef, args);
+    };
+
+
+  var emval_addMethodCaller = (caller) => {
+      var id = emval_methodCallers.length;
+      emval_methodCallers.push(caller);
+      return id;
+    };
+  
+  var emval_lookupTypes = (argCount, argTypes) => {
+      var a = new Array(argCount);
+      for (var i = 0; i < argCount; ++i) {
+        a[i] = requireRegisteredType(HEAPU32[(((argTypes)+(i * 4))>>2)],
+                                     "parameter " + i);
+      }
+      return a;
+    };
+  
+  var createNamedFunction = (name, body) => Object.defineProperty(body, 'name', {
+      value: name
+    });
+  
+  var reflectConstruct = Reflect.construct;
+  
+  
+  function newFunc(constructor, argumentList) {
+      if (!(constructor instanceof Function)) {
+        throw new TypeError(`new_ called with constructor type ${typeof(constructor)} which is not a function`);
+      }
+      /*
+       * Previously, the following line was just:
+       *   function dummy() {};
+       * Unfortunately, Chrome was preserving 'dummy' as the object's name, even
+       * though at creation, the 'dummy' has the correct constructor name.  Thus,
+       * objects created with IMVU.new would show up in the debugger as 'dummy',
+       * which isn't very helpful.  Using IMVU.createNamedFunction addresses the
+       * issue.  Doublely-unfortunately, there's no way to write a test for this
+       * behavior.  -NRD 2013.02.22
+       */
+      var dummy = createNamedFunction(constructor.name || 'unknownFunctionName', function(){});
+      dummy.prototype = constructor.prototype;
+      var obj = new dummy;
+  
+      var r = constructor.apply(obj, argumentList);
+      return (r instanceof Object) ? r : obj;
+    }
+  var __emval_get_method_caller = (argCount, argTypes, kind) => {
+      var types = emval_lookupTypes(argCount, argTypes);
+      var retType = types.shift();
+      argCount--; // remove the shifted off return type
+  
+      var functionBody =
+        `return function (obj, func, destructorsRef, args) {\n`;
+  
+      var offset = 0;
+      var argsList = []; // 'obj?, arg0, arg1, arg2, ... , argN'
+      if (kind === /* FUNCTION */ 0) {
+        argsList.push("obj");
+      }
+      var params = ["retType"];
+      var args = [retType];
+      for (var i = 0; i < argCount; ++i) {
+        argsList.push("arg" + i);
+        params.push("argType" + i);
+        args.push(types[i]);
+        functionBody +=
+          `  var arg${i} = argType${i}.readValueFromPointer(args${offset ? "+" + offset : ""});\n`;
+        offset += types[i]['argPackAdvance'];
+      }
+      var invoker = kind === /* CONSTRUCTOR */ 1 ? 'new func' : 'func.call';
+      functionBody +=
+        `  var rv = ${invoker}(${argsList.join(", ")});\n`;
+      for (var i = 0; i < argCount; ++i) {
+        if (types[i]['deleteObject']) {
+          functionBody +=
+            `  argType${i}.deleteObject(arg${i});\n`;
+        }
+      }
+      if (!retType.isVoid) {
+        params.push("emval_returnValue");
+        args.push(emval_returnValue);
+        functionBody +=
+          "  return emval_returnValue(retType, destructorsRef, rv);\n";
+      }
+      functionBody +=
+        "};\n";
+  
+      params.push(functionBody);
+      var invokerFunction = newFunc(Function, params).apply(null, args);
+      var functionName = `methodCaller<(${types.map(t => t.name).join(', ')}) => ${retType.name}>`;
+      return emval_addMethodCaller(createNamedFunction(functionName, invokerFunction));
+    };
+
+  var __emval_incref = (handle) => {
+      if (handle > 4) {
+        emval_handles.get(handle).refcount += 1;
+      }
+    };
+
+  var __emval_new_array = () => Emval.toHandle([]);
+
   
   var __emval_new_cstring = (v) => Emval.toHandle(getStringOrSymbol(v));
 
@@ -11096,7 +11205,15 @@ var wasmImports = {
   /** @export */
   _emval_await: __emval_await,
   /** @export */
+  _emval_call_method: __emval_call_method,
+  /** @export */
   _emval_decref: __emval_decref,
+  /** @export */
+  _emval_get_method_caller: __emval_get_method_caller,
+  /** @export */
+  _emval_incref: __emval_incref,
+  /** @export */
+  _emval_new_array: __emval_new_array,
   /** @export */
   _emval_new_cstring: __emval_new_cstring,
   /** @export */
@@ -11138,6 +11255,8 @@ var wasmImports = {
   /** @export */
   download_document: download_document,
   /** @export */
+  download_project_zip: download_project_zip,
+  /** @export */
   emscripten_asm_const_double: _emscripten_asm_const_double,
   /** @export */
   emscripten_asm_const_int: _emscripten_asm_const_int,
@@ -11171,6 +11290,8 @@ var wasmImports = {
   fd_write: _fd_write,
   /** @export */
   gapi_loaded: gapi_loaded,
+  /** @export */
+  gapi_ready: gapi_ready,
   /** @export */
   get_audio_context_time: get_audio_context_time,
   /** @export */
@@ -11550,6 +11671,7 @@ var _TouchExtraKeyEvents = Module['_TouchExtraKeyEvents'] = createExportWrapper(
 var _ShowInputDebugger = Module['_ShowInputDebugger'] = createExportWrapper('ShowInputDebugger');
 var _LoadProject = Module['_LoadProject'] = createExportWrapper('LoadProject');
 var _SaveProject = Module['_SaveProject'] = createExportWrapper('SaveProject');
+var _ExportZip = Module['_ExportZip'] = createExportWrapper('ExportZip');
 var _GoogleTokenExpirationCallback = Module['_GoogleTokenExpirationCallback'] = createExportWrapper('GoogleTokenExpirationCallback');
 var _LogInToGoogle = Module['_LogInToGoogle'] = createExportWrapper('LogInToGoogle');
 var _DropboxTokenExpirationCallback = Module['_DropboxTokenExpirationCallback'] = createExportWrapper('DropboxTokenExpirationCallback');
@@ -11614,9 +11736,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923472;
-var ___start_em_js = Module['___start_em_js'] = 3958064;
-var ___stop_em_js = Module['___stop_em_js'] = 3987003;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3923528;
+var ___start_em_js = Module['___start_em_js'] = 3958096;
+var ___stop_em_js = Module['___stop_em_js'] = 3987641;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
@@ -11756,7 +11878,6 @@ var missingLibrarySymbols = [
   'exposePublicSymbol',
   'replacePublicSymbol',
   'extendError',
-  'createNamedFunction',
   'getBasestPointer',
   'registerInheritedInstance',
   'unregisterInheritedInstance',
@@ -11764,7 +11885,6 @@ var missingLibrarySymbols = [
   'getInheritedInstanceCount',
   'getLiveInheritedInstances',
   'enumReadValueFromPointer',
-  'newFunc',
   'craftInvokerFunction',
   'embind__requireFunction',
   'genericPointerToWireType',
@@ -11792,8 +11912,6 @@ var missingLibrarySymbols = [
   'char_9',
   'makeLegalFunctionName',
   'emval_get_global',
-  'emval_lookupTypes',
-  'emval_addMethodCaller',
 ];
 missingLibrarySymbols.forEach(missingLibrarySymbol)
 
@@ -11982,6 +12100,7 @@ var unexportedSymbols = [
   'UnboundTypeError',
   'PureVirtualError',
   'GenericWireTypeSize',
+  'createNamedFunction',
   'embindRepr',
   'registeredInstances',
   'registeredPointers',
@@ -11991,6 +12110,7 @@ var unexportedSymbols = [
   'simpleReadValueFromPointer',
   'readPointer',
   'runDestructors',
+  'newFunc',
   'finalizationRegistry',
   'detachFinalizer_deps',
   'deletionQueue',
@@ -12002,7 +12122,9 @@ var unexportedSymbols = [
   'getStringOrSymbol',
   'Emval',
   'emval_returnValue',
+  'emval_lookupTypes',
   'emval_methodCallers',
+  'emval_addMethodCaller',
   'reflectConstruct',
   'IDBFS',
 ];

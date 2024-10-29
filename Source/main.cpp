@@ -80,6 +80,23 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveProject()
     g_closeFileTab = true;
     ImGui::Ext::StopLoadingScreen();
 }
+extern "C" EMSCRIPTEN_KEEPALIVE void ExportZip()
+{
+    ImGui::Ext::StartLoadingScreen();
+    std::vector<std::string> pathList;
+    pathList.push_back(Serialization::KaraokeDocument::Get().Save());
+    pathList.push_back(AudioPlayback::GetPath());
+    int imgCount = PreviewWindow::GetBackgroundElementPaths().size();
+    for(int i = 0; i < imgCount; i++)
+    {
+        pathList.push_back("/local/" + PreviewWindow::GetBackgroundElementPaths()[i]);
+    }
+    FileHandler::DownloadZip(pathList, Serialization::KaraokeDocument::Get().GetName().data());
+    Serialization::KaraokeDocument::Get().UnsetIsDirty();
+    FileHandler::SyncLocalFS();
+    g_closeFileTab = true;
+    ImGui::Ext::StopLoadingScreen();
+}
 
 extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::EM_VAL aTime, emscripten::EM_VAL aUserName, emscripten::EM_VAL aProfilePhotoURL)
 {
@@ -190,8 +207,8 @@ void loop(void* window){
             }
             if(!g_hasGoogleAcc && !g_hasDropboxAcc)
             {
-                ImGui::MenuItem("Log In With Google");
-                ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle");
+                ImGui::MenuItem("Log In With Google", 0, false, GoogleDrive::Ready());
+                if(GoogleDrive::Ready()) { ImGui::Ext::CreateHTMLButton("GoogleLogin", "click", "_LogInToGoogle"); }
                 ImGui::MenuItem("Log In to Dropbox");
                 ImGui::Ext::CreateHTMLButton("DropboxLogin", "click", "_LogInToDropbox");
                 ImGui::Separator();
@@ -199,6 +216,7 @@ void loop(void* window){
                 if(!g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
                 ImGui::MenuItem("Save Document");
                 ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
+                ImGui::Separator();
             }
             else if(g_hasGoogleAcc)
             {
@@ -224,6 +242,7 @@ void loop(void* window){
                     FileHandler::SyncLocalFS();
                     ImGui::Ext::StopLoadingScreen();
                 }
+                ImGui::SeparatorText("Local");
             }
             else if(g_hasDropboxAcc)
             {
@@ -245,7 +264,10 @@ void loop(void* window){
                     FileHandler::SyncLocalFS();
                     ImGui::Ext::StopLoadingScreen();
                 }
+                ImGui::SeparatorText("Local");
             }
+            ImGui::MenuItem("Export as Zip");
+            ImGui::Ext::CreateHTMLButton("ExportZip", "click", "_ExportZip");
             ImGui::EndMenu();
             g_fileTabOpenedThisFrame = false;
         }
@@ -258,6 +280,7 @@ void loop(void* window){
             ImGui::Ext::DestroyHTMLElement("GoogleLogin");
             ImGui::Ext::DestroyHTMLElement("DropboxLogin");
             ImGui::Ext::DestroyHTMLElement("OpenDBProject");
+            ImGui::Ext::DestroyHTMLElement("ExportZip");
         }
         Menu::Edit_CheckShortcuts();
         if(ImGui::BeginMenu("Edit", !g_isSafeMode))
