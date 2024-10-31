@@ -22,6 +22,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "Extensions/TouchInput.h"
+#include "Extensions/Gamepad.h"
 #include "Extensions/imguiExt.h"
 #include "Extensions/FileHandler.h"
 #include "Extensions/GoogleDrive.h"
@@ -91,7 +92,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void ExportZip()
     {
         pathList.push_back("/local/" + PreviewWindow::GetBackgroundElementPaths()[i]);
     }
-    FileHandler::DownloadZip(pathList, Serialization::KaraokeDocument::Get().GetName().data());
+    FileHandler::DownloadZip(pathList, std::filesystem::path(Serialization::KaraokeDocument::Get().GetName()).replace_extension().c_str());
     Serialization::KaraokeDocument::Get().UnsetIsDirty();
     FileHandler::SyncLocalFS();
     g_closeFileTab = true;
@@ -533,6 +534,10 @@ void loop(void* window){
             {
                 Serialization::PrintPrefs();
             }
+            if(ImGui::MenuItem("Show Input Debugger"))
+            {
+                ShowInputDebugger();
+            }
             if(ImGui::MenuItem("Reload Page"))
             {
                 EM_ASM(location.reload());
@@ -549,6 +554,11 @@ void loop(void* window){
         ImGui::EndMainMenuBar();
     }
 
+    if(ImGui::IsKeyPressed(ImGuiKey_GamepadFaceUp))
+    {
+        Gamepad::TestGamepad();
+    }
+
     if(g_showInputDebugger)
     {
         ImGui::Begin("Input Debugger", &g_showInputDebugger);
@@ -557,6 +567,23 @@ void loop(void* window){
         else ImGui::Text("Using Mouse");
         ImGui::InputText("Text Input", g_testStr, 50);
         if(ImGui::IsItemClicked(0) && TouchInput_HasTouch()) TouchInput_ReadyKeyboard(false);
+        for(int i = ImGuiKey_Tab; i < ImGuiKey_COUNT; i++)
+        {
+            if(ImGui::IsKeyDown((ImGuiKey)i))
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, {1, 0, 1, 1});
+            }
+            else
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, {.8f, .2f, 0, 1});
+            }
+            if(ImGui::IsKeyDown((ImGuiKey)i) || (i >= ImGuiKey_GamepadStart && i <= ImGuiKey_GamepadRStickDown))
+            {
+                ImGui::Text(ImGui::GetKeyName((ImGuiKey)i));
+                if(i % 2 == 1) ImGui::SameLine();
+            }
+            ImGui::PopStyleColor();
+        }
         //char* logs = &get_console_logs();
         //ImGui::Text(logs);
         //free(logs);
