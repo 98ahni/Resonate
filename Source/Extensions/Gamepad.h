@@ -8,32 +8,83 @@
 class Gamepad
 {
 public:
+    enum Mapping
+    {
+        Xinput,
+        DualShock3, DualShock4, DualSense, PSClassic,
+        SwitchPro, JoyConPair, JoyConL, JoyConR,
+        Standard, Other
+    };
     enum Button
     {
         std0, std1, std2, std3, std4, std5, std6, std7, std8, std9, std10, std11, std12, std13, std14, std15, std16,
-        xA=std0, xB, xX, xY, xLB, xRB, xLT, xRT, xBack, xStart, xLSB, xRSB, xD_Up, xD_Down, xD_Left, xD_Right, xGuide,
-        psCross=std0, psCircle, psSquare, psTriangle, psL1, psR1, psL2, psR2, psShare, psOption, psL3, psR3, psD_Up, psD_Down, psD_Left, psD_Right, psPS, PS=psPS,
-        nsB=std0, nsA, nsY, nsX, nsL, nsR, nsZL, nsZR, 
+        A=std0, B, X, Y, LB, RB, LT, RT, Back, Start, LSB, RSB, D_Up, D_Down, D_Left, D_Right, Guide,
+        Cross=std0, Circle, Square, Triangle, L1, R1, L2, R2, Share, Option, L3, R3, PS=std16, TouchPadClick,
+        L=std4, R, ZL, ZR, Minus, Plus, LeftStick, RightStick, Home=std16, Capture, LeftSL, LeftSR, RightSL, RightSR
     };
-    void TestGamepad();
+    enum Axis
+    {
+        std0X, std0Y, std1X, std1Y,
+        LeftStickX=std0X, LeftStickY, RightStickX, RightStickY,
+        StickX=std0X, StickY
+    };
+    static void Initialize();
+    static void Update();
+    static Mapping GetMapping(int aControllerID);
+    static bool GetButton(int aControllerID, Button aButton);
+    static bool GetButtonDown(int aControllerID, Button aButton);
+    static bool GetButtonUp(int aControllerID, Button aButton);
+    static float GetButtonAnalog(int aControllerID, Button aButton);
+    static float GetButtonAnalogRaw(int aControllerID, Button aButton);
+    static float GetAxis(int aControllerID, Axis anAxis);
+    static float GetAxisRaw(int aControllerID, Axis anAxis);
+    static float GetAxisDeltaRaw(int aControllerID, Axis anAxis);
+    static bool GetAxisCrossedDeadZone(int aControllerID, Axis anAxis);
+    static float GetTimeSinceToggled(int aControllerID, Button aButton);
+    static float GetTimeSinceCrossedDeadZone(int aControllerID, Axis anAxis);
+    static bool GetButton(Button aButton);
+    static bool GetButtonDown(Button aButton);
+    static bool GetButtonUp(Button aButton);
+    static float GetButtonAnalog(Button aButton);
+    static float GetButtonAnalogRaw(Button aButton);
+    static float GetAxis(Axis anAxis);
+    static float GetAxisRaw(Axis anAxis);
+    static float GetAxisDeltaRaw(Axis anAxis);
+    static bool GetAxisCrossedDeadZone(Axis anAxis);
+    static float GetTimeSinceToggled(Button aButton);
+    static float GetTimeSinceCrossedDeadZone(Axis anAxis);
+    static int GetControllerPressing(Button aButton);
+    static void SetDeadZone(float aValue);
+    static void UseVerticalJoyCon();
+    static void UseHorizontalJoyCon();
 
 private:
     struct ButtonState
     {
         bool myIsDown;
+        float myValue;
         bool myIsInitial;
+        float myTimeSinceToggled;
     };
     struct AxisState
     {
+        float myDelta;
         float myValue;
         bool myIsInitial;
+        float myTimeSinceToggled;
     };
     struct State
     {
         int myID;
         std::string myName;
+        Mapping myMapping;
+        float myTime;
         std::vector<ButtonState> myButtons;
-        std::vector<AxisState> myAxies;
+        std::vector<AxisState> myAxes;
     };
-    std::unordered_map<int, State> myGamepads;
+    static inline std::unordered_map<int, State> myGamepads;
+    inline static float myDeadZone = 0;
+    inline static bool myUseJoyConVertical = false;
+
+    static Button RemapButtonToStd(Button aButton, Mapping aMapping);
 };
