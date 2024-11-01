@@ -33,6 +33,7 @@
 #include "StringTools.h"
 #include "Defines.h"
 #include "EditMenu.h"
+#include "GamepadActions.h"
 #include <filesystem>
 
 bool g_showInputDebugger = false;
@@ -177,6 +178,7 @@ EM_JS(void, open_resonate_issues, (), {
 });
 
 void loop(void* window){
+    Gamepad::Update();
     MainWindow_NewFrame(window);
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     MainWindow_SetName(doc.GetName().empty() ? "Resonate" : (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate");
@@ -195,6 +197,7 @@ void loop(void* window){
         FileHandler::SyncLocalFS();
     }
 
+    DoGamepadActions();
     if(ImGui::BeginMainMenuBar())
     {
         if(!g_closeFileTab && ImGui::BeginMenu("File"))
@@ -284,7 +287,7 @@ void loop(void* window){
             ImGui::Ext::DestroyHTMLElement("ExportZip");
         }
         Menu::Edit_CheckShortcuts();
-        if(ImGui::BeginMenu("Edit", !g_isSafeMode))
+        if(ImGui::BeginMenu("Edit", !g_isSafeMode) || Gamepad::GetButton(Gamepad::ZL))
         {
             if(ImGui::MenuItem("Insert Line Break", "Alt + Enter", false, !TimingEditor::Get().GetInputUnsafe()))
             {
@@ -333,7 +336,7 @@ void loop(void* window){
             {
                 Menu::Edit_ToggleCase();
             }
-            ImGui::EndMenu();
+            if(!Gamepad::GetButton(Gamepad::ZL))ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("Effects", !g_isSafeMode))
         {
@@ -554,11 +557,6 @@ void loop(void* window){
         ImGui::EndMainMenuBar();
     }
 
-    if(ImGui::IsKeyPressed(ImGuiKey_GamepadFaceUp))
-    {
-        Gamepad::TestGamepad();
-    }
-
     if(g_showInputDebugger)
     {
         ImGui::Begin("Input Debugger", &g_showInputDebugger);
@@ -567,23 +565,33 @@ void loop(void* window){
         else ImGui::Text("Using Mouse");
         ImGui::InputText("Text Input", g_testStr, 50);
         if(ImGui::IsItemClicked(0) && TouchInput_HasTouch()) TouchInput_ReadyKeyboard(false);
-        for(int i = ImGuiKey_Tab; i < ImGuiKey_COUNT; i++)
+        for(int i = 0; i < 25; i++)
         {
-            if(ImGui::IsKeyDown((ImGuiKey)i))
+            if(Gamepad::GetButton((Gamepad::Button)i))
             {
-                ImGui::PushStyleColor(ImGuiCol_Text, {1, 0, 1, 1});
+                ImGui::Text("[std%i,%f]", i, Gamepad::GetButtonAnalog((Gamepad::Button)i));
+                ImGui::SameLine();
             }
-            else
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, {.8f, .2f, 0, 1});
-            }
-            if(ImGui::IsKeyDown((ImGuiKey)i) || (i >= ImGuiKey_GamepadStart && i <= ImGuiKey_GamepadRStickDown))
-            {
-                ImGui::Text(ImGui::GetKeyName((ImGuiKey)i));
-                if(i % 2 == 1) ImGui::SameLine();
-            }
-            ImGui::PopStyleColor();
         }
+        ImGui::NewLine();
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        ImVec2 startPos = ImGui::GetCursorPos();
+        startPos.x += ImGui::GetWindowPos().x;
+        startPos.y += ImGui::GetWindowPos().y;
+        drawList->PathLineTo({startPos.x + 30, startPos.y});
+        drawList->PathLineTo({startPos.x + 30, startPos.y + 60});
+        drawList->PathStroke(IM_COL32(255, 0, 50, 255), 0, 1);
+        drawList->PathLineTo({startPos.x + 100, startPos.y});
+        drawList->PathLineTo({startPos.x + 100, startPos.y + 60});
+        drawList->PathStroke(IM_COL32(255, 0, 50, 255), 0, 1);
+        drawList->PathLineTo({startPos.x, startPos.y + 30});
+        drawList->PathLineTo({startPos.x + 60, startPos.y + 30});
+        drawList->PathStroke(IM_COL32(255, 0, 50, 255), 0, 1);
+        drawList->PathLineTo({startPos.x + 70, startPos.y + 30});
+        drawList->PathLineTo({startPos.x + 130, startPos.y + 30});
+        drawList->PathStroke(IM_COL32(255, 0, 50, 255), 0, 1);
+        drawList->AddCircleFilled({startPos.x + 30 + (Gamepad::GetAxis(Gamepad::LeftStickX) * 30), startPos.y + 30 + (Gamepad::GetAxis(Gamepad::LeftStickY) * -30)}, 5, IM_COL32_WHITE);
+        drawList->AddCircleFilled({startPos.x + 100 + (Gamepad::GetAxis(Gamepad::RightStickX) * 30), startPos.y + 30 + (Gamepad::GetAxis(Gamepad::RightStickY) * -30)}, 5, IM_COL32_WHITE);
         //char* logs = &get_console_logs();
         //ImGui::Text(logs);
         //free(logs);
@@ -704,6 +712,8 @@ int main(){
     }
 
     ImGui::Ext::SetShortcutEvents();
+    Gamepad::Initialize();
+    Gamepad::SetDeadZone(.9f);
     
     ImGui::GetIO().IniFilename = "/local/Layout.Resonate";
     if(!std::filesystem::exists(ImGui::GetIO().IniFilename))
