@@ -44,7 +44,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsGamepadConnected(emscripten::EM_VAL aGamep
 }
 extern"C" EMSCRIPTEN_KEEPALIVE void jsGamepadDisconnected(int anIndex)
 {
-    Gamepad::myGamepads.erase(anIndex);
+    printf("Gamepad %s disconnected from %i.\n", Gamepad::myGamepads[anIndex].myName.data(), anIndex);
 }
 
 EM_JS(emscripten::EM_VAL, update_gamepad_state, (int index), {
@@ -66,7 +66,7 @@ void Gamepad::Update()
     for(auto&[index, con] : myGamepads)
     {
         emscripten::val state = VAR_FROM_JS(update_gamepad_state(index));
-        if(state.isNull()) { continue; }
+        if(state.isNull()) { Gamepad::myGamepads.erase(index); continue; }
         int buttonsLen = state["buttons"]["length"].as<int>();
         int axesLen = state["axes"]["length"].as<int>();
         con.myTime = state["timeStamp"].as<float>();
@@ -205,7 +205,7 @@ bool Gamepad::GetButtonUp(Button aButton)
 
 float Gamepad::GetButtonAnalog(Button aButton)
 {
-    float value = GetButtonAnalog(aButton);
+    float value = GetButtonAnalogRaw(aButton);
     bool isNegative = value < 0;
     value = remap(abs(value), myDeadZone, 1, 0, 1);
     return (value < 0 ? 0 : value) * (isNegative ? -1 : 1);

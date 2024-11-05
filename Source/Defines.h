@@ -5,6 +5,7 @@
 #define remap(value, istart, istop, ostart, ostop) (ostart + (ostop - ostart) * ((value - istart) / (istop - istart)))
 #define clamp(value, min, max) (value < min ? min : (max < value ? max : value))
 #define fl_mod(value, devisor) (((int)(value) % (devisor)) + ((value) - (int)(value)))
+#define magnitude(x, y) (sqrtf((x * x) + (y * y)))
 
 // Strings
 #define ASSET_PATH "assets/"

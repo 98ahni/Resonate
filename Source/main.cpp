@@ -569,7 +569,7 @@ void loop(void* window){
         {
             if(Gamepad::GetButton((Gamepad::Button)i))
             {
-                ImGui::Text("[std%i,%f]", i, Gamepad::GetButtonAnalog((Gamepad::Button)i));
+                ImGui::Text("[std%i,%f]", i, Gamepad::GetButtonAnalogRaw((Gamepad::Button)i));
                 ImGui::SameLine();
             }
         }
@@ -590,8 +590,14 @@ void loop(void* window){
         drawList->PathLineTo({startPos.x + 70, startPos.y + 30});
         drawList->PathLineTo({startPos.x + 130, startPos.y + 30});
         drawList->PathStroke(IM_COL32(255, 0, 50, 255), 0, 1);
-        drawList->AddCircleFilled({startPos.x + 30 + (Gamepad::GetAxis(Gamepad::LeftStickX) * 30), startPos.y + 30 + (Gamepad::GetAxis(Gamepad::LeftStickY) * -30)}, 5, IM_COL32_WHITE);
-        drawList->AddCircleFilled({startPos.x + 100 + (Gamepad::GetAxis(Gamepad::RightStickX) * 30), startPos.y + 30 + (Gamepad::GetAxis(Gamepad::RightStickY) * -30)}, 5, IM_COL32_WHITE);
+        drawList->AddCircleFilled({startPos.x + 30 + (Gamepad::GetAxis(Gamepad::LeftStickX) * 30), startPos.y + 30 + (Gamepad::GetAxis(Gamepad::LeftStickY) * -30)}, 5, IM_COL32(155, 0, 200, 255));
+        drawList->AddCircleFilled({startPos.x + 30 + (Gamepad::GetAxisRaw(Gamepad::LeftStickX) * 30), startPos.y + 30 + (Gamepad::GetAxisRaw(Gamepad::LeftStickY) * -30)}, 5, IM_COL32_WHITE);
+        drawList->AddCircleFilled({startPos.x + 100 + (Gamepad::GetAxis(Gamepad::RightStickX) * 30), startPos.y + 30 + (Gamepad::GetAxis(Gamepad::RightStickY) * -30)}, 5, IM_COL32(155, 0, 200, 255));
+        drawList->AddCircleFilled({startPos.x + 100 + (Gamepad::GetAxisRaw(Gamepad::RightStickX) * 30), startPos.y + 30 + (Gamepad::GetAxisRaw(Gamepad::RightStickY) * -30)}, 5, IM_COL32_WHITE);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 60);
+        ImGui::Text("[ x: %f,  y: %f]   [ x: %f,  y: %f]", Gamepad::GetAxis(Gamepad::LeftStickX), Gamepad::GetAxis(Gamepad::LeftStickY), Gamepad::GetAxis(Gamepad::RightStickX), Gamepad::GetAxis(Gamepad::RightStickY));
+        ImGui::Text("[rx: %f, ry: %f]   [rx: %f, ry: %f]", Gamepad::GetAxisRaw(Gamepad::LeftStickX), Gamepad::GetAxisRaw(Gamepad::LeftStickY), Gamepad::GetAxisRaw(Gamepad::RightStickX), Gamepad::GetAxisRaw(Gamepad::RightStickY));
+        ImGui::Text("[ m: %f, sd: %f]   [ m: %f, sd: %f]", Gamepad_Magnitude(Gamepad::LeftStick), Gamepad_Spin(Gamepad::LeftStick), Gamepad_Magnitude(Gamepad::RightStick), Gamepad_Spin(Gamepad::RightStick));
         //char* logs = &get_console_logs();
         //ImGui::Text(logs);
         //free(logs);
