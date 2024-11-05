@@ -144,12 +144,13 @@ EM_JS(void, download_project_zip, (emscripten::EM_VAL zip_name, emscripten::EM_V
     for(let i = 0; i < pathList.length; i++){
         const docData = FS.readFile(pathList[i]);
         const docBlob = new File([new Blob([docData.buffer], {type: 'application/octet-binary'})], pathList[i].split('/').pop(), {type: 'application/octet-binary'});
+        //const docBlob = new File([docData.buffer], pathList[i].split('/').pop(), {type: 'application/octet-binary'});
         console.log(docBlob.name);
 	    fileBlobs.push(docBlob);
     }
     const zip = new Zip(zipName);
-    zip.files2zip(fileBlobs);
-    zip.makeZip();
+    zip.files2zip(fileBlobs).then(()=>
+        zip.makeZip());
 });
 
 EM_JS(emscripten::EM_VAL, wait_for_sync_fs, (),

@@ -55,15 +55,18 @@ class Zip {
 	}
 	
 	files2zip(files,folder=''){
+		let promises = [];
 		for(let i=0;i<files.length;i++){
-			files[i].arrayBuffer().then(data=>{
+			promises.push(new Promise((resolve)=>files[i].arrayBuffer().then((data)=>{
 				let uint=[...new Uint8Array(data)];
 				uint.name=files[i].name;
 				uint.modTime=files[i].lastModified;
 				uint.fileUrl=`${this.name}/${folder}${files[i].name}`;
-				this.zip[uint.fileUrl]=uint;							
-			});
+				this.zip[uint.fileUrl]=uint;
+				resolve();
+			})));
 		}
+		return Promise.all(promises);
 	}
 	
 	makeZip(){
