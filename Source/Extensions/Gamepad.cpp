@@ -18,7 +18,7 @@ EM_JS(void, initialize_gamepad_events, (), {
             standardMap: e.gamepad.mapping == 'standard',
             buttonCount: e.gamepad.buttons.length,
             axesCount: e.gamepad.axes.length,
-            timeStamp: e.gamepad.timestamp
+            timeStamp: performance.now()//e.gamepad.timestamp
         }));
     });
     window.addEventListener("gamepaddisconnected", (e)=>{_jsGamepadDisconnected(e.gamepad.index)});
@@ -49,7 +49,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsGamepadDisconnected(int anIndex)
 
 EM_JS(emscripten::EM_VAL, update_gamepad_state, (int index), {
     const gp = navigator.getGamepads()[index];
-    let output = {buttons: [], axes: [], timeStamp: gp.timestamp};
+    let output = {buttons: [], axes: [], timeStamp: performance.now()};
     if(gp === null) { return Emval.toHandle(null); }
     gp.buttons.forEach(b => output.buttons.push({digital: b.pressed, analog: b.value}));
     gp.axes.forEach(v => output.axes.push(v));
@@ -69,7 +69,7 @@ void Gamepad::Update()
         if(state.isNull()) { Gamepad::myGamepads.erase(index); continue; }
         int buttonsLen = state["buttons"]["length"].as<int>();
         int axesLen = state["axes"]["length"].as<int>();
-        con.myTime = state["timeStamp"].as<float>();
+        con.myTime = state["timeStamp"].as<double>();
         for(int i = 0; i < buttonsLen; i++)
         {
             bool isDown = state["buttons"][i]["digital"].as<bool>();
