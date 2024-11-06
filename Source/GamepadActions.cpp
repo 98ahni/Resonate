@@ -256,12 +256,12 @@ void DoGamepadActions()
                             IM_COL32_FROM_DOC(effect->myStartColor), DPI_SCALED(15));
                     }
                     ImVec2 textSize = ImGui::CalcTextSize(effect->myECHOValue.data());
-                    drawList->AddText(MainWindow::Font, 30, {origin.x - (textSize.x * .75f), (origin.y * 1.1f) - (textSize.y * .75f)}, ImGui::GetColorU32(ImGuiCol_TextDisabled), effect->myECHOValue.data());
+                    drawList->AddText(MainWindow::Font, DPI_SCALED(30), {origin.x - (textSize.x * .75f), (origin.y * 1.1f) - (textSize.y * .75f)}, ImGui::GetColorU32(ImGuiCol_TextDisabled), effect->myECHOValue.data());
                 }
                 ImVec2 textSize = ImGui::CalcTextSize(g_menuSpinType == Document ? "Document Effects" : "Local Effects");
-                drawList->AddText(MainWindow::Font, 40, {origin.x - textSize.x, (origin.y - (halfSquare * .8f)) - textSize.y}, ImGui::GetColorU32(ImGuiCol_TextDisabled), g_menuSpinType == Document ? "Document Effects" : "Local Effects");
+                drawList->AddText(MainWindow::Font, DPI_SCALED(40), {origin.x - textSize.x, (origin.y - (halfSquare * .8f)) - textSize.y}, ImGui::GetColorU32(ImGuiCol_TextDisabled), g_menuSpinType == Document ? "Document Effects" : "Local Effects");
                 textSize = ImGui::CalcTextSize(options[index].data());
-                drawList->AddText(MainWindow::Font, 40, {origin.x - textSize.x, origin.y - textSize.y}, ImGui::GetColorU32(ImGuiCol_Text), options[index].data());
+                drawList->AddText(MainWindow::Font, DPI_SCALED(40), {origin.x - textSize.x, origin.y - textSize.y}, ImGui::GetColorU32(ImGuiCol_Text), options[index].data());
                 ImGui::PopFont();
                 g_currentSpin += Gamepad_Spin(Gamepad::LeftStick);
                 StickMenu(g_currentSpin, options);
@@ -413,14 +413,14 @@ void DoGamepadActions()
                             IM_COL32_FROM_DOC(effect->myStartColor), DPI_SCALED(15));
                     }
                     ImVec2 textSize = ImGui::CalcTextSize(effect->myECHOValue.data());
-                    drawList->AddText(MainWindow::Font, 30, {origin.x - (textSize.x * .75f), (origin.y * 1.1f) - (textSize.y * .75f)}, ImGui::GetColorU32(ImGuiCol_TextDisabled), effect->myECHOValue.data());
+                    drawList->AddText(MainWindow::Font, DPI_SCALED(30), {origin.x - (textSize.x * .75f), (origin.y * 1.1f) - (textSize.y * .75f)}, ImGui::GetColorU32(ImGuiCol_TextDisabled), effect->myECHOValue.data());
                 }
                 else
                 {
                     drawList->AddImage(PreviewWindow::GetBackgroundTexture(options[index]).myID, {origin.x - (halfSquare * .3f), origin.y - (halfSquare * .6f)}, {origin.x + (halfSquare * .3f), origin.y - (halfSquare * 0.2625f)});
                 }
                 ImVec2 textSize = ImGui::CalcTextSize(options[index].data());
-                drawList->AddText(MainWindow::Font, 40, {origin.x - textSize.x, origin.y - textSize.y}, ImGui::GetColorU32(ImGuiCol_Text), options[index].data());
+                drawList->AddText(MainWindow::Font, DPI_SCALED(40), {origin.x - textSize.x, origin.y - textSize.y}, ImGui::GetColorU32(ImGuiCol_Text), options[index].data());
                 ImGui::PopFont();
                 g_currentSpin += Gamepad_Spin(Gamepad::LeftStick);
                 StickMenu(g_currentSpin, options);
@@ -485,7 +485,7 @@ int StickMenu(float aScroll, std::vector<std::string> someLabels)
         ImVec2 textSize = ImGui::CalcTextSize(someLabels[drawInd].data());
         ImVec2 size = {textSize.x * .75f * scale, textSize.y * .75f * scale};
         drawList->AddEllipseFilled(pos, size.x * .55f, size.y * .55f, IM_COL32(105, 50, 105, (200 * scale)));
-        drawList->AddText(MainWindow::Font, 30, {pos.x - size.x, pos.y - size.y}, IM_COL32(255, 255, 255, (255 * scale)), someLabels[drawInd].data());
+        drawList->AddText(MainWindow::Font, DPI_SCALED(30), {pos.x - size.x, pos.y - size.y}, IM_COL32(255, 255, 255, (255 * scale)), someLabels[drawInd].data());
     }
     ImGui::PopFont();
     drawList->PathEllipticalArcTo({origin.x, origin.y - halfSquare * .1f}, halfSquare * .6f, halfSquare * .2f, 0, 3.f, .14159f);
