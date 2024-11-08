@@ -33,6 +33,9 @@ std::vector<std::string> g_localEffectNames = {};
 std::vector<std::string> g_docEffectNames = {};
 int g_lastAddedEffect = -1;
 
+ImExtTexture g_menuBGTexture = {};
+ImExtTexture g_Texture = {};
+
 void SetUpLocalEffectData()
 {
     if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
@@ -467,14 +470,22 @@ void DoGamepadActions()
 
 int StickMenu(float aScroll, std::vector<std::string> someLabels)
 {
+    if(g_menuBGTexture.myID == 0)
+    {
+        ImGui::Ext::LoadImage("##MenuBGTexture", "GamepadSprites/MenuBG.png");
+        ImGui::Ext::RenderTexture("##MenuBGTexture", g_menuBGTexture);
+    }
     ImVec2 origin = {((float)MainWindow::SwapWidth) * .5f, ((float)MainWindow::SwapHeight) * .6f};
     float halfSquare = origin.x < origin.y ? origin.x : origin.y;
     ImDrawList* drawList = ImGui::GetForegroundDrawList();
     int index = (int)aScroll;
     float animStep = 0.6283185307f;
     float animPos = (aScroll - index) * -animStep;
-    drawList->PathEllipticalArcTo({origin.x, origin.y}, halfSquare * .6f, halfSquare * .23f, 0, 3.f, .14159f);
-    drawList->PathStroke(IM_COL32(100, 20, 140, 50), 0, halfSquare * .2f);
+    //drawList->PushTextureID(g_menuBGTexture.myID);
+    //drawList->PathEllipticalArcTo({origin.x, origin.y}, halfSquare * .6f, halfSquare * .23f, 0, 3.f, .14159f);
+    //drawList->PathStroke(IM_COL32_WHITE, 0, (int)(halfSquare * .2f));
+    //drawList->PopTextureID();
+    drawList->AddImage(g_menuBGTexture.myID, {origin.x - halfSquare, origin.y - (halfSquare * .25f)}, {origin.x + halfSquare, origin.y + (halfSquare * .75f)}, {0, 0}, {1, .5f}, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
     ImGui::PushFont(MainWindow::Font);
     while(index < 5) { index += someLabels.size();}
     for(int i = 0; i < 10; i++)
@@ -488,9 +499,10 @@ int StickMenu(float aScroll, std::vector<std::string> someLabels)
         drawList->AddText(MainWindow::Font, DPI_SCALED(30), {pos.x - size.x, pos.y - size.y}, IM_COL32(255, 255, 255, (255 * scale)), someLabels[drawInd].data());
     }
     ImGui::PopFont();
-    drawList->PathEllipticalArcTo({origin.x, origin.y - halfSquare * .1f}, halfSquare * .6f, halfSquare * .2f, 0, 3.f, .14159f);
-    drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .03f);
-    drawList->PathEllipticalArcTo({origin.x, origin.y + halfSquare * .1f}, halfSquare * .6f, halfSquare * .25f, 0, .14159f, 3.f);
-    drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .03f);
+    drawList->AddImage(g_menuBGTexture.myID, {origin.x - halfSquare, origin.y - (halfSquare * .25f)}, {origin.x + halfSquare, origin.y + (halfSquare * .75f)}, {0, .5f}, {1, 1}, ImGui::GetColorU32(ImGuiCol_Border));
+    //drawList->PathEllipticalArcTo({origin.x, origin.y - halfSquare * .1f}, halfSquare * .6f, halfSquare * .2f, 0, 3.f, .14159f);
+    //drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .02f);
+    //drawList->PathEllipticalArcTo({origin.x, origin.y + halfSquare * .1f}, halfSquare * .6f, halfSquare * .25f, 0, .14159f, 3.f);
+    //drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .02f);
     return -1;
 }

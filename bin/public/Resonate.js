@@ -999,27 +999,27 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  3989007: ($0) => { init_gapi_with_key($0); },  
- 3989033: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 3989073: () => { Module.hide_loading_screen(); },  
- 3989103: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 3989226: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 3989328: () => { return Date.now(); },  
- 3989349: () => { return Date.now(); },  
- 3989370: () => { return Date.now(); },  
- 3989391: () => { location.reload() },  
- 3989409: () => { location.reload(); },  
- 3989428: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 3989491: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3989584: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 3989680: () => { return global_audio_element.paused ? 1 : 0; },  
- 3989724: () => { return global_audio_element.paused ? 1 : 0; },  
- 3989768: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 3989818: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 3990074: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 3990343: () => { audio_element_pause(); },  
- 3990366: () => { audio_element_play(); },  
- 3990388: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4070948: ($0) => { init_gapi_with_key($0); },  
+ 4070974: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4071014: () => { Module.hide_loading_screen(); },  
+ 4071044: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4071167: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4071269: () => { return Date.now(); },  
+ 4071290: () => { return Date.now(); },  
+ 4071311: () => { return Date.now(); },  
+ 4071332: () => { location.reload() },  
+ 4071350: () => { location.reload(); },  
+ 4071369: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4071432: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4071525: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4071621: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4071665: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4071709: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4071759: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4072015: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4072284: () => { audio_element_pause(); },  
+ 4072307: () => { audio_element_play(); },  
+ 4072329: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['account_info.read', 'files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); global_db_api.usersGetCurrentAccount().then((user_res)=>{ callback_func( Emval.toHandle(Date.now() + (global_db_auth.getAccessTokenExpiresAt() * 1000)), Emval.toHandle(user_res.result.name.display_name), Emval.toHandle(user_res.result.profile_photo_url || '')); }); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
 function db_refresh_token(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));}); }
@@ -1035,8 +1035,8 @@ function set_local_value(key,value_to_store) { localStorage.setItem(Emval.toValu
 function get_local_value(key) { const keyname = Emval.toValue(key); if(!localStorage.getItem(keyname)){return Emval.toHandle("");} return Emval.toHandle(localStorage.getItem(keyname)); }
 function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); }
 function clear_local_storage() { localStorage.clear(); }
-function initialize_gamepad_events() { window.addEventListener("gamepadconnected", (e)=>{ _jsGamepadConnected(Emval.toHandle({ index: e.gamepad.index, name: e.gamepad.id, standardMap: e.gamepad.mapping == 'standard', buttonCount: e.gamepad.buttons.length, axesCount: e.gamepad.axes.length, timeStamp: e.gamepad.timestamp })); }); window.addEventListener("gamepaddisconnected", (e)=>{_jsGamepadDisconnected(e.gamepad.index)}); }
-function update_gamepad_state(index) { const gp = navigator.getGamepads()[index]; let output = {buttons: [], axes: [], timeStamp: gp.timestamp}; if(gp === null) { return Emval.toHandle(null); } gp.buttons.forEach(b => output.buttons.push({digital: b.pressed, analog: b.value})); gp.axes.forEach(v => output.axes.push(v)); return Emval.toHandle(output); }
+function initialize_gamepad_events() { window.addEventListener("gamepadconnected", (e)=>{ _jsGamepadConnected(Emval.toHandle({ index: e.gamepad.index, name: e.gamepad.id, standardMap: e.gamepad.mapping == 'standard', buttonCount: e.gamepad.buttons.length, axesCount: e.gamepad.axes.length, timeStamp: performance.now() })); }); window.addEventListener("gamepaddisconnected", (e)=>{_jsGamepadDisconnected(e.gamepad.index)}); }
+function update_gamepad_state(index) { const gp = navigator.getGamepads()[index]; let output = {buttons: [], axes: [], timeStamp: performance.now()}; if(gp === null) { return Emval.toHandle(null); } gp.buttons.forEach(b => output.buttons.push({digital: b.pressed, analog: b.value})); gp.axes.forEach(v => output.axes.push(v)); return Emval.toHandle(output); }
 function gapi_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'gapi')){ alert('GAPI is slow to load.'); return false; } gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
 function gapi_ready() { return global_gapi_inited && global_gis_inited; } var global_gapi_inited = false; var global_gis_inited = false;
 function gis_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'google')){ alert('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
@@ -1048,13 +1048,13 @@ function create_picker(APIKey,mime_types,file_callback_name,done_callback_name,c
 function __asyncjs__save_to_drive(file_id,fs_path) { return Asyncify.handleAsync(async () => { const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'}); await gapi.client.request({ path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id), method: 'PATCH', body: fileData, params: { uploadType: 'media', fields: 'id,version,name', }, }); }); }
 function create_button(id,event,callback,pos_x,pos_y,width,height) { let imid = Emval.toValue(id); let btn = document.getElementById(imid); if(btn === null){ btn = document.createElement('button'); btn.id = imid; document.body.insertBefore(btn, document.getElementById('canvas').nextSibling); } btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false); btn.style.position = 'fixed'; btn.style.left = pos_x + 'px'; btn.style.top = pos_y + 'px'; btn.style.width = width + 'px'; btn.style.height = height + 'px'; btn.style.opacity = 0.1; }
 function create_input(id,type,event,callback,pos_x,pos_y,width,height) { let imid = Emval.toValue(id); let input = document.getElementById(imid); if(input === null){ input = document.createElement('input'); input.id = imid; document.body.insertBefore(input, document.getElementById('canvas').nextSibling); } input.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); input.type = Emval.toValue(type); input.style.position = 'fixed'; input.style.left = pos_x + 'px'; input.style.top = pos_y + 'px'; input.style.width = width + 'px'; input.style.height = height + 'px'; input.style.opacity = 0; }
-function load_video(id,fs_path) { return Emval.toHandle(new Promise(async(resolve)=>{ var imid = Emval.toValue(id); var vid = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(vid === null){ if(!FS.analyzePath(fsPath, false).exists){ return; } vid = document.createElement('video'); vid.id = imid; vid.volume = 0; vid.defaultMuted = true; document.body.insertBefore(vid, document.getElementById('canvas')); } vid.style.position = 'fixed'; vid.style.width = 160 + 'px'; vid.style.height = 90 + 'px'; const vidData = FS.readFile(fsPath); const vidBlob = new Blob([vidData.buffer], {type: 'video/mp4'}); vid.src = URL.createObjectURL(vidBlob); vid.disablePictureInPicture = true; vid.volume = 0; vid.defaultMuted = true; vid.load(); vid.oncanplaythrough = ()=>{vid.play().then(()=>{vid.pause();});resolve();}; })); }
+function load_video(id,fs_path) { return Emval.toHandle(new Promise(async(resolve, reject)=>{ var imid = Emval.toValue(id); var vid = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(vid === null){ if(!FS.analyzePath(fsPath, false).exists){ console.error('File not found: ', fsPath); reject(); } vid = document.createElement('video'); vid.id = imid; vid.volume = 0; vid.defaultMuted = true; document.body.insertBefore(vid, document.getElementById('canvas')); } vid.style.position = 'fixed'; vid.style.width = 160 + 'px'; vid.style.height = 90 + 'px'; const vidData = FS.readFile(fsPath); const vidBlob = new Blob([vidData.buffer], {type: 'video/mp4'}); vid.src = URL.createObjectURL(vidBlob); vid.disablePictureInPicture = true; vid.volume = 0; vid.defaultMuted = true; vid.load(); vid.oncanplaythrough = ()=>{vid.play().then(()=>{vid.pause();});resolve();}; })); }
 function play_video(id) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return; } vid.play(); }
 function pause_video(id) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return; } vid.pause(); }
 function set_video_playback_progress(id,seconds) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return; } vid.currentTime = seconds; }
 function set_video_playback_rate(id,rate) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return; } vid.playbackRate = rate; }
 function is_video_paused(id) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return true; } return vid.paused; }
-function load_image(id,fs_path) { return Emval.toHandle(new Promise(async(resolve)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(img === null){ if(!FS.analyzePath(fsPath, false).exists){ return; } img = document.createElement('img'); img.id = imid; document.body.insertBefore(img, document.getElementById('canvas')); } img.style.position = 'fixed'; img.style.width = 1 + 'px'; img.style.height = 1 + 'px'; const imgData = FS.readFile(fsPath); const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'}); img.src = URL.createObjectURL(imgBlob); await img.decode(); resolve();})); }
+function load_image(id,fs_path) { return Emval.toHandle(new Promise(async(resolve, reject)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(img === null){ if(!FS.analyzePath(fsPath, false).exists){ console.error('File not found: ', fsPath); reject(); } img = document.createElement('img'); img.id = imid; document.body.insertBefore(img, document.getElementById('canvas')); } img.style.position = 'fixed'; img.style.width = 1 + 'px'; img.style.height = 1 + 'px'; const imgData = FS.readFile(fsPath); const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'}); img.src = URL.createObjectURL(imgBlob); try{ await img.decode(); resolve(); } catch(e){ console.error('Image failed to decode!'); reject(); } })); }
 function render_image(id,texture) { var imid = Emval.toValue(id); var img = document.getElementById(imid); if(img === null){ return Emval.toHandle(0); } var canvas = document.getElementById(imid + 'canvas'); if(canvas === null){ canvas = document.createElement('canvas'); canvas.id = imid + 'canvas'; document.body.insertBefore(canvas, document.getElementById('canvas')); if(img.nodeName == 'IMG'){ canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; } else if(img.nodeName == 'VIDEO'){ canvas.width = img.videoWidth; canvas.height = img.videoHeight; } canvas.style.position = 'fixed'; canvas.style.top = 100 + 'px'; canvas.style.width = 160 + 'px'; canvas.style.height = 90 + 'px'; } var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0); var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height); var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height); ctx = null; pixels = null; return output; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
 function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(Emval.toValue(id)); setTimeout(()=>{ if(input !== null){ input.remove(); } }, delay_ms); }); }
@@ -5786,7 +5786,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   Disabled:3,
   },
   state:0,
-  StackSize:4096,
+  StackSize:8192,
   currData:null,
   handleSleepReturnValue:0,
   exportCallStack:[],
@@ -11752,9 +11752,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3924024;
-var ___start_em_js = Module['___start_em_js'] = 3958592;
-var ___stop_em_js = Module['___stop_em_js'] = 3989007;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4005748;
+var ___start_em_js = Module['___start_em_js'] = 4040352;
+var ___stop_em_js = Module['___stop_em_js'] = 4070948;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

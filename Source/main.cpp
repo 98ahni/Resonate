@@ -197,7 +197,6 @@ void loop(void* window){
         FileHandler::SyncLocalFS();
     }
 
-    DoGamepadActions();
     if(ImGui::BeginMainMenuBar())
     {
         if(!g_closeFileTab && ImGui::BeginMenu("File"))
@@ -605,6 +604,7 @@ void loop(void* window){
     }
 
     WindowManager::ImGuiDraw();
+    DoGamepadActions();
 
     MainWindow_RenderFrame();
     if(g_shouldHideLoadingScreen)
