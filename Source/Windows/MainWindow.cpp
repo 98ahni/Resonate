@@ -505,7 +505,7 @@ void MainWindow_StyleColorsShadow(ImGuiStyle* dst)
 	ImVec4 darkbg = ImVec4(0.09f, 0.08f, 0.12f, 1.f);
 	ImVec4 lightItembg = ImVec4(0.3f, 0.3f, 0.3f, 1.f);
 	ImVec4 itembg = ImVec4(0.1f, 0.1f, 0.1f, 1.f);
-	ImVec4 lightItemHover = ImVec4(0.37f, 0.35f, 0.4f, 1.f);
+	ImVec4 lightItemHover = ImVec4(0.37f, 0.35f, 0.42f, 1.f);
 	ImVec4 itemHover = ImVec4(0.15f, 0.13f, 0.2f, 1.f);
 	ImVec4 lightItemActive = ImVec4(0.37f, 0.35f, 0.4f, 1.f);
 	ImVec4 itemActive = ImVec4(0.15f, 0.15f, 0.2f, 1.f);
