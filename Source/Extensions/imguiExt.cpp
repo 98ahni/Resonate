@@ -51,13 +51,14 @@ EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscr
     input.style.opacity = 0;
 });
 EM_JS(emscripten::EM_VAL, load_video, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
-    return Emval.toHandle(new Promise(async(resolve)=>{
+    return Emval.toHandle(new Promise(async(resolve, reject)=>{
     var imid = Emval.toValue(id);
     var vid = document.getElementById(imid);
     const fsPath = Emval.toValue(fs_path);
     if(vid === null){
         if(!FS.analyzePath(fsPath, false).exists){
-            return;
+            console.error('File not found: ', fsPath);
+            reject();
         }
         vid = document.createElement('video');
         vid.id = imid;
@@ -127,13 +128,14 @@ EM_JS(bool, is_video_paused, (emscripten::EM_VAL id), {
     return vid.paused;
 });
 EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
-    return Emval.toHandle(new Promise(async(resolve)=>{
+    return Emval.toHandle(new Promise(async(resolve, reject)=>{
     let imid = Emval.toValue(id);
     let img = document.getElementById(imid);
     const fsPath = Emval.toValue(fs_path);
     if(img === null){
         if(!FS.analyzePath(fsPath, false).exists){
-            return;
+            console.error('File not found: ', fsPath);
+            reject();
         }
         img = document.createElement('img');
         img.id = imid;
@@ -145,8 +147,15 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
 	const imgData = FS.readFile(fsPath);
     const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'});
     img.src = URL.createObjectURL(imgBlob);
-    await img.decode();
-    resolve();}));
+    try{
+        await img.decode();
+        resolve();
+    }
+    catch(e){
+        console.error('Image failed to decode!');
+        reject();
+    }
+    }));
 });
 EM_JS(ImExtTexture&, render_image, (emscripten::EM_VAL id, ImExtTexture& texture), {
     var imid = Emval.toValue(id);

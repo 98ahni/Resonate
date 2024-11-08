@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <deque>
 
+#pragma once
 typedef unsigned int uint;
 struct ImFont;
 class PreviewWindow : public EditorWindow
