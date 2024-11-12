@@ -34,7 +34,48 @@ std::vector<std::string> g_docEffectNames = {};
 int g_lastAddedEffect = -1;
 
 ImExtTexture g_menuBGTexture = {};
-ImExtTexture g_Texture = {};
+ImExtTexture g_hudTexture = {};
+bool g_showOverlay = true;
+enum HUDSprite
+{
+    DocColor, PreviewBtn, ShiftTimes, FontSize, Latency,
+    MenuBtn, EffectBtn, SyllableBtn, TimeEnd, TimeStart,
+    SpeedUp, SpeedDown, LineTagPlus, LineTagMinus, NoEffectBtn, SingerBtn, ImageBtn,
+    LineMoveUp, LineMoveDown, LineMergeUp, LineMergeDown, LineDuplicate, LineSplit, LineRemove,
+    CaseCapital, CaseMajus, CaseMinus, CaseToggle,
+    StopBtn, PlayBtn, PauseBtn, RW5sBtn, FF5sBtn, Unused1,
+    BtnPadBGPS, DPadBGPS, BtnPadBG, DPadBG, StickSpinBG, StickFlickBG,
+    DPadFillPSY, DPadFillPSX, DPadFillY, DPadFillX,
+    //DPadFillPSYR, DPadFillPSXR, DPadFillYR, DPadFillXR,       // Might be useful later
+    ArrowUpBtn, ArrowDownBtn, ArrowLeftBtn, ArrowRightBtn,
+    SpinIcon, BumperFill, TriggerFill, BtnFill
+};
+ImVec2 g_hudStartUVs[] = {
+    {.0f, .0f}, {.0f, .1f}, {.0f, .2f}, {.0f, .3f}, {.0f, .4f},
+    {.1f, .0f}, {.2f, .0f}, {.3f, .0f}, {.4f, .0f}, {.5f, .0f},
+    {.6f, .0f}, {.6f, .1f}, {.5f, .1f}, {.4f, .1f}, {.3f, .1f}, {.2f, .1f}, {.1f, .1f},
+    {.1f, .2f}, {.2f, .2f}, {.3f, .2f}, {.4f, .2f}, {.5f, .2f}, {.6f, .2f}, {.3f, .6f},
+    {.1f, .3f}, {.2f, .3f}, {.3f, .3f}, {.4f, .3f},
+    {.1f, .4f}, {.2f, .4f}, {.3f, .4f}, {.4f, .4f}, {.5f, .4f}, {.6f, .4f},
+    {.7f, .0f}, {.4f, .6f}, {.7f, .3f}, {.7f, .6f}, {.0f, .5f}, {.0f, .7f},
+    {.2f, .7f}, {.2f, .5f}, {.3f, .7f}, {.2f, .6f},
+    //{.3f, .85f}, {.35f, .6f}, {.4f, .85f}, {.35f, .7f},
+    {.4f, .9f}, {.5f, .9f}, {.6f, .9f}, {.7f, .9f},
+    {.0f, .9f}, {.2f, .85f}, {.3f, .85f}, {.9f, .9f},
+};
+ImVec2 g_hudEndUVs[] = {
+    {.1f, .1f}, {.1f, .2f}, {.1f, .3f}, {.1f, .4f}, {.1f, .5f},
+    {.2f, .1f}, {.3f, .1f}, {.4f, .1f}, {.5f, .1f}, {.6f, .1f},
+    {.7f, .1f}, {.7f, .2f}, {.6f, .2f}, {.5f, .2f}, {.4f, .2f}, {.3f, .2f}, {.2f, .2f},
+    {.2f, .3f}, {.3f, .3f}, {.4f, .3f}, {.5f, .3f}, {.6f, .3f}, {.7f, .3f}, {.4f, .7f},
+    {.2f, .4f}, {.3f, .4f}, {.4f, .4f}, {.5f, .4f},
+    {.2f, .5f}, {.3f, .5f}, {.4f, .5f}, {.5f, .5f}, {.6f, .5f}, {.7f, .5f},
+    {1.f, .3f}, {.7f, .9f}, {1.f, .6f}, {1.f, .9f}, {.2f, .7f}, {.2f, .9f},
+    {.3f, .85f}, {.35f, .6f}, {.4f, .85f}, {.35f, .7f},
+    //{.2f, .7f}, {.2f, .5f}, {.3f, .7f}, {.2f, .6f},
+    {.5f, 1.f}, {.6f, 1.f}, {.7f, 1.f}, {.8f, 1.f},
+    {.2f, 1.f}, {.3f, 1.f}, {.4f, 1.f}, {1.f, 1.f},
+};
 
 void SetUpLocalEffectData()
 {
@@ -135,6 +176,8 @@ void DoGamepadActions()
     - [Confirm] - Split/Join
     */
 
+    //if(Gamepad::GetCount() == 0) { return; }
+
     Layer layer = g_layerLastFrame;
     if(!Gamepad::GetButton(Gamepad::Square) && !Gamepad::GetButton(Gamepad::Triangle) && !Gamepad::GetButton(Gamepad::L2) && !Gamepad::GetButton(Gamepad::R2))
     {
@@ -158,7 +201,6 @@ void DoGamepadActions()
     }
 
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    ImVec2 cursorResetPos = ImGui::GetCursorPos();
     if(layer == Standard || layer == Adjust)
     {
         if(Gamepad::GetButtonDown(Gamepad::D_Up)) TimingEditor::Get().MoveMarkerUp();
@@ -465,7 +507,86 @@ void DoGamepadActions()
         if(Gamepad_FlickAxis(Gamepad::LeftStickX, Gamepad_FlickLEFT)) { Menu::Edit_Capital(); }
         if(Gamepad_FlickAxis(Gamepad::LeftStickX, Gamepad_FlickRIGHT)) { Menu::Edit_ToggleCase(); }
     }
-    ImGui::SetCursorPos(cursorResetPos);
+
+    // Overlay
+    if(!g_showOverlay) { return; }
+    if(g_hudTexture.myID == 0)
+    {
+        ImGui::Ext::LoadImage("##MenuHUDTexture", "GamepadSprites/IconSprites.png");
+        ImGui::Ext::RenderTexture("##MenuHUDTexture", g_hudTexture);
+    }
+    ImDrawList* drawList = ImGui::GetForegroundDrawList();
+    //ImVec2 screenSize = {((float)MainWindow::SwapWidth) - DPI_SCALED(50), ((float)MainWindow::SwapHeight)};
+    ImVec2 screenSize = ImGui::GetWindowSize();
+    screenSize.x -= DPI_SCALED(50);
+    ImVec2 drawSize = DPI_SCALED(400) < screenSize.x ? ImVec2{DPI_SCALED(400), DPI_SCALED(300)} : ImVec2{screenSize.x, screenSize.x * .5f};
+    ImVec2 origin = {screenSize.x - drawSize.x, screenSize.y - drawSize.y};
+    Gamepad::Mapping controllerMapping = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+
+#define MapSwitch(Xin, PS, ProCon, JoyCon) (controllerMapping == Gamepad::Xinput ? (Xin) : (controllerMapping <= Gamepad::PSClassic ? (PS) : (controllerMapping == Gamepad::SwitchPro ? (ProCon) : (controllerMapping <= Gamepad::JoyConR ? (JoyCon) : (ProCon)))))
+#define DrawHudSprite(sprite, posX, posY, sizeX, sizeY, col) drawList->AddImage(g_hudTexture.myID, {origin.x + (drawSize.x * posX), origin.y + (drawSize.x * posY)}, {origin.x + (drawSize.x * (sizeX + posX)), origin.y + (drawSize.x * (sizeY + posY))}, g_hudStartUVs[sprite], g_hudEndUVs[sprite], col)
+#define DrawDPadUpScale(sprite, alpha, Y) DrawHudSprite(sprite, .1f, .015625f, .1f, Y, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawDPadLeftScale(sprite, alpha, X) DrawHudSprite(sprite, .015625f, .1f, X, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawDPadRightScale(sprite, alpha, X, flip) DrawHudSprite(sprite, ((flip ? .3f : .2f) - .015625f), .1f, X, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawDPadDownScale(sprite, alpha, Y, flip) DrawHudSprite(sprite, .1f, ((flip ? .3f : .2f) - .015625f), .1f, Y, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawDPadUp(sprite, alpha) DrawDPadUpScale(sprite, alpha, .1f)
+#define DrawDPadLeft(sprite, alpha) DrawDPadLeftScale(sprite, alpha, .1f)
+#define DrawDPadRight(sprite, alpha)DrawDPadRightScale(sprite, alpha, .1f, false)
+#define DrawDPadDown(sprite, alpha) DrawDPadDownScale(sprite, alpha, .1f, false)
+#define DrawFaceButtonEffect(sprite, alpha) MapSwitch(DrawHudSprite(sprite, .8f, .015625f, .1f, .1f, IM_COL32(255, 232, 35, alpha)), DrawHudSprite(sprite, .8f, .015625f, .1f, .1f, IM_COL32(35, 203, 211, alpha)), DrawHudSprite(sprite, .715625f, .1f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, .715625f, .1f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
+#define DrawFaceButtonSetting(sprite, alpha) MapSwitch(DrawHudSprite(sprite, .715625f, .1f, .1f, .1f, IM_COL32(14, 82, 255, alpha)), DrawHudSprite(sprite, .715625f, .1f, .1f, .1f, IM_COL32(217, 173, 216, alpha)), DrawHudSprite(sprite, .8f, .015625f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, .8f, .015625f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
+#define DrawFaceButtonDecline(sprite, alpha) MapSwitch(DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(255, 19, 3, alpha)), DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(246, 129, 132, alpha)), DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
+#define DrawFaceButtonConfirm(sprite, alpha) MapSwitch(DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(53, 217, 0, alpha)), DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(152, 188, 228, alpha)), DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
+    DrawHudSprite(MapSwitch(DPadBGPS, DPadBGPS, DPadBG, BtnPadBG), .0f, .0f, .3f, .3f, IM_COL32_WHITE);
+    DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .7f, .0f, .3f, .3f, IM_COL32_WHITE);
+    DrawHudSprite((layer == Settings || layer == Effects) ? StickSpinBG : StickFlickBG, .35f, .3f, .2f, .2f, IM_COL32_WHITE);
+    //DrawHudSprite(StickSpinBG, .5f, .3f, .2f, .2f, IM_COL32_WHITE);   // Right stick might not need a spot
+    if(Gamepad::GetButton(Gamepad::D_Up)) DrawDPadUpScale(MapSwitch(DPadFillPSY, DPadFillPSY, DPadFillY, BtnFill), 150, .15f);
+    if(Gamepad::GetButton(Gamepad::D_Left)) DrawDPadLeftScale(MapSwitch(DPadFillPSX, DPadFillPSX, DPadFillX, BtnFill), 150, .15f);
+    if(Gamepad::GetButton(Gamepad::D_Right)) DrawDPadRightScale(MapSwitch(DPadFillPSX, DPadFillPSX, DPadFillX, BtnFill), 150, -.15f, true);
+    if(Gamepad::GetButton(Gamepad::D_Down)) DrawDPadDownScale(MapSwitch(DPadFillPSY, DPadFillPSY, DPadFillY, BtnFill), 150, -.15f, true);
+    if(Gamepad::GetButton(Gamepad::Triangle)) DrawFaceButtonEffect(BtnFill, 150);
+    if(Gamepad::GetButton(Gamepad::Square)) DrawFaceButtonSetting(BtnFill, 150);
+    if(Gamepad::GetButton(Gamepad::Circle)) DrawFaceButtonDecline(BtnFill, 150);
+    if(Gamepad::GetButton(Gamepad::Cross)) DrawFaceButtonConfirm(BtnFill, 150);
+    if(layer == Standard || layer == Adjust)
+    {
+        DrawFaceButtonEffect(EffectBtn, 255);
+        DrawFaceButtonSetting(MenuBtn, 255);
+        DrawFaceButtonDecline(TimeEnd, 255);
+        DrawFaceButtonConfirm(layer == Standard ? TimeStart : SyllableBtn, 255);
+        DrawDPadUp(ArrowUpBtn, 255);
+        DrawDPadLeft(ArrowLeftBtn, 255);
+        DrawDPadRight(ArrowRightBtn, 255);
+        DrawDPadDown(ArrowDownBtn, 255);
+    }
+    if(layer == Settings)
+    {
+        DrawFaceButtonSetting(MenuBtn, 255);
+        DrawFaceButtonConfirm(PreviewBtn, 255);
+        DrawDPadUp(Latency, 255);
+        DrawDPadLeft(FontSize, 255);
+        DrawDPadRight(DocColor, 255);
+        DrawDPadDown(ShiftTimes, 255);
+    }
+    if(layer == Effects)
+    {
+        DrawFaceButtonEffect(EffectBtn, 255);
+        DrawFaceButtonDecline(NoEffectBtn, 255);
+        DrawDPadUp(LineTagPlus, 255);
+        DrawDPadDown(LineTagMinus, 255);
+    }
+    if(layer == Layout)
+    {
+        DrawFaceButtonConfirm(LineDuplicate, 255);
+        DrawFaceButtonDecline(LineSplit, 255);
+        DrawDPadUp(LineMoveUp, 255);
+        DrawDPadLeft(LineMergeUp, 255);
+        DrawDPadRight(LineMergeDown, 255);
+        DrawDPadDown(LineMoveDown, 255);
+    }
+#undef MapSwitch
+#undef DrawHudSprite
 }
 
 int StickMenu(float aScroll, std::vector<std::string> someLabels)
