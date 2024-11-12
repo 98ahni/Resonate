@@ -11,6 +11,17 @@
 #include <Defines.h>
 
 EM_JS(void, initialize_gamepad_events, (), {
+    navigator.getGamepads().forEach((gp) =>{
+        if(gp !== null)
+        _jsGamepadConnected(Emval.toHandle({
+            index: gp.index,
+            name: gp.id,
+            standardMap: gp.mapping == 'standard',
+            buttonCount: gp.buttons.length,
+            axesCount: gp.axes.length,
+            timeStamp: performance.now()//gp.timestamp
+        }));
+    });
     window.addEventListener("gamepadconnected", (e)=>{
         _jsGamepadConnected(Emval.toHandle({
             index: e.gamepad.index,
@@ -38,6 +49,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsGamepadConnected(emscripten::EM_VAL aGamep
             )
         );
     Gamepad::myGamepads[index].myTime = gamepad["timeStamp"].as<double>();
+    Gamepad::myGamepads[index].myTimeOfLastToggle = gamepad["timeStamp"].as<double>();
     Gamepad::myGamepads[index].myButtons.resize(gamepad["buttonCount"].as<int>(), {false, 0, false, (float)gamepad["timeStamp"].as<double>()});
     Gamepad::myGamepads[index].myAxes.resize(gamepad["axesCount"].as<int>(), {0, 0, false, (float)gamepad["timeStamp"].as<double>()});
     printf("Gamepad %s connected at %i with %i buttons and %i axes.\n", name.data(), index, gamepad["buttonCount"].as<int>(), gamepad["axesCount"].as<int>());
@@ -73,7 +85,7 @@ void Gamepad::Update()
         for(int i = 0; i < buttonsLen; i++)
         {
             bool isDown = state["buttons"][i]["digital"].as<bool>();
-            if(con.myButtons[i].myIsInitial) {con.myButtons[i].myTimeSinceToggled = state["timeStamp"].as<double>();}
+            if(con.myButtons[i].myIsInitial){con.myTimeOfLastToggle = con.myButtons[i].myTimeOfLastToggle = state["timeStamp"].as<double>();}
             con.myButtons[i].myIsInitial = con.myButtons[i].myIsDown != isDown;
             con.myButtons[i].myIsDown = isDown;
             con.myButtons[i].myValue = state["buttons"][i]["analog"].as<double>();
@@ -81,8 +93,7 @@ void Gamepad::Update()
         for(int i = 0; i < axesLen; i++)
         {
             float val = state["axes"][i].as<float>();
-            if(con.myAxes[i].myIsInitial) {
-                con.myAxes[i].myTimeSinceToggled = state["timeStamp"].as<double>();}
+            if(con.myAxes[i].myIsInitial) {con.myTimeOfLastToggle = con.myAxes[i].myTimeOfLastToggle = state["timeStamp"].as<double>();}
             con.myAxes[i].myIsInitial = (abs(con.myAxes[i].myValue) < myDeadZone) != (abs(val) < myDeadZone);
             con.myAxes[i].myDelta = val - con.myAxes[i].myValue;
             con.myAxes[i].myValue = val;
@@ -92,7 +103,23 @@ void Gamepad::Update()
 
 Gamepad::Mapping Gamepad::GetMapping(int aControllerID)
 {
+    if(aControllerID == -1) { return Mapping::Other; }
     return myGamepads[aControllerID].myMapping;
+}
+
+int Gamepad::GetCount()
+{
+    return myGamepads.size();
+}
+
+std::vector<int> Gamepad::GetConnectedIDs()
+{
+    std::vector<int> output = {};
+    for(auto& [id, con] : myGamepads)
+    {
+        output.push_back(id);
+    }
+    return output;
 }
 
 bool Gamepad::GetButton(int aControllerID, Button aButton)
@@ -161,13 +188,13 @@ float Gamepad::GetTimeSinceToggled(int aControllerID, Button aButton)
 {
     Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
     if(myGamepads[aControllerID].myButtons.size() <= button) { return 0; }
-    return (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myButtons[button].myTimeSinceToggled) * .001f;
+    return (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myButtons[button].myTimeOfLastToggle) * .001f;
 }
 
 float Gamepad::GetTimeSinceCrossedDeadZone(int aControllerID, Axis anAxis)
 {
     if(myGamepads[aControllerID].myAxes.size() <= anAxis) { return 0; }
-    return (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myAxes[anAxis].myTimeSinceToggled) * .001f;
+    return (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myAxes[anAxis].myTimeOfLastToggle) * .001f;
 }
 
 bool Gamepad::GetButton(Button aButton)
@@ -270,7 +297,7 @@ float Gamepad::GetTimeSinceToggled(Button aButton)
     {
         Button button = RemapButtonToStd(aButton, con.myMapping);
         if(con.myButtons.size() <= button) { continue; }
-        float time = (con.myTime - con.myButtons[button].myTimeSinceToggled) * .001f;
+        float time = (con.myTime - con.myButtons[button].myTimeOfLastToggle) * .001f;
         if(min > time) min = time;
     }
     return min;
@@ -282,7 +309,7 @@ float Gamepad::GetTimeSinceCrossedDeadZone(Axis anAxis)
     for(auto&[index, con] : myGamepads)
     {
         if(con.myAxes.size() <= anAxis) { continue; }
-        float time = (con.myTime - con.myAxes[anAxis].myTimeSinceToggled) * .001f;
+        float time = (con.myTime - con.myAxes[anAxis].myTimeOfLastToggle) * .001f;
         if(min > time) min = time;
     }
     return min;
@@ -297,6 +324,21 @@ int Gamepad::GetControllerPressing(Button aButton)
         if(con.myButtons[button].myIsDown) return index;
     }
     return -1;
+}
+
+int Gamepad::GetControllerWithLastEvent()
+{
+    float min = FLT_MAX;
+    int output = -1;
+    for(auto&[index, con] : myGamepads)
+    {
+        if(min > (con.myTime - con.myTimeOfLastToggle))
+        {
+            min = (con.myTime - con.myTimeOfLastToggle);
+            output = index;
+        }
+    }
+    return output;
 }
 
 void Gamepad::SetDeadZone(float aValue)

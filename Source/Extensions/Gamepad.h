@@ -31,6 +31,8 @@ public:
     static void Initialize();
     static void Update();
     static Mapping GetMapping(int aControllerID);
+    static int GetCount();
+    static std::vector<int> GetConnectedIDs();
     static bool GetButton(int aControllerID, Button aButton);
     static bool GetButtonDown(int aControllerID, Button aButton);
     static bool GetButtonUp(int aControllerID, Button aButton);
@@ -54,6 +56,7 @@ public:
     static float GetTimeSinceToggled(Button aButton);
     static float GetTimeSinceCrossedDeadZone(Axis anAxis);
     static int GetControllerPressing(Button aButton);
+    static int GetControllerWithLastEvent();
     static void SetDeadZone(float aValue);
     static void UseVerticalJoyCon();
     static void UseHorizontalJoyCon();
@@ -64,14 +67,14 @@ private:
         bool myIsDown;
         float myValue;
         bool myIsInitial;
-        float myTimeSinceToggled;
+        float myTimeOfLastToggle;
     };
     struct AxisState
     {
         float myDelta;
         float myValue;
         bool myIsInitial;
-        float myTimeSinceToggled;
+        float myTimeOfLastToggle;
     };
     struct State
     {
@@ -79,6 +82,7 @@ private:
         std::string myName;
         Mapping myMapping;
         float myTime;
+        float myTimeOfLastToggle;
         std::vector<ButtonState> myButtons;
         std::vector<AxisState> myAxes;
     };
