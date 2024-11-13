@@ -104,9 +104,17 @@ void SetUpDocumentEffectData()
     }
 }
 
+void CheckGamepadActions();
 int StickMenu(float aScroll, std::vector<std::string> someLabels);
+void DrawOverLay();
 
 void DoGamepadActions()
+{
+    CheckGamepadActions();
+    DrawOverLay();
+}
+
+void CheckGamepadActions()
 {
     /*
     R Stick spin - scroll
@@ -176,7 +184,7 @@ void DoGamepadActions()
     - [Confirm] - Split/Join
     */
 
-    if(Gamepad::GetCount() == 0) { return; }
+    //if(Gamepad::GetCount() == 0) { return; }
 
     Layer layer = g_layerLastFrame;
     if(!Gamepad::GetButton(Gamepad::Square) && !Gamepad::GetButton(Gamepad::Triangle) && !Gamepad::GetButton(Gamepad::L2) && !Gamepad::GetButton(Gamepad::R2))
@@ -246,7 +254,7 @@ void DoGamepadActions()
         if(Gamepad_Tap(Gamepad::Square))
         {
             // Show/Hide overlay
-            printf("Toggle HUD\n");
+            g_showOverlay = !g_showOverlay;
         }
         else if(Gamepad_Hold(Gamepad::Square))
         {
@@ -507,8 +515,49 @@ void DoGamepadActions()
         if(Gamepad_FlickAxis(Gamepad::LeftStickX, Gamepad_FlickLEFT)) { Menu::Edit_Capital(); }
         if(Gamepad_FlickAxis(Gamepad::LeftStickX, Gamepad_FlickRIGHT)) { Menu::Edit_ToggleCase(); }
     }
+}
 
-    // Overlay
+int StickMenu(float aScroll, std::vector<std::string> someLabels)
+{
+    if(g_menuBGTexture.myID == 0)
+    {
+        ImGui::Ext::LoadImage("##MenuBGTexture", "GamepadSprites/MenuBG.png");
+        ImGui::Ext::RenderTexture("##MenuBGTexture", g_menuBGTexture);
+    }
+    ImVec2 origin = {((float)MainWindow::SwapWidth) * .5f, ((float)MainWindow::SwapHeight) * .6f};
+    float halfSquare = origin.x < origin.y ? origin.x : origin.y;
+    ImDrawList* drawList = ImGui::GetForegroundDrawList();
+    int index = (int)aScroll;
+    float animStep = 0.6283185307f;
+    float animPos = (aScroll - index) * -animStep;
+    //drawList->PushTextureID(g_menuBGTexture.myID);
+    //drawList->PathEllipticalArcTo({origin.x, origin.y}, halfSquare * .6f, halfSquare * .23f, 0, 3.f, .14159f);
+    //drawList->PathStroke(IM_COL32_WHITE, 0, (int)(halfSquare * .2f));
+    //drawList->PopTextureID();
+    drawList->AddImage(g_menuBGTexture.myID, {origin.x - halfSquare, origin.y - (halfSquare * .25f)}, {origin.x + halfSquare, origin.y + (halfSquare * .75f)}, {0, 0}, {1, .5f}, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
+    ImGui::PushFont(MainWindow::Font);
+    while(index < 5) { index += someLabels.size();}
+    for(int i = 0; i < 10; i++)
+    {
+        int drawInd = ((index - 5) + i) % someLabels.size();
+        float scale = -cos(((float)i * animStep) + animPos);
+        ImVec2 pos = {origin.x + (halfSquare * .6f * sin(((float)i * animStep) + animPos)), origin.y + (halfSquare * .23f * -cos(((float)i * animStep) + animPos))};
+        ImVec2 textSize = ImGui::CalcTextSize(someLabels[drawInd].data());
+        ImVec2 size = {textSize.x * .75f * scale, textSize.y * .75f * scale};
+        drawList->AddEllipseFilled(pos, size.x * .55f, size.y * .55f, IM_COL32(105, 50, 105, (200 * scale)));
+        drawList->AddText(MainWindow::Font, DPI_SCALED(30), {pos.x - size.x, pos.y - size.y}, IM_COL32(255, 255, 255, (255 * scale)), someLabels[drawInd].data());
+    }
+    ImGui::PopFont();
+    drawList->AddImage(g_menuBGTexture.myID, {origin.x - halfSquare, origin.y - (halfSquare * .25f)}, {origin.x + halfSquare, origin.y + (halfSquare * .75f)}, {0, .5f}, {1, 1}, ImGui::GetColorU32(ImGuiCol_Border));
+    //drawList->PathEllipticalArcTo({origin.x, origin.y - halfSquare * .1f}, halfSquare * .6f, halfSquare * .2f, 0, 3.f, .14159f);
+    //drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .02f);
+    //drawList->PathEllipticalArcTo({origin.x, origin.y + halfSquare * .1f}, halfSquare * .6f, halfSquare * .25f, 0, .14159f, 3.f);
+    //drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .02f);
+    return -1;
+}
+
+void DrawOverLay()
+{
     if(!g_showOverlay) { return; }
     if(g_hudTexture.myID == 0)
     {
@@ -553,7 +602,7 @@ void DoGamepadActions()
 
     DrawHudSprite(MapSwitch(DPadBGPS, DPadBGPS, DPadBG, BtnPadBG), .0f, .0f, .3f, .3f, IM_COL32_WHITE);
     DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .7f, .0f, .3f, .3f, IM_COL32_WHITE);
-    DrawHudSprite((layer == Settings || layer == Effects) ? StickSpinBG : StickFlickBG, .25f, .3f, .2f, .2f, IM_COL32_WHITE);
+    DrawHudSprite((g_layerLastFrame == Settings || g_layerLastFrame == Effects) ? StickSpinBG : StickFlickBG, .25f, .3f, .2f, .2f, IM_COL32_WHITE);
     DrawBumperRight(BumperFill, 255);
     DrawTriggerRightScale(TriggerFill, 255, .15f);
     DrawBumperLeft(BumperFill, 255);
@@ -573,10 +622,10 @@ void DoGamepadActions()
     if(Gamepad::GetButton(Gamepad::L1)) DrawBumperLeft(BumperFill, 150);
     if(Gamepad::GetButton(Gamepad::L2)) DrawTriggerLeftScale(TriggerFill, 150, .15f);
     if(Gamepad::GetButton(Gamepad::LeftStick)) DrawLStickCenter(BtnFill, 150);
-    if(layer == Standard || layer == Adjust)
+    if(g_layerLastFrame == Standard || g_layerLastFrame == Adjust)
     {
         DrawFaceButtonDecline(TimeEnd, 255);
-        DrawFaceButtonConfirm(layer == Standard ? TimeStart : SyllableBtn, 255);
+        DrawFaceButtonConfirm(g_layerLastFrame == Standard ? TimeStart : SyllableBtn, 255);
         DrawDPadUp(ArrowUpBtn, 255);
         DrawDPadLeft(ArrowLeftBtn, 255);
         DrawDPadRight(ArrowRightBtn, 255);
@@ -590,13 +639,30 @@ void DoGamepadActions()
         DrawLStickDown((AudioPlayback::GetIsPlaying() ? PauseBtn : PlayBtn), 255);
         DrawLStickCenter(StopBtn, 255);
     }
-    if(layer == Standard)   // Only the ones that are unique to Standard
+    if(g_layerLastFrame == Standard)   // Only the ones that are unique to Standard
     {
         DrawFaceButtonEffect(EffectBtn, 255);
+        if(Serialization::KaraokeDocument::Get().GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue.starts_with("image "))
+        {
+            DrawHudSprite(BtnFill, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(ImageBtn, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+        }
+        else if(Serialization::KaraokeDocument::Get().IsEffectToken(Serialization::KaraokeDocument::Get().GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken())))
+        {
+            DrawHudSprite(BtnFill, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(EffectBtn, .825f, -.075f, .075f, .075f, IM_COL32_WHITE); // TODO: Switch out for a remove symbol. 
+        }
+        else if(g_lastAddedEffect != -1)
+        {
+            DrawHudSprite(BtnFill, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(SingerBtn, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+        }
         DrawFaceButtonSetting(MenuBtn, 255);
+        DrawHudSprite(BtnFill, .625f, .125f, .075f, .075f, IM_COL32_WHITE);
+        DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .625f, .125f, .075f, .075f, IM_COL32_WHITE);
         DrawTriggerLeftScale(LayoutBtn, 255, .1f);
     }
-    if(layer == Settings)
+    if(g_layerLastFrame == Settings)
     {
         DrawFaceButtonSetting(MenuBtn, 255);
         DrawFaceButtonConfirm(PreviewBtn, 255);
@@ -607,7 +673,7 @@ void DoGamepadActions()
         DrawLStickUp((g_effectSpinType == Singer ? SingerBtn : ImageBtn), 255);
         DrawLStickCenter(MenuToggle, 255);
     }
-    if(layer == Effects)
+    if(g_layerLastFrame == Effects)
     {
         DrawFaceButtonEffect(EffectBtn, 255);
         DrawFaceButtonDecline(NoEffectBtn, 255);
@@ -616,7 +682,7 @@ void DoGamepadActions()
         DrawLStickUp(SingerBtn, 255);
         DrawLStickCenter(MenuToggle, 255);
     }
-    if(layer == Layout)
+    if(g_layerLastFrame == Layout)
     {
         DrawFaceButtonConfirm(LineDuplicate, 255);
         DrawFaceButtonDecline(LineSplit, 255);
@@ -633,43 +699,4 @@ void DoGamepadActions()
     }
 #undef MapSwitch
 #undef DrawHudSprite
-}
-
-int StickMenu(float aScroll, std::vector<std::string> someLabels)
-{
-    if(g_menuBGTexture.myID == 0)
-    {
-        ImGui::Ext::LoadImage("##MenuBGTexture", "GamepadSprites/MenuBG.png");
-        ImGui::Ext::RenderTexture("##MenuBGTexture", g_menuBGTexture);
-    }
-    ImVec2 origin = {((float)MainWindow::SwapWidth) * .5f, ((float)MainWindow::SwapHeight) * .6f};
-    float halfSquare = origin.x < origin.y ? origin.x : origin.y;
-    ImDrawList* drawList = ImGui::GetForegroundDrawList();
-    int index = (int)aScroll;
-    float animStep = 0.6283185307f;
-    float animPos = (aScroll - index) * -animStep;
-    //drawList->PushTextureID(g_menuBGTexture.myID);
-    //drawList->PathEllipticalArcTo({origin.x, origin.y}, halfSquare * .6f, halfSquare * .23f, 0, 3.f, .14159f);
-    //drawList->PathStroke(IM_COL32_WHITE, 0, (int)(halfSquare * .2f));
-    //drawList->PopTextureID();
-    drawList->AddImage(g_menuBGTexture.myID, {origin.x - halfSquare, origin.y - (halfSquare * .25f)}, {origin.x + halfSquare, origin.y + (halfSquare * .75f)}, {0, 0}, {1, .5f}, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
-    ImGui::PushFont(MainWindow::Font);
-    while(index < 5) { index += someLabels.size();}
-    for(int i = 0; i < 10; i++)
-    {
-        int drawInd = ((index - 5) + i) % someLabels.size();
-        float scale = -cos(((float)i * animStep) + animPos);
-        ImVec2 pos = {origin.x + (halfSquare * .6f * sin(((float)i * animStep) + animPos)), origin.y + (halfSquare * .23f * -cos(((float)i * animStep) + animPos))};
-        ImVec2 textSize = ImGui::CalcTextSize(someLabels[drawInd].data());
-        ImVec2 size = {textSize.x * .75f * scale, textSize.y * .75f * scale};
-        drawList->AddEllipseFilled(pos, size.x * .55f, size.y * .55f, IM_COL32(105, 50, 105, (200 * scale)));
-        drawList->AddText(MainWindow::Font, DPI_SCALED(30), {pos.x - size.x, pos.y - size.y}, IM_COL32(255, 255, 255, (255 * scale)), someLabels[drawInd].data());
-    }
-    ImGui::PopFont();
-    drawList->AddImage(g_menuBGTexture.myID, {origin.x - halfSquare, origin.y - (halfSquare * .25f)}, {origin.x + halfSquare, origin.y + (halfSquare * .75f)}, {0, .5f}, {1, 1}, ImGui::GetColorU32(ImGuiCol_Border));
-    //drawList->PathEllipticalArcTo({origin.x, origin.y - halfSquare * .1f}, halfSquare * .6f, halfSquare * .2f, 0, 3.f, .14159f);
-    //drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .02f);
-    //drawList->PathEllipticalArcTo({origin.x, origin.y + halfSquare * .1f}, halfSquare * .6f, halfSquare * .25f, 0, .14159f, 3.f);
-    //drawList->PathStroke(IM_COL32_WHITE, 0, halfSquare * .02f);
-    return -1;
 }
