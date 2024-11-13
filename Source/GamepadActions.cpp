@@ -42,8 +42,8 @@ enum HUDSprite
     MenuBtn, EffectBtn, SyllableBtn, TimeEnd, TimeStart,
     SpeedUp, SpeedDown, LineTagPlus, LineTagMinus, NoEffectBtn, SingerBtn, ImageBtn,
     LineMoveUp, LineMoveDown, LineMergeUp, LineMergeDown, LineDuplicate, LineSplit, LineRemove,
-    CaseCapital, CaseMajus, CaseMinus, CaseToggle,
-    StopBtn, PlayBtn, PauseBtn, RW5sBtn, FF5sBtn, Unused1,
+    CaseCapital, CaseMajus, CaseMinus, CaseToggle, MenuToggle,
+    StopBtn, PlayBtn, PauseBtn, RW5sBtn, FF5sBtn, SeekToMarkBtn, LayoutBtn, AdjustBtn,
     BtnPadBGPS, DPadBGPS, BtnPadBG, DPadBG, StickSpinBG, StickFlickBG,
     DPadFillPSY, DPadFillPSX, DPadFillY, DPadFillX,
     //DPadFillPSYR, DPadFillPSXR, DPadFillYR, DPadFillXR,       // Might be useful later
@@ -54,22 +54,22 @@ ImVec2 g_hudStartUVs[] = {
     {.0f, .0f}, {.0f, .1f}, {.0f, .2f}, {.0f, .3f}, {.0f, .4f},
     {.1f, .0f}, {.2f, .0f}, {.3f, .0f}, {.4f, .0f}, {.5f, .0f},
     {.6f, .0f}, {.6f, .1f}, {.5f, .1f}, {.4f, .1f}, {.3f, .1f}, {.2f, .1f}, {.1f, .1f},
-    {.1f, .2f}, {.2f, .2f}, {.3f, .2f}, {.4f, .2f}, {.5f, .2f}, {.6f, .2f}, {.3f, .6f},
-    {.1f, .3f}, {.2f, .3f}, {.3f, .3f}, {.4f, .3f},
-    {.1f, .4f}, {.2f, .4f}, {.3f, .4f}, {.4f, .4f}, {.5f, .4f}, {.6f, .4f},
+    {.1f, .2f}, {.2f, .2f}, {.3f, .2f}, {.4f, .2f}, {.5f, .2f}, {.6f, .2f}, {.6f, .3f},
+    {.1f, .3f}, {.2f, .3f}, {.3f, .3f}, {.4f, .3f}, {.5f, .3f},
+    {.1f, .4f}, {.2f, .4f}, {.3f, .4f}, {.4f, .4f}, {.5f, .4f}, {.6f, .4f}, {.5f, .5f}, {.6f, .5f},
     {.7f, .0f}, {.4f, .6f}, {.7f, .3f}, {.7f, .6f}, {.0f, .5f}, {.0f, .7f},
     {.2f, .7f}, {.2f, .5f}, {.3f, .7f}, {.2f, .6f},
     //{.3f, .85f}, {.35f, .6f}, {.4f, .85f}, {.35f, .7f},
     {.4f, .9f}, {.5f, .9f}, {.6f, .9f}, {.7f, .9f},
-    {.0f, .9f}, {.2f, .85f}, {.3f, .85f}, {.9f, .9f},
+    {.0f, .9f}, {.2f, .9f}, {.3f, .85f}, {.9f, .9f},
 };
 ImVec2 g_hudEndUVs[] = {
     {.1f, .1f}, {.1f, .2f}, {.1f, .3f}, {.1f, .4f}, {.1f, .5f},
     {.2f, .1f}, {.3f, .1f}, {.4f, .1f}, {.5f, .1f}, {.6f, .1f},
     {.7f, .1f}, {.7f, .2f}, {.6f, .2f}, {.5f, .2f}, {.4f, .2f}, {.3f, .2f}, {.2f, .2f},
-    {.2f, .3f}, {.3f, .3f}, {.4f, .3f}, {.5f, .3f}, {.6f, .3f}, {.7f, .3f}, {.4f, .7f},
-    {.2f, .4f}, {.3f, .4f}, {.4f, .4f}, {.5f, .4f},
-    {.2f, .5f}, {.3f, .5f}, {.4f, .5f}, {.5f, .5f}, {.6f, .5f}, {.7f, .5f},
+    {.2f, .3f}, {.3f, .3f}, {.4f, .3f}, {.5f, .3f}, {.6f, .3f}, {.7f, .3f}, {.7f, .4f},
+    {.2f, .4f}, {.3f, .4f}, {.4f, .4f}, {.5f, .4f}, {.6f, .4f},
+    {.2f, .5f}, {.3f, .5f}, {.4f, .5f}, {.5f, .5f}, {.6f, .5f}, {.7f, .5f}, {.6f, .6f}, {.7f, .6f},
     {1.f, .3f}, {.7f, .9f}, {1.f, .6f}, {1.f, .9f}, {.2f, .7f}, {.2f, .9f},
     {.3f, .85f}, {.35f, .6f}, {.4f, .85f}, {.35f, .7f},
     //{.2f, .7f}, {.2f, .5f}, {.3f, .7f}, {.2f, .6f},
@@ -160,7 +160,7 @@ void DoGamepadActions()
     - - L-stick spin - Cycle singers/images (release to use)
     - - L-stick click - Toggle singers/images menu
     
-    Edit (ZL)
+    Layout (ZL)
     - D-pad Up/Down - Move line
     - D-pad Left/Right - Merge line up/down
     - [Confirm] - Duplicate line
@@ -171,12 +171,12 @@ void DoGamepadActions()
     - L-stick Flick Left - Capital case
     - L-stick Flick Right - Toggle letter case
     
-    Char (ZR)
+    Adjust (ZR)
     - D-pad = arrows
     - [Confirm] - Split/Join
     */
 
-    //if(Gamepad::GetCount() == 0) { return; }
+    if(Gamepad::GetCount() == 0) { return; }
 
     Layer layer = g_layerLastFrame;
     if(!Gamepad::GetButton(Gamepad::Square) && !Gamepad::GetButton(Gamepad::Triangle) && !Gamepad::GetButton(Gamepad::L2) && !Gamepad::GetButton(Gamepad::R2))
@@ -519,9 +519,13 @@ void DoGamepadActions()
     //ImVec2 screenSize = {((float)MainWindow::SwapWidth) - DPI_SCALED(50), ((float)MainWindow::SwapHeight)};
     ImVec2 screenSize = ImGui::GetWindowSize();
     screenSize.x -= DPI_SCALED(50);
-    ImVec2 drawSize = DPI_SCALED(400) < screenSize.x ? ImVec2{DPI_SCALED(400), DPI_SCALED(300)} : ImVec2{screenSize.x, screenSize.x * .5f};
+    ImVec2 drawSize = DPI_SCALED(400) < screenSize.x ? ImVec2{DPI_SCALED(400), DPI_SCALED(300)} : ImVec2{screenSize.x, screenSize.x * .75f};
     ImVec2 origin = {screenSize.x - drawSize.x, screenSize.y - drawSize.y};
     Gamepad::Mapping controllerMapping = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+    float magnitudeLStick = Gamepad_Magnitude(Gamepad::LeftStick);
+    ImVec2 clampedLStick = magnitudeLStick < 1 ?
+        ImVec2{Gamepad::GetAxisRaw(Gamepad::LeftStickX), Gamepad::GetAxisRaw(Gamepad::LeftStickY)} :
+        ImVec2{Gamepad::GetAxisRaw(Gamepad::LeftStickX) / magnitudeLStick, Gamepad::GetAxisRaw(Gamepad::LeftStickY) / magnitudeLStick};
 
 #define MapSwitch(Xin, PS, ProCon, JoyCon) (controllerMapping == Gamepad::Xinput ? (Xin) : (controllerMapping <= Gamepad::PSClassic ? (PS) : (controllerMapping == Gamepad::SwitchPro ? (ProCon) : (controllerMapping <= Gamepad::JoyConR ? (JoyCon) : (ProCon)))))
 #define DrawHudSprite(sprite, posX, posY, sizeX, sizeY, col) drawList->AddImage(g_hudTexture.myID, {origin.x + (drawSize.x * posX), origin.y + (drawSize.x * posY)}, {origin.x + (drawSize.x * (sizeX + posX)), origin.y + (drawSize.x * (sizeY + posY))}, g_hudStartUVs[sprite], g_hudEndUVs[sprite], col)
@@ -537,9 +541,24 @@ void DoGamepadActions()
 #define DrawFaceButtonSetting(sprite, alpha) MapSwitch(DrawHudSprite(sprite, .715625f, .1f, .1f, .1f, IM_COL32(14, 82, 255, alpha)), DrawHudSprite(sprite, .715625f, .1f, .1f, .1f, IM_COL32(217, 173, 216, alpha)), DrawHudSprite(sprite, .8f, .015625f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, .8f, .015625f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
 #define DrawFaceButtonDecline(sprite, alpha) MapSwitch(DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(255, 19, 3, alpha)), DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(246, 129, 132, alpha)), DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
 #define DrawFaceButtonConfirm(sprite, alpha) MapSwitch(DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(53, 217, 0, alpha)), DrawHudSprite(sprite, .8f, (.2f - .015625f), .1f, .1f, IM_COL32(152, 188, 228, alpha)), DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)), DrawHudSprite(sprite, (.9f - .015625f), .1f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha)))
+#define DrawBumperLeft(sprite, alpha) DrawHudSprite(sprite, .35f, .06f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawBumperRight(sprite, alpha) DrawHudSprite(sprite, .55f, .06f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawTriggerLeftScale(sprite, alpha, Y) DrawHudSprite(sprite, .35f, (.05f - Y), .1f, Y, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawTriggerRightScale(sprite, alpha, Y) DrawHudSprite(sprite, .55f, (.05f - Y), .1f, Y, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickUp(sprite, alpha) DrawHudSprite(sprite, .3f, .25f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickRight(sprite, alpha) DrawHudSprite(sprite, .2f, .35f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickLeft(sprite, alpha) DrawHudSprite(sprite, .4f, .35f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickDown(sprite, alpha) DrawHudSprite(sprite, .3f, .45f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickCenter(sprite, alpha) DrawHudSprite(sprite, (.3f + (clampedLStick.x * .1f)), (.35f - (clampedLStick.y * .1f)), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+
     DrawHudSprite(MapSwitch(DPadBGPS, DPadBGPS, DPadBG, BtnPadBG), .0f, .0f, .3f, .3f, IM_COL32_WHITE);
     DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .7f, .0f, .3f, .3f, IM_COL32_WHITE);
-    DrawHudSprite((layer == Settings || layer == Effects) ? StickSpinBG : StickFlickBG, .35f, .3f, .2f, .2f, IM_COL32_WHITE);
+    DrawHudSprite((layer == Settings || layer == Effects) ? StickSpinBG : StickFlickBG, .25f, .3f, .2f, .2f, IM_COL32_WHITE);
+    DrawBumperRight(BumperFill, 255);
+    DrawTriggerRightScale(TriggerFill, 255, .15f);
+    DrawBumperLeft(BumperFill, 255);
+    DrawTriggerLeftScale(TriggerFill, 255, .15f);
+    DrawLStickCenter(BtnFill, 255);
     //DrawHudSprite(StickSpinBG, .5f, .3f, .2f, .2f, IM_COL32_WHITE);   // Right stick might not need a spot
     if(Gamepad::GetButton(Gamepad::D_Up)) DrawDPadUpScale(MapSwitch(DPadFillPSY, DPadFillPSY, DPadFillY, BtnFill), 150, .15f);
     if(Gamepad::GetButton(Gamepad::D_Left)) DrawDPadLeftScale(MapSwitch(DPadFillPSX, DPadFillPSX, DPadFillX, BtnFill), 150, .15f);
@@ -549,16 +568,33 @@ void DoGamepadActions()
     if(Gamepad::GetButton(Gamepad::Square)) DrawFaceButtonSetting(BtnFill, 150);
     if(Gamepad::GetButton(Gamepad::Circle)) DrawFaceButtonDecline(BtnFill, 150);
     if(Gamepad::GetButton(Gamepad::Cross)) DrawFaceButtonConfirm(BtnFill, 150);
+    if(Gamepad::GetButton(Gamepad::R1)) DrawBumperRight(BumperFill, 150);
+    if(Gamepad::GetButton(Gamepad::R2)) DrawTriggerRightScale(TriggerFill, 150, .15f);
+    if(Gamepad::GetButton(Gamepad::L1)) DrawBumperLeft(BumperFill, 150);
+    if(Gamepad::GetButton(Gamepad::L2)) DrawTriggerLeftScale(TriggerFill, 150, .15f);
+    if(Gamepad::GetButton(Gamepad::LeftStick)) DrawLStickCenter(BtnFill, 150);
     if(layer == Standard || layer == Adjust)
     {
-        DrawFaceButtonEffect(EffectBtn, 255);
-        DrawFaceButtonSetting(MenuBtn, 255);
         DrawFaceButtonDecline(TimeEnd, 255);
         DrawFaceButtonConfirm(layer == Standard ? TimeStart : SyllableBtn, 255);
         DrawDPadUp(ArrowUpBtn, 255);
         DrawDPadLeft(ArrowLeftBtn, 255);
         DrawDPadRight(ArrowRightBtn, 255);
         DrawDPadDown(ArrowDownBtn, 255);
+        DrawBumperRight(SpeedUp, 255);
+        DrawTriggerRightScale(AdjustBtn, 255, .1f);
+        DrawBumperLeft(SpeedDown, 255);
+        DrawLStickUp(SeekToMarkBtn, 255);
+        DrawLStickRight(FF5sBtn, 255);
+        DrawLStickLeft(RW5sBtn, 255);
+        DrawLStickDown((AudioPlayback::GetIsPlaying() ? PauseBtn : PlayBtn), 255);
+        DrawLStickCenter(StopBtn, 255);
+    }
+    if(layer == Standard)   // Only the ones that are unique to Standard
+    {
+        DrawFaceButtonEffect(EffectBtn, 255);
+        DrawFaceButtonSetting(MenuBtn, 255);
+        DrawTriggerLeftScale(LayoutBtn, 255, .1f);
     }
     if(layer == Settings)
     {
@@ -568,6 +604,8 @@ void DoGamepadActions()
         DrawDPadLeft(FontSize, 255);
         DrawDPadRight(DocColor, 255);
         DrawDPadDown(ShiftTimes, 255);
+        DrawLStickUp((g_effectSpinType == Singer ? SingerBtn : ImageBtn), 255);
+        DrawLStickCenter(MenuToggle, 255);
     }
     if(layer == Effects)
     {
@@ -575,6 +613,8 @@ void DoGamepadActions()
         DrawFaceButtonDecline(NoEffectBtn, 255);
         DrawDPadUp(LineTagPlus, 255);
         DrawDPadDown(LineTagMinus, 255);
+        DrawLStickUp(SingerBtn, 255);
+        DrawLStickCenter(MenuToggle, 255);
     }
     if(layer == Layout)
     {
@@ -584,6 +624,12 @@ void DoGamepadActions()
         DrawDPadLeft(LineMergeUp, 255);
         DrawDPadRight(LineMergeDown, 255);
         DrawDPadDown(LineMoveDown, 255);
+        DrawTriggerLeftScale(LayoutBtn, 255, .1f);
+        DrawLStickUp(CaseMajus, 255);
+        DrawLStickRight(CaseToggle, 255);
+        DrawLStickLeft(CaseCapital, 255);
+        DrawLStickDown(CaseMinus, 255);
+        DrawLStickCenter(LineRemove, 255);
     }
 #undef MapSwitch
 #undef DrawHudSprite

@@ -286,7 +286,7 @@ void loop(void* window){
             ImGui::Ext::DestroyHTMLElement("ExportZip");
         }
         Menu::Edit_CheckShortcuts();
-        if(ImGui::BeginMenu("Edit", !g_isSafeMode) || Gamepad::GetButton(Gamepad::ZL))
+        if(ImGui::BeginMenu("Edit", !g_isSafeMode))
         {
             if(ImGui::MenuItem("Insert Line Break", "Alt + Enter", false, !TimingEditor::Get().GetInputUnsafe()))
             {
@@ -335,7 +335,7 @@ void loop(void* window){
             {
                 Menu::Edit_ToggleCase();
             }
-            if(!Gamepad::GetButton(Gamepad::ZL))ImGui::EndMenu();
+            ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("Effects", !g_isSafeMode))
         {

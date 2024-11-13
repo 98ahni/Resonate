@@ -999,27 +999,27 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4045168: ($0) => { init_gapi_with_key($0); },  
- 4045194: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4045234: () => { Module.hide_loading_screen(); },  
- 4045264: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4045387: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4045489: () => { return Date.now(); },  
- 4045510: () => { return Date.now(); },  
- 4045531: () => { return Date.now(); },  
- 4045552: () => { location.reload() },  
- 4045570: () => { location.reload(); },  
- 4045589: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4045652: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4045745: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4045841: () => { return global_audio_element.paused ? 1 : 0; },  
- 4045885: () => { return global_audio_element.paused ? 1 : 0; },  
- 4045929: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4045979: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4046235: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4046504: () => { audio_element_pause(); },  
- 4046527: () => { audio_element_play(); },  
- 4046549: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4045848: ($0) => { init_gapi_with_key($0); },  
+ 4045874: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4045914: () => { Module.hide_loading_screen(); },  
+ 4045944: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4046067: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4046169: () => { return Date.now(); },  
+ 4046190: () => { return Date.now(); },  
+ 4046211: () => { return Date.now(); },  
+ 4046232: () => { location.reload() },  
+ 4046250: () => { location.reload(); },  
+ 4046269: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4046332: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4046425: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4046521: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4046565: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4046609: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4046659: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4046915: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4047184: () => { audio_element_pause(); },  
+ 4047207: () => { audio_element_play(); },  
+ 4047229: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['account_info.read', 'files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); global_db_api.usersGetCurrentAccount().then((user_res)=>{ callback_func( Emval.toHandle(Date.now() + (global_db_auth.getAccessTokenExpiresAt() * 1000)), Emval.toHandle(user_res.result.name.display_name), Emval.toHandle(user_res.result.profile_photo_url || '')); }); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
 function db_refresh_token(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));}); }
@@ -11752,9 +11752,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3978868;
-var ___start_em_js = Module['___start_em_js'] = 4014312;
-var ___stop_em_js = Module['___stop_em_js'] = 4045168;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3979504;
+var ___start_em_js = Module['___start_em_js'] = 4014992;
+var ___stop_em_js = Module['___stop_em_js'] = 4045848;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
