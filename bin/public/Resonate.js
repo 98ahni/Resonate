@@ -5786,7 +5786,7 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   Disabled:3,
   },
   state:0,
-  StackSize:7168,
+  StackSize:4096,
   currData:null,
   handleSleepReturnValue:0,
   exportCallStack:[],

@@ -106,12 +106,25 @@ void SetUpDocumentEffectData()
 
 void CheckGamepadActions();
 int StickMenu(float aScroll, std::vector<std::string> someLabels);
-void DrawOverLay();
+void DrawImagePopup();
+void DrawLatencyPopup();
+void DrawFontSizePopup();
+void DrawDocColorsPopup();
+void DrawTimeShiftPopup();
+void DrawSingerPopup();
+void DrawOverlay();
 
 void DoGamepadActions()
 {
+    if(Gamepad::GetCount() == 0) { return; }
+    if(g_hudTexture.myID == 0)
+    {
+        ImGui::Ext::LoadImage("##MenuHUDTexture", "GamepadSprites/IconSprites.png");
+        ImGui::Ext::RenderTexture("##MenuHUDTexture", g_hudTexture);
+    }
     CheckGamepadActions();
-    DrawOverLay();
+    if(!g_showOverlay) { return; }
+    DrawOverlay();
 }
 
 void CheckGamepadActions()
@@ -183,8 +196,6 @@ void CheckGamepadActions()
     - D-pad = arrows
     - [Confirm] - Split/Join
     */
-
-    //if(Gamepad::GetCount() == 0) { return; }
 
     Layer layer = g_layerLastFrame;
     if(!Gamepad::GetButton(Gamepad::Square) && !Gamepad::GetButton(Gamepad::Triangle) && !Gamepad::GetButton(Gamepad::L2) && !Gamepad::GetButton(Gamepad::R2))
@@ -556,14 +567,56 @@ int StickMenu(float aScroll, std::vector<std::string> someLabels)
     return -1;
 }
 
-void DrawOverLay()
+void DrawImagePopup()
 {
-    if(!g_showOverlay) { return; }
-    if(g_hudTexture.myID == 0)
+    if(ImGui::BeginPopupModal("Image##Gamepad"))
     {
-        ImGui::Ext::LoadImage("##MenuHUDTexture", "GamepadSprites/IconSprites.png");
-        ImGui::Ext::RenderTexture("##MenuHUDTexture", g_hudTexture);
+        ImGui::EndPopup();
     }
+}
+
+void DrawLatencyPopup()
+{
+    if(ImGui::BeginPopupModal("Latency##Gamepad"))
+    {
+        ImGui::EndPopup();
+    }
+}
+
+void DrawFontSizePopup()
+{
+    if(ImGui::BeginPopupModal("Font Size##Gamepad"))
+    {
+        ImGui::EndPopup();
+    }
+}
+
+void DrawDocColorsPopup()
+{
+    if(ImGui::BeginPopupModal("Default Colors##Gamepad"))
+    {
+        ImGui::EndPopup();
+    }
+}
+
+void DrawTimeShiftPopup()
+{
+    if(ImGui::BeginPopupModal("Shift Timings##Gamepad"))
+    {
+        ImGui::EndPopup();
+    }
+}
+
+void DrawSingerPopup()
+{
+    if(ImGui::BeginPopupModal("Edit Singer##Gamepad"))
+    {
+        ImGui::EndPopup();
+    }
+}
+
+void DrawOverlay()
+{
     ImDrawList* drawList = ImGui::GetForegroundDrawList();
     //ImVec2 screenSize = {((float)MainWindow::SwapWidth) - DPI_SCALED(50), ((float)MainWindow::SwapHeight)};
     ImVec2 screenSize = ImGui::GetWindowSize();
@@ -644,22 +697,22 @@ void DrawOverLay()
         DrawFaceButtonEffect(EffectBtn, 255);
         if(Serialization::KaraokeDocument::Get().GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue.starts_with("image "))
         {
-            DrawHudSprite(BtnFill, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
-            DrawHudSprite(ImageBtn, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(BtnFill, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(ImageBtn, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
         }
         else if(Serialization::KaraokeDocument::Get().IsEffectToken(Serialization::KaraokeDocument::Get().GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken())))
         {
-            DrawHudSprite(BtnFill, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
-            DrawHudSprite(EffectBtn, .825f, -.075f, .075f, .075f, IM_COL32_WHITE); // TODO: Switch out for a remove symbol. 
+            DrawHudSprite(BtnFill, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(EffectBtn, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE); // TODO: Switch out for a remove symbol. 
         }
         else if(g_lastAddedEffect != -1)
         {
-            DrawHudSprite(BtnFill, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
-            DrawHudSprite(SingerBtn, .825f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(BtnFill, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(SingerBtn, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
         }
         DrawFaceButtonSetting(MenuBtn, 255);
-        DrawHudSprite(BtnFill, .625f, .125f, .075f, .075f, IM_COL32_WHITE);
-        DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .625f, .125f, .075f, .075f, IM_COL32_WHITE);
+        DrawHudSprite(BtnFill, .625f, .1125f, .075f, .075f, IM_COL32_WHITE);
+        DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .625f, .1125f, .075f, .075f, IM_COL32_WHITE);
         DrawTriggerLeftScale(LayoutBtn, 255, .1f);
     }
     if(g_layerLastFrame == Settings)

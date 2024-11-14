@@ -139,7 +139,7 @@ sourceFiles.forEach(file => {
 if((!SKIP_Linking && hasUnlinkedFiles) || FORCE_Linking)
 {
     console.log('Linking Resonate');
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sASYNCIFY_STACK_SIZE=8192 -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sASYNCIFY_STACK_SIZE=4096 -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
 }
 
 console.log('Done!');
