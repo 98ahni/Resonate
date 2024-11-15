@@ -10,6 +10,7 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <Extensions/TouchInput.h>
 #include <Defines.h>
+#include <GamepadActions.h>
 
 PropertiesWindow::PropertiesWindow()
 {
@@ -77,7 +78,7 @@ void PropertiesWindow::OnImGuiDraw()
         if(ImGui::Button("Shift Timings"))
         {
             ImGui::OpenPopup("Shift Timings");
-            myShiftTimingsValue = 0;
+            ourShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = true;
         }
     }
@@ -117,12 +118,54 @@ void PropertiesWindow::OnImGuiDraw()
     Gui_End();
 }
 
+void PropertiesWindow::DrawGamepadFontSizeInput()
+{
+    int fontSize = Serialization::KaraokeDocument::Get().GetFontSize();
+    if(ImGui::InputInt("##Latency", &fontSize))
+    {
+        Serialization::KaraokeDocument::Get().myFontSize = fontSize;
+    }
+    if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+    {
+        Serialization::KaraokeDocument::Get().myFontSize = fontSize - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+    }
+    if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+    {
+        Serialization::KaraokeDocument::Get().myFontSize = fontSize + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+    }
+}
+
+void PropertiesWindow::DrawGamepadShiftTimingsInput()
+{
+    ImGui::Dummy({0, DPI_SCALED(5)});
+    ImGui::Text("If the syllables light up too early, enter a positive offset.");
+    ImGui::Text("If the syllables light up after the audio, enter a negative offset.");
+    ImGui::Dummy({0, DPI_SCALED(10)});
+    if(ImGui::InputInt("##Latency", &ourShiftTimingsValue))
+    {
+    }
+    if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+    {
+        ourShiftTimingsValue -= (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+    }
+    if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+    {
+        ourShiftTimingsValue += (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+    }
+    if(Gamepad::GetButtonDown(Gamepad::A))
+    {
+        Serialization::KaraokeDocument::Get().ShiftTimings(ourShiftTimingsValue);
+        Serialization::KaraokeDocument::Get().MakeDirty();
+        ourShiftTimingsValue = 0;
+    }
+}
+
 void PropertiesWindow::ShiftTimingsPopupDraw()
 {
     if(ImGui::BeginPopupModal("Shift Timings", &myShiftTimingsPopupOpen))
     {
         //ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        if(ImGui::Ext::StepInt("Offset (cs)", myShiftTimingsValue, 1, 10))
+        if(ImGui::Ext::StepInt("Offset (cs)", ourShiftTimingsValue, 1, 10))
         {
             Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
             Serialization::KaraokeToken& token = doc.GetToken(0, 0);
@@ -130,9 +173,9 @@ void PropertiesWindow::ShiftTimingsPopupDraw()
             {
                 token = doc.GetTimedTokenAfter(0, 0);
             }
-            if(((int)token.myStartTime) < -myShiftTimingsValue)
+            if(((int)token.myStartTime) < -ourShiftTimingsValue)
             {
-                myShiftTimingsValue = -(int)token.myStartTime;
+                ourShiftTimingsValue = -(int)token.myStartTime;
             }
         }
         ImGui::Dummy({0, DPI_SCALED(5)});
@@ -141,15 +184,15 @@ void PropertiesWindow::ShiftTimingsPopupDraw()
         ImGui::Dummy({0, DPI_SCALED(10)});
         if(ImGui::Button("Shift"))
         {
-            Serialization::KaraokeDocument::Get().ShiftTimings(myShiftTimingsValue);
+            Serialization::KaraokeDocument::Get().ShiftTimings(ourShiftTimingsValue);
             Serialization::KaraokeDocument::Get().MakeDirty();
-            myShiftTimingsValue = 0;
+            ourShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = false;
         }
         ImGui::SameLine();
         if(ImGui::Button("Cancel"))
         {
-            myShiftTimingsValue = 0;
+            ourShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = false;
         }
         ImGui::EndPopup();

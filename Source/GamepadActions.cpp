@@ -2,14 +2,15 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "GamepadActions.h"
-#include "Extensions/Gamepad.h"
 #include "Extensions/imguiExt.h"
 #include "Serialization/KaraokeData.h"
 #include <Serialization/Preferences.h>
 #include "Windows/MainWindow.h"
 #include "Windows/TimingEditor.h"
+#include "Windows/Settings.h"
 #include "Windows/AudioPlayback.h"
 #include "Windows/Preview.h"
+#include "Windows/Properties.h"
 #include "Defines.h"
 #include "StringTools.h"
 #include "EditMenu.h"
@@ -269,11 +270,21 @@ void CheckGamepadActions()
         }
         else if(Gamepad_Hold(Gamepad::Square))
         {
-            if(Gamepad::GetButtonDown(Gamepad::D_Up)) {}
-            if(Gamepad::GetButtonDown(Gamepad::D_Down)) {}
-            if(Gamepad::GetButtonDown(Gamepad::D_Left)) {}
-            if(Gamepad::GetButtonDown(Gamepad::D_Right)) {}
-            if(Gamepad::GetButtonDown(Gamepad::Cross)) {printf("Show Preview\n");}
+            if(Gamepad::GetButtonDown(Gamepad::D_Up)) { Settings::InitLatencyVisualization(); ImGui::OpenPopup("Latency##Gamepad"); }
+            if(Gamepad::GetButtonDown(Gamepad::D_Down)) { ImGui::OpenPopup("Shift Timings##Gamepad"); }
+            if(Gamepad::GetButtonDown(Gamepad::D_Left)) { ImGui::OpenPopup("Font Size##Gamepad"); }
+            if(Gamepad::GetButtonDown(Gamepad::D_Right)) { ImGui::OpenPopup("Default Colors##Gamepad"); }
+            if(Gamepad::GetButtonDown(Gamepad::Cross))
+            {
+                if(WindowManager::GetWindow("Preview") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Preview"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<PreviewWindow>("Preview");
+                }
+            }
             if(Gamepad::GetButtonDown(Gamepad::LeftStick)) {g_menuSpinType = (MenuSpinType)!g_menuSpinType;}
             float mag = Gamepad_Magnitude(Gamepad::LeftStick);
             std::vector<std::string> options = g_menuSpinType == Document ? g_docEffectNames : g_localEffectNames;
@@ -571,6 +582,8 @@ void DrawImagePopup()
 {
     if(ImGui::BeginPopupModal("Image##Gamepad"))
     {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+
         ImGui::EndPopup();
     }
 }
@@ -579,6 +592,56 @@ void DrawLatencyPopup()
 {
     if(ImGui::BeginPopupModal("Latency##Gamepad"))
     {
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        int latency = TimingEditor::Get().GetLatencyOffset();
+        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
+        ImGui::SameLine();
+        if(ImGui::InputInt("##Latency", &latency))
+        {
+            TimingEditor::Get().SetLatencyOffset(latency);
+        }
+        ImGui::SameLine();
+        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
+        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+        {
+            TimingEditor::Get().SetLatencyOffset(latency - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5));
+        }
+        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+        {
+            TimingEditor::Get().SetLatencyOffset(latency + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5));
+        }
+        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
+        {
+            ImGui::Text("Hit (X) when the bass hits.");
+        }
+        else
+        {
+            ImGui::Text("Hit (A) when the bass hits.");
+        }
+
+        // Visualization
+        float sizeY = ImGui::GetWindowHeight() - ImGui::GetCursorPosY();
+        float sizeX = ImGui::GetWindowWidth();
+        float size = (sizeX < sizeY ? sizeX : sizeY) * .4f;
+        int timeRaw = Settings::DrawLatencyVisualization({sizeX, sizeY});
+
+        // Latency Detection
+        if(Gamepad::GetButtonDown(Gamepad::Cross))
+        {
+            if(timeRaw < 150)
+            {
+                TimingEditor::Get().SetLatencyOffset(timeRaw);
+            }
+            else
+            {
+                TimingEditor::Get().SetLatencyOffset(timeRaw - 200);
+            }
+        }
         ImGui::EndPopup();
     }
 }
@@ -587,6 +650,16 @@ void DrawFontSizePopup()
 {
     if(ImGui::BeginPopupModal("Font Size##Gamepad"))
     {
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
+        ImGui::SameLine();
+        PropertiesWindow::DrawGamepadFontSizeInput();
+        ImGui::SameLine();
+        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
+        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            ImGui::CloseCurrentPopup();
+        }
         ImGui::EndPopup();
     }
 }
@@ -603,6 +676,16 @@ void DrawTimeShiftPopup()
 {
     if(ImGui::BeginPopupModal("Shift Timings##Gamepad"))
     {
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
+        ImGui::SameLine();
+        PropertiesWindow::DrawGamepadShiftTimingsInput();
+        ImGui::SameLine();
+        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
+        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            ImGui::CloseCurrentPopup();
+        }
         ImGui::EndPopup();
     }
 }

@@ -4,11 +4,14 @@
 #include "Base/EditorWindow.h"
 #include <string>
 
+struct ImVec2;
 class Settings : public EditorWindow
 {
 public:
     Settings();
     void OnImGuiDraw();
+    static void InitLatencyVisualization();
+    static int DrawLatencyVisualization(ImVec2 aSize);
 
 private:
     int DrawLatencyWidget();
@@ -16,5 +19,5 @@ private:
     bool myTimingEditorExists;
     bool myLatencyPopup;
     bool myLatencyPopupOpenLastFrame;
-    float myLatencyStartTime;
+    static inline float ourLatencyStartTime;
 };

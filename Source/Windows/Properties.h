@@ -10,6 +10,8 @@ class PropertiesWindow : public EditorWindow
 public:
     PropertiesWindow();
     void OnImGuiDraw() override;
+    static void DrawGamepadFontSizeInput();
+    static void DrawGamepadShiftTimingsInput();
 
 private:
     enum TabIndex
@@ -23,7 +25,7 @@ private:
     void ApplyEdit(Serialization::KaraokeEffect* anEffect);
 
     bool myShiftTimingsPopupOpen;
-    int myShiftTimingsValue;
+    static inline int ourShiftTimingsValue;
     TabIndex myCurrentTab;
     std::string myEditingEffect;
     std::string myNewEffectName;
