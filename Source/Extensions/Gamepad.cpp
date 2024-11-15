@@ -81,6 +81,7 @@ void Gamepad::Update()
         if(state.isNull()) { Gamepad::myGamepads.erase(index); continue; }
         int buttonsLen = state["buttons"]["length"].as<int>();
         int axesLen = state["axes"]["length"].as<int>();
+        con.myDeltaTime = state["timeStamp"].as<double>() - con.myTime;
         con.myTime = state["timeStamp"].as<double>();
         for(int i = 0; i < buttonsLen; i++)
         {
@@ -103,7 +104,7 @@ void Gamepad::Update()
 
 Gamepad::Mapping Gamepad::GetMapping(int aControllerID)
 {
-    if(aControllerID == -1) { return Mapping::Other; }
+    if(!myGamepads.contains(aControllerID)) { return Mapping::Other; }
     return myGamepads[aControllerID].myMapping;
 }
 
@@ -124,6 +125,7 @@ std::vector<int> Gamepad::GetConnectedIDs()
 
 bool Gamepad::GetButton(int aControllerID, Button aButton)
 {
+    if(!myGamepads.contains(aControllerID)) { return false; }
     Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
     if(myGamepads[aControllerID].myButtons.size() <= button) { return false; }
     return myGamepads[aControllerID].myButtons[button].myIsDown;
@@ -131,13 +133,26 @@ bool Gamepad::GetButton(int aControllerID, Button aButton)
 
 bool Gamepad::GetButtonDown(int aControllerID, Button aButton)
 {
+    if(!myGamepads.contains(aControllerID)) { return false; }
     Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
     if(myGamepads[aControllerID].myButtons.size() <= button) { return false; }
     return myGamepads[aControllerID].myButtons[button].myIsDown && myGamepads[aControllerID].myButtons[button].myIsInitial;
 }
 
+bool Gamepad::GetButtonRepeating(int aControllerID, Button aButton, float someRate)
+{
+    if(!myGamepads.contains(aControllerID)) { return false; }
+    Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
+    if(myGamepads[aControllerID].myButtons.size() <= button) { return false; }
+    if(!myGamepads[aControllerID].myButtons[button].myIsDown) { return false; }
+    if(someRate == 0) { return true; }
+    float time = (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myButtons[button].myTimeOfLastToggle) * .001f;
+    return ((int)(time / someRate)) - ((int)((time - (myGamepads[aControllerID].myDeltaTime * .001f)) / someRate)) > 0;
+}
+
 bool Gamepad::GetButtonUp(int aControllerID, Button aButton)
 {
+    if(!myGamepads.contains(aControllerID)) { return false; }
     Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
     if(myGamepads[aControllerID].myButtons.size() <= button) { return false; }
     return !myGamepads[aControllerID].myButtons[button].myIsDown && myGamepads[aControllerID].myButtons[button].myIsInitial;
@@ -145,6 +160,7 @@ bool Gamepad::GetButtonUp(int aControllerID, Button aButton)
 
 float Gamepad::GetButtonAnalog(int aControllerID, Button aButton)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     float value = GetButtonAnalogRaw(aControllerID, aButton);
     bool isNegative = value < 0;
     value = remap(abs(value), myDeadZone, 1, 0, 1);
@@ -153,6 +169,7 @@ float Gamepad::GetButtonAnalog(int aControllerID, Button aButton)
 
 float Gamepad::GetButtonAnalogRaw(int aControllerID, Button aButton)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
     if(myGamepads[aControllerID].myButtons.size() <= button) { return 0; }
     return myGamepads[aControllerID].myButtons[button].myValue;
@@ -160,6 +177,7 @@ float Gamepad::GetButtonAnalogRaw(int aControllerID, Button aButton)
 
 float Gamepad::GetAxis(int aControllerID, Axis anAxis)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     float value = GetAxisRaw(aControllerID, anAxis);
     bool isNegative = value < 0;
     value = remap(abs(value), myDeadZone, 1, 0, 1);
@@ -168,24 +186,28 @@ float Gamepad::GetAxis(int aControllerID, Axis anAxis)
 
 float Gamepad::GetAxisRaw(int aControllerID, Axis anAxis)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     if(myGamepads[aControllerID].myAxes.size() <= anAxis) { return 0; }
     return myGamepads[aControllerID].myAxes[anAxis].myValue * (anAxis % 2 == 1 ? -1 : 1);
 }
 
 float Gamepad::GetAxisDeltaRaw(int aControllerID, Axis anAxis)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     if(myGamepads[aControllerID].myAxes.size() <= anAxis) { return 0; }
     return myGamepads[aControllerID].myAxes[anAxis].myDelta * (anAxis % 2 == 1 ? -1 : 1);
 }
 
 bool Gamepad::GetAxisCrossedDeadZone(int aControllerID, Axis anAxis)
 {
+    if(!myGamepads.contains(aControllerID)) { return false; }
     if(myGamepads[aControllerID].myAxes.size() <= anAxis) { return 0; }
     return myGamepads[aControllerID].myAxes[anAxis].myIsInitial;
 }
 
 float Gamepad::GetTimeSinceToggled(int aControllerID, Button aButton)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     Button button = RemapButtonToStd(aButton, myGamepads[aControllerID].myMapping);
     if(myGamepads[aControllerID].myButtons.size() <= button) { return 0; }
     return (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myButtons[button].myTimeOfLastToggle) * .001f;
@@ -193,6 +215,7 @@ float Gamepad::GetTimeSinceToggled(int aControllerID, Button aButton)
 
 float Gamepad::GetTimeSinceCrossedDeadZone(int aControllerID, Axis anAxis)
 {
+    if(!myGamepads.contains(aControllerID)) { return 0; }
     if(myGamepads[aControllerID].myAxes.size() <= anAxis) { return 0; }
     return (myGamepads[aControllerID].myTime - myGamepads[aControllerID].myAxes[anAxis].myTimeOfLastToggle) * .001f;
 }
@@ -217,6 +240,11 @@ bool Gamepad::GetButtonDown(Button aButton)
         if(con.myButtons[button].myIsDown && con.myButtons[button].myIsInitial) return true;
     }
     return false;
+}
+
+bool Gamepad::GetButtonRepeating(Button aButton, float someRate)
+{
+    return GetButtonRepeating(GetControllerPressing(aButton), aButton, someRate);
 }
 
 bool Gamepad::GetButtonUp(Button aButton)

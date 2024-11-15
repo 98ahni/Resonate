@@ -1,6 +1,7 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
 //  <Copyright (C) 2024 98ahni> Original file author
 
+#pragma once
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -35,6 +36,7 @@ public:
     static std::vector<int> GetConnectedIDs();
     static bool GetButton(int aControllerID, Button aButton);
     static bool GetButtonDown(int aControllerID, Button aButton);
+    static bool GetButtonRepeating(int aControllerID, Button aButton, float someRate = .1f);
     static bool GetButtonUp(int aControllerID, Button aButton);
     static float GetButtonAnalog(int aControllerID, Button aButton);
     static float GetButtonAnalogRaw(int aControllerID, Button aButton);
@@ -46,6 +48,7 @@ public:
     static float GetTimeSinceCrossedDeadZone(int aControllerID, Axis anAxis);
     static bool GetButton(Button aButton);
     static bool GetButtonDown(Button aButton);
+    static bool GetButtonRepeating(Button aButton, float someRate = .1f);
     static bool GetButtonUp(Button aButton);
     static float GetButtonAnalog(Button aButton);
     static float GetButtonAnalogRaw(Button aButton);
@@ -82,6 +85,7 @@ private:
         std::string myName;
         Mapping myMapping;
         float myTime;
+        float myDeltaTime;
         float myTimeOfLastToggle;
         std::vector<ButtonState> myButtons;
         std::vector<AxisState> myAxes;
