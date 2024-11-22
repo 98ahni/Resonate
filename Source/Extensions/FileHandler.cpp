@@ -134,7 +134,7 @@ EM_JS(void, download_document, (emscripten::EM_VAL path, emscripten::EM_VAL mime
 	document.body.removeChild(link);
 });
 
-EM_JS(void, download_project_zip, (emscripten::EM_VAL zip_name, emscripten::EM_VAL path_list), {
+EM_JS(emscripten::EM_VAL, download_project_zip, (emscripten::EM_VAL zip_name, emscripten::EM_VAL path_list), {
 	const zipName = Emval.toValue(zip_name);
 	const pathList = Emval.toValue(path_list);
     var fileBlobs = [];
@@ -148,9 +148,13 @@ EM_JS(void, download_project_zip, (emscripten::EM_VAL zip_name, emscripten::EM_V
         console.log(docBlob.name);
 	    fileBlobs.push(docBlob);
     }
-    const zip = new Zip(zipName);
-    zip.files2zip(fileBlobs).then(()=>
-        zip.makeZip());
+    return Emval.toHandle(new Promise((resolve)=>{
+        const zip = new Zip(zipName);
+        zip.files2zip(fileBlobs).then(()=>{
+            zip.makeZip();
+            resolve();
+        });
+    }));
 });
 
 EM_JS(emscripten::EM_VAL, wait_for_sync_fs, (),
@@ -211,7 +215,7 @@ void FileHandler::DownloadZip(std::vector<std::string> aPathList, const char *aZ
     {
         output.push_back(emscripten::val(aPathList[i]));
     }
-    download_project_zip(VAR_TO_JS(aZipName), VEC_TO_JS(output));
+    VAR_FROM_JS(download_project_zip(VAR_TO_JS(aZipName), VEC_TO_JS(output))).await();
 }
 
 void FileHandler::SyncLocalFS()
