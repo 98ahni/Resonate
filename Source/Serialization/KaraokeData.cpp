@@ -270,14 +270,32 @@ namespace Serialization
         myTokens[aLineToSplit + 1].erase(myTokens[aLineToSplit + 1].begin(), myTokens[aLineToSplit + 1].begin() + aToken);
         if(aChar)
         {
-            myTokens[aLineToSplit][aToken].myValue.erase(myTokens[aLineToSplit][aToken].myValue.begin() + aChar, myTokens[aLineToSplit][aToken].myValue.end());
-            myTokens[aLineToSplit + 1][0].myValue.erase(myTokens[aLineToSplit][aToken].myValue.begin(), myTokens[aLineToSplit][aToken].myValue.begin() + aChar - 1);
+            myTokens[aLineToSplit].push_back({myTokens[aLineToSplit + 1].front()});
+            myTokens[aLineToSplit].back().myValue.erase(myTokens[aLineToSplit].back().myValue.begin() + aChar, myTokens[aLineToSplit].back().myValue.end());
+            myTokens[aLineToSplit + 1].front().myValue.erase(myTokens[aLineToSplit + 1].front().myValue.begin(), myTokens[aLineToSplit + 1].front().myValue.begin() + aChar);
+            myTokens[aLineToSplit + 1].front().myHasStart = false;
+        }
+        else if(myTokens[aLineToSplit + 1].front().myHasStart && !IsPauseToken(myTokens[aLineToSplit].back()))
+        {
+            myTokens[aLineToSplit].push_back({"", true, myTokens[aLineToSplit + 1].front().myStartTime});
         }
     }
     void KaraokeDocument::RevoveLineBreak(size_t aLineToMergeUp)
     {
         MakeDirty();
         if(aLineToMergeUp <= 0 || myTokens.size() <= aLineToMergeUp) return;
+        if(myTokens[aLineToMergeUp - 1].size() > 0 && myTokens[aLineToMergeUp].size() > 0)
+        {
+            if(IsPauseToken(myTokens[aLineToMergeUp - 1].back()) && myTokens[aLineToMergeUp - 1].back().myStartTime == myTokens[aLineToMergeUp].front().myStartTime)
+            {
+                myTokens[aLineToMergeUp - 1].erase(myTokens[aLineToMergeUp - 1].end() - 1);
+            }
+            else if(!IsPauseToken(myTokens[aLineToMergeUp - 1].back()) && !myTokens[aLineToMergeUp].front().myHasStart)
+            {
+                myTokens[aLineToMergeUp - 1].back().myValue += myTokens[aLineToMergeUp].front().myValue;
+                myTokens[aLineToMergeUp].erase(myTokens[aLineToMergeUp].begin());
+            }
+        }
         myTokens[aLineToMergeUp - 1].insert(myTokens[aLineToMergeUp - 1].end(), myTokens[aLineToMergeUp].begin(), myTokens[aLineToMergeUp].end());
         myTokens.erase(myTokens.begin() + aLineToMergeUp);
     }
