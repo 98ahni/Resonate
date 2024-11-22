@@ -12,8 +12,8 @@
 #include <Extensions/imguiExt.h>
 #include <Defines.h>
 
-EM_ASYNC_JS(emscripten::EM_VAL, setup_latency_metronome, (), {
-    return new Promise((resolve) => {
+EM_JS(emscripten::EM_VAL, setup_latency_metronome, (), {
+    return Emval.toHandle(new Promise(async (resolve) => {
         if(global_metronome_buffer !== null) {resolve();}
 	    const audioData = FS.readFile('/Sound/Metronome.mp3');
         const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
@@ -21,7 +21,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, setup_latency_metronome, (), {
             global_metronome_buffer = buffer;
             resolve();
         });
-    });
+    }));
 });
 EM_JS(void, play_latency_metronome, (), {
     global_metronome_source = /*AudioPlayback*/global_audio_context.createBufferSource();
@@ -195,6 +195,7 @@ void Settings::OnImGuiDraw()
 void Settings::InitLatencyVisualization()
 {
     VAR_FROM_JS(setup_latency_metronome()).await();
+    play_latency_metronome();
     ourLatencyStartTime = VAR_FROM_JS(get_audio_context_time()).as<float>();
 }
 
@@ -228,6 +229,11 @@ int Settings::DrawLatencyVisualization(ImVec2 aSize)
     color.w = .9f * alphaMult;
     drawList->AddCircleFilled(center, size * .2f * radiusMult, ImGui::ColorConvertFloat4ToU32(color));
     return 0;
+}
+
+void Settings::StopLatencyVisualization()
+{
+    stop_latency_metronome();
 }
 
 int Settings::DrawLatencyWidget()

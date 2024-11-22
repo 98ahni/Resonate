@@ -999,37 +999,38 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4045896: ($0) => { init_gapi_with_key($0); },  
- 4045922: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4045962: () => { Module.hide_loading_screen(); },  
- 4045992: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4046115: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4046217: () => { return Date.now(); },  
- 4046238: () => { return Date.now(); },  
- 4046259: () => { return Date.now(); },  
- 4046280: () => { location.reload() },  
- 4046298: () => { location.reload(); },  
- 4046317: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4046380: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4046473: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4046569: () => { return global_audio_element.paused ? 1 : 0; },  
- 4046613: () => { return global_audio_element.paused ? 1 : 0; },  
- 4046657: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4046707: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4046963: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4047232: () => { audio_element_pause(); },  
- 4047255: () => { audio_element_play(); },  
- 4047277: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4047215: ($0) => { init_gapi_with_key($0); },  
+ 4047241: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4047281: () => { Module.hide_loading_screen(); },  
+ 4047311: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4047434: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4047536: () => { return Date.now(); },  
+ 4047557: () => { return Date.now(); },  
+ 4047578: () => { return Date.now(); },  
+ 4047599: () => { location.reload() },  
+ 4047617: () => { location.reload(); },  
+ 4047636: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4047699: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4047792: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4047888: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4047932: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4047976: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4048026: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4048282: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4048551: () => { audio_element_pause(); },  
+ 4048574: () => { audio_element_play(); },  
+ 4048596: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function db_open_auth_popup(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.getAuthenticationUrl(window.location.href, undefined, 'code', 'offline', ['account_info.read', 'files.content.write', 'files.content.read'], undefined, true).then(authUrl => { const popup = window.open(authUrl, 'Log In with Dropbox', 'width=520,height=600'); const message_func = function(msg){ popup.close(); global_db_auth.getAccessTokenFromCode(window.location.href, msg.data.code).then((res) => { global_db_auth.setAccessToken(res.result.access_token); global_db_auth.setRefreshToken(res.result.refresh_token); global_db_auth.setAccessTokenExpiresAt(res.result.expires_in); global_db_api = new Dropbox.Dropbox({auth: global_db_auth}); global_db_api.usersGetCurrentAccount().then((user_res)=>{ callback_func( Emval.toHandle(Date.now() + (global_db_auth.getAccessTokenExpiresAt() * 1000)), Emval.toHandle(user_res.result.name.display_name), Emval.toHandle(user_res.result.profile_photo_url || '')); }); }); }; window.addEventListener('message', message_func); const checkWindow = setInterval(() => { if (!popup || !popup.closed) return; window.removeEventListener('message', message_func); clearInterval(checkWindow); }, 100); }); } if(new URLSearchParams(window.location.search).has('code')){ window.opener.postMessage({code: new URLSearchParams(window.location.search).get('code')}); } var global_db_auth = new Dropbox.DropboxAuth({clientId: 'pzgv8lp5thkigx4'}); var global_db_api = null;
 function db_refresh_token(token_callback) { const callback_func = Module[Emval.toValue(token_callback)]; global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));}); }
+function revoke_db_token() { return Emval.toHandle(global_db_api.authTokenRevoke()); }
 function has_db_token() { return global_db_auth.getAccessToken() !== undefined; }
 function db_open_chooser(file_callback_name,done_callback_name,cancel_callback_name,use_iframe) { const callback_func = Module[Emval.toValue(file_callback_name)]; const done_callback_func = Module[Emval.toValue(done_callback_name)]; const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)]; const options = { success: (files)=>{ if(!FS.analyzePath("/Dropbox").exists){ FS.mkdir("/Dropbox"); } let loadPromises = []; files.forEach(function(file) { loadPromises.push(new Promise(async (resolve)=>{ console.log('Loading file "' + file.name + '" from Dropbox.'); fetch(file.link).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => { FS.writeFile("/Dropbox/" + file.name, new Uint8Array(buffer)); callback_func(Emval.toHandle("/Dropbox/" + file.name), Emval.toHandle(file.id)); resolve(); }); })); }); Promise.all(loadPromises).then(()=>{console.log('Done loading from Dropbox!');done_callback_func();}); }, cancel: cancel_callback_func, extensions: ['<no extension>'], linkType: 'direct', multiselect: true }; if(use_iframe){ options.iframe = true; } Dropbox.choose(options); }
 function __asyncjs__db_update_file(file_id,fs_path) { return Asyncify.handleAsync(async () => { const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'}); const response = await global_db_api.filesUpload({path: Emval.toValue(file_id), "mode": "overwrite", contents: fileData}); console.log(JSON.stringify(response)); }); }
 function __asyncjs__open_directory(mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; if(typeof input.webkitdirectory !== "boolean") { input.multiple = true; } else { input.webkitdirectory = true; } input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = ""; if(files[0].webkitRelativePath.toString().includes("/")) { if(!FS.analyzePath("/" + files[0].webkitRelativePath.split("/")[0]).exists) { FS.mkdir("/" + files[0].webkitRelativePath.split("/")[0]); } } else { exDir = "/WorkDir"; if(!FS.analyzePath("/WorkDir").exists) { FS.mkdir("/WorkDir"); } } for(const file of files) { promisedFiles.push(new Promise((resolve) => { console.log('Loading file ' + file.webkitRelativePath); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + file.name : file.webkitRelativePath, uint8_view); resolve(); }; reader.readAsArrayBuffer(file); })); } input.remove(); Promise.all(promisedFiles).then(() => { resolve(exDir.length != 0 ? exDir : files[0].webkitRelativePath.split("/")[0]); }); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function __asyncjs__open_document(save_folder,mime_type,mode) { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { const input = document.createElement('input'); input.type = 'file'; input.accept = Emval.toValue(mime_type); input.addEventListener( 'cancel', () => { resolve(""); }); input.addEventListener( 'change', () => { let files = Array.from(input.files); let promisedFiles = []; let exDir = Emval.toValue(save_folder); if(!FS.analyzePath(exDir).exists) { FS.mkdir(exDir); } new Promise((resolveLoad) => { console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name); let reader = new FileReader(); reader.onload = (event) => { const uint8_view = new Uint8Array(event.target.result); FS.writeFile(exDir.length != 0 ? exDir + '/' + files[0].name : files[0].webkitRelativePath, uint8_view); resolveLoad(); }; reader.readAsArrayBuffer(files[0]); }).then(() => { resolve(exDir + '/' + files[0].name); }); input.remove(); }); if ('showPicker' in HTMLInputElement.prototype) { input.showPicker(); } else { input.click(); } })); }); }
 function download_document(path,mime_type) { const docPath = Emval.toValue(path); const mime = Emval.toValue(mime_type); const docData = FS.readFile(docPath); const docBlob = new Blob([docData.buffer], {type: 'application/octet-binary'}); const docURL = URL.createObjectURL(docBlob); const link = document.createElement('a'); link.href = docURL; link.type = mime; link.download = docPath.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
-function download_project_zip(zip_name,path_list) { const zipName = Emval.toValue(zip_name); const pathList = Emval.toValue(path_list); var fileBlobs = []; for(let i = 0; i < pathList.length; i++){ console.log(pathList[i]); } for(let i = 0; i < pathList.length; i++){ const docData = FS.readFile(pathList[i]); const docBlob = new File([new Blob([docData.buffer], {type: 'application/octet-binary'})], pathList[i].split('/').pop(), {type: 'application/octet-binary'}); console.log(docBlob.name); fileBlobs.push(docBlob); } const zip = new Zip(zipName); zip.files2zip(fileBlobs).then(()=> zip.makeZip()); }
+function download_project_zip(zip_name,path_list) { const zipName = Emval.toValue(zip_name); const pathList = Emval.toValue(path_list); var fileBlobs = []; for(let i = 0; i < pathList.length; i++){ console.log(pathList[i]); } for(let i = 0; i < pathList.length; i++){ const docData = FS.readFile(pathList[i]); const docBlob = new File([new Blob([docData.buffer], {type: 'application/octet-binary'})], pathList[i].split('/').pop(), {type: 'application/octet-binary'}); console.log(docBlob.name); fileBlobs.push(docBlob); } return Emval.toHandle(new Promise((resolve)=>{ const zip = new Zip(zipName); zip.files2zip(fileBlobs).then(()=>{ zip.makeZip(); resolve(); }); })); }
 function wait_for_sync_fs() { return Emval.toHandle(new Promise((resolve)=>{ FS.syncfs(false, function (err) { if(err){ console.error('Unable to sync IndexDB!\n' + err); } resolve(); }); })); }
 function set_local_value(key,value_to_store) { localStorage.setItem(Emval.toValue(key), Emval.toValue(value_to_store)); }
 function get_local_value(key) { const keyname = Emval.toValue(key); if(!localStorage.getItem(keyname)){return Emval.toHandle("");} return Emval.toHandle(localStorage.getItem(keyname)); }
@@ -1037,9 +1038,9 @@ function remove_local_value(key) { localStorage.removeItem(Emval.toValue(key)); 
 function clear_local_storage() { localStorage.clear(); }
 function initialize_gamepad_events() { navigator.getGamepads().forEach((gp) =>{ if(gp !== null) _jsGamepadConnected(Emval.toHandle({ index: gp.index, name: gp.id, standardMap: gp.mapping == 'standard', buttonCount: gp.buttons.length, axesCount: gp.axes.length, timeStamp: performance.now() })); }); window.addEventListener("gamepadconnected", (e)=>{ _jsGamepadConnected(Emval.toHandle({ index: e.gamepad.index, name: e.gamepad.id, standardMap: e.gamepad.mapping == 'standard', buttonCount: e.gamepad.buttons.length, axesCount: e.gamepad.axes.length, timeStamp: performance.now() })); }); window.addEventListener("gamepaddisconnected", (e)=>{_jsGamepadDisconnected(e.gamepad.index)}); }
 function update_gamepad_state(index) { const gp = navigator.getGamepads()[index]; let output = {buttons: [], axes: [], timeStamp: performance.now()}; if(gp === null) { return Emval.toHandle(null); } gp.buttons.forEach(b => output.buttons.push({digital: b.pressed, analog: b.value})); gp.axes.forEach(v => output.axes.push(v)); return Emval.toHandle(output); }
-function gapi_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'gapi')){ alert('GAPI is slow to load.'); return false; } gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
+function gapi_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'gapi')){ console.log('GAPI is slow to load.'); return false; } gapi.load('client', ()=>{ gapi.load('client:picker', _GAPI_Init_Client); }); return true; }
 function gapi_ready() { return global_gapi_inited && global_gis_inited; } var global_gapi_inited = false; var global_gis_inited = false;
-function gis_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'google')){ alert('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
+function gis_loaded() { if(global_gis_inited){ return true; } if(!Object.hasOwn(window, 'google')){ console.log('GSI is slow to load.'); return false; } global_client_token = google.accounts.oauth2.initTokenClient({ client_id: '824603127976-vjf2sbqo99s9kulm1jp847c453ctmv65.apps.googleusercontent.com', scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile', prompt: '', callback: '', }); global_gis_inited = true; return true; } var global_client_token;
 function init_gapi_with_key(APIKey) { gapi.client.init({ apiKey: Emval.toValue(APIKey), discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest', 'https://people.googleapis.com/$discovery/rest?version=v1'] }).then(()=>{global_gapi_inited = true;}); }
 function has_gapi_token() { return gapi.client.getToken() !== null; }
 function request_client_token(prompt,token_callback) { var client_token_callback = Module[Emval.toValue(token_callback)]; global_client_token.callback = (token_data) => { gapi.client.people.people.get({ "resourceName": "people/me", "requestMask.includeField": "person.names,person.photos", "sources": [ "READ_SOURCE_TYPE_PROFILE" ] }).then((user_data)=>{ client_token_callback( Emval.toHandle(Date.now() + (token_data.expires_in * 1000)), Emval.toHandle(user_data.result.names.length != 0 ? user_data.result.names[0].displayName : '(Anon)'), Emval.toHandle(user_data.result.photos.length != 0 ? user_data.result.photos[0].url : '') ); }); }; global_client_token.requestAccessToken({prompt: Emval.toValue(prompt)}); }
@@ -1054,7 +1055,8 @@ function pause_video(id) { let imid = Emval.toValue(id); let vid = document.getE
 function set_video_playback_progress(id,seconds) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return; } vid.currentTime = seconds; }
 function set_video_playback_rate(id,rate) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return; } vid.playbackRate = rate; }
 function is_video_paused(id) { let imid = Emval.toValue(id); let vid = document.getElementById(imid); if(vid === null){ return true; } return vid.paused; }
-function load_image(id,fs_path) { return Emval.toHandle(new Promise(async(resolve, reject)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(img === null){ if(!FS.analyzePath(fsPath, false).exists){ console.error('File not found: ', fsPath); reject(); } img = document.createElement('img'); img.id = imid; document.body.insertBefore(img, document.getElementById('canvas')); } img.style.position = 'fixed'; img.style.width = 1 + 'px'; img.style.height = 1 + 'px'; const imgData = FS.readFile(fsPath); const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'}); img.src = URL.createObjectURL(imgBlob); try{ await img.decode(); resolve(); } catch(e){ console.error('Image failed to decode!'); reject(); } })); }
+function load_image_from_url(id,url) { return Emval.toHandle(new Promise(async(resolve, reject)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); const imgURL = Emval.toValue(url); if(img === null){ img = document.createElement('img'); img.id = imid; img.crossOrigin = "anonymous"; img.referrerPolicy = 'origin'; document.body.insertBefore(img, document.getElementById('canvas')); } img.style.position = 'fixed'; img.style.width = 1 + 'px'; img.style.height = 1 + 'px'; img.src = imgURL; try{ await img.decode(); resolve(); } catch(e){ console.error('Image failed to decode!'); reject(); } })); }
+function load_image(id,fs_path) { return Emval.toHandle(new Promise(async(resolve, reject)=>{ let imid = Emval.toValue(id); let img = document.getElementById(imid); const fsPath = Emval.toValue(fs_path); if(img === null){ if(!FS.analyzePath(fsPath, false).exists){ console.error('File not found: ', fsPath); reject(); } } const imgData = FS.readFile(fsPath); const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'}); Emval.toValue(load_image_from_url(Emval.toHandle(imid), Emval.toHandle(URL.createObjectURL(imgBlob)))).then(resolve, reject); })); }
 function render_image(id,texture) { var imid = Emval.toValue(id); var img = document.getElementById(imid); if(img === null){ return Emval.toHandle(0); } var canvas = document.getElementById(imid + 'canvas'); if(canvas === null){ canvas = document.createElement('canvas'); canvas.id = imid + 'canvas'; document.body.insertBefore(canvas, document.getElementById('canvas')); if(img.nodeName == 'IMG'){ canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; } else if(img.nodeName == 'VIDEO'){ canvas.width = img.videoWidth; canvas.height = img.videoHeight; } canvas.style.position = 'fixed'; canvas.style.top = 100 + 'px'; canvas.style.width = 160 + 'px'; canvas.style.height = 90 + 'px'; } var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0); var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height); var output = _CreateTexture(texture, Emval.toHandle(pixels.data), canvas.width, canvas.height); ctx = null; pixels = null; return output; }
 function destroy_element(id) { let input = document.getElementById(Emval.toValue(id)); if(input !== null){ input.remove(); } }
 function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(Emval.toValue(id)); setTimeout(()=>{ if(input !== null){ input.remove(); } }, delay_ms); }); }
@@ -1080,7 +1082,7 @@ function language_code_to_name(language_code) { let names = new Intl.DisplayName
 function create_audio_element() { } var global_audio_element = null; var global_audio_context = null; var global_audio_blobs = []; var global_audio_completion = []; var global_audio_worker_setup_data = []; if(false){ }
 function set_audio_playback_buffer(rate_index) { if(global_audio_blobs.length == 0) { return; } const audio = global_audio_element; try { audio.srcObject = global_audio_blobs[Emval.toValue(rate_index) - 1]; } catch (e) { audio.src = URL.createObjectURL(global_audio_blobs[Emval.toValue(rate_index) - 1]); } }
 function is_audio_stretched(rate_index) { return Emval.toHandle(global_audio_completion[Emval.toValue(rate_index) - 1]); }
-function create_audio_playback() { global_audio_element = new Audio(); const audio = global_audio_element; const AudioContext = window.AudioContext || window.webkitAudioContext; global_audio_context = new AudioContext(); const track = global_audio_context.createMediaElementSource(global_audio_element); track.connect(global_audio_context.destination); audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"; if(audio.hasAttribute("webkitPreservesPitch")) { audio.webkitPreservesPitch = true; } else { audio.preservesPitch = true; } default_console_log(global_audio_context.state); global_audio_context.resume(); audio.play().then(()=>{ audio.pause(); }); audio.onplay = (e) => { _AudioOnPlay(); }; audio.onpause = (e) => { _AudioOnPause(); }; audio.onended = (e) => { _AudioOnEnded(); }; audio.ondurationchange = (e) => { _AudioOnDurationChange(); }; window.onpagehide = (e) => { }; }
+function create_audio_playback() { global_audio_element = new Audio(); const audio = global_audio_element; const AudioContext = window.AudioContext || window.webkitAudioContext; global_audio_context = new AudioContext(); const track = global_audio_context.createMediaElementSource(global_audio_element); track.connect(global_audio_context.destination); audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"; if(audio.hasAttribute("webkitPreservesPitch")) { audio.webkitPreservesPitch = true; } else { audio.preservesPitch = true; } default_console_log(global_audio_context.state); global_audio_context.resume(); audio.play().then(()=>{ audio.pause(); }); audio.onplay = (e) => { _AudioOnPlay(); }; audio.onpause = (e) => { _AudioOnPause(); }; audio.onended = (e) => { _AudioOnEnded(); }; audio.ondurationchange = (e) => { _AudioOnDurationChange(); }; window.onpagehide = (e) => { global_audio_context.close(); }; }
 function get_audio_playback_progress() { const audio = global_audio_element; return Emval.toHandle(audio.currentTime); }
 function get_audio_duration() { const audio = global_audio_element; return Emval.toHandle(audio.duration); }
 function set_audio_playback_progress(progress) { const audio = global_audio_element; audio.currentTime = Emval.toValue(progress); }
@@ -1102,7 +1104,7 @@ function has_fullscreen() { return ( document.fullscreenEnabled || document.webk
 function is_fullscreen() { if(document.fullscreenEnabled) { return document.fullscreenElement != null; } else if(document.webkitFullscreenEnabled) { return document.webkitFullscreenElement != null; } else if(document.msFullscreenEnabled) { return document.msFullscreenElement != null; } return false; }
 function open_fullscreen() { if(document.getElementById('canvas').requestFullscreen) { document.getElementById('canvas').requestFullscreen(); } else if(document.getElementById('canvas').webkitRequestFullscreen) { document.getElementById('canvas').webkitRequestFullscreen(); } else if(document.getElementById('canvas').msRequestFullscreen) { document.getElementById('canvas').msRequestFullscreen(); } }
 function close_fullscreen() { if(document.exitFullscreen) { document.exitFullscreen(); } else if(document.webkitExitFullscreen) { document.webkitExitFullscreen(); } else if(document.msExitFullscreen) { document.msExitFullscreen(); } }
-function __asyncjs__setup_latency_metronome() { return Asyncify.handleAsync(async () => { if(global_metronome_buffer !== null) {return;} const audioData = FS.readFile('/Sound/Metronome.mp3'); const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' }); global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{ global_metronome_buffer = buffer; }); }); }
+function setup_latency_metronome() { return Emval.toHandle(new Promise(async (resolve) => { if(global_metronome_buffer !== null) {resolve();} const audioData = FS.readFile('/Sound/Metronome.mp3'); const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' }); global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{ global_metronome_buffer = buffer; resolve(); }); })); }
 function play_latency_metronome() { global_metronome_source = global_audio_context.createBufferSource(); global_metronome_source.buffer = global_metronome_buffer; global_metronome_source.loop = true; global_metronome_source.connect( global_audio_context.destination); global_metronome_source.start(); } var global_metronome_buffer = null; var global_metronome_source = null;
 function stop_latency_metronome() { global_metronome_source.stop(); global_metronome_source.disconnect(); global_metronome_source = null; }
 function get_audio_context_time() { return Emval.toHandle( global_audio_context.currentTime); }
@@ -11149,8 +11151,6 @@ var wasmImports = {
   /** @export */
   __asyncjs__set_clipboard_content: __asyncjs__set_clipboard_content,
   /** @export */
-  __asyncjs__setup_latency_metronome: __asyncjs__setup_latency_metronome,
-  /** @export */
   __asyncjs__show_touch_keyboard: __asyncjs__show_touch_keyboard,
   /** @export */
   __asyncjs__webgpu_create_device: __asyncjs__webgpu_create_device,
@@ -11527,6 +11527,8 @@ var wasmImports = {
   /** @export */
   load_image: load_image,
   /** @export */
+  load_image_from_url: load_image_from_url,
+  /** @export */
   load_preferences_json: load_preferences_json,
   /** @export */
   load_video: load_video,
@@ -11547,6 +11549,8 @@ var wasmImports = {
   /** @export */
   revoke_client_token: revoke_client_token,
   /** @export */
+  revoke_db_token: revoke_db_token,
+  /** @export */
   set_audio_playback_buffer: set_audio_playback_buffer,
   /** @export */
   set_audio_playback_progress: set_audio_playback_progress,
@@ -11560,6 +11564,8 @@ var wasmImports = {
   set_video_playback_progress: set_video_playback_progress,
   /** @export */
   set_video_playback_rate: set_video_playback_rate,
+  /** @export */
+  setup_latency_metronome: setup_latency_metronome,
   /** @export */
   stop_latency_metronome: stop_latency_metronome,
   /** @export */
@@ -11752,9 +11758,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3979552;
-var ___start_em_js = Module['___start_em_js'] = 4015040;
-var ___stop_em_js = Module['___stop_em_js'] = 4045896;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3980256;
+var ___start_em_js = Module['___start_em_js'] = 4015744;
+var ___stop_em_js = Module['___stop_em_js'] = 4047215;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

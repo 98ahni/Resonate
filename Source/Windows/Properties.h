@@ -4,14 +4,25 @@
 #include "Base/EditorWindow.h"
 #include <unordered_map>
 
-namespace Serialization{ struct KaraokeEffect; }
+namespace Serialization
+{
+    struct KaraokeEffect;
+    struct KaraokeColorEffect;
+    typedef std::unordered_map<std::string, KaraokeEffect*> KaraokeAliasMap;
+}
+typedef unsigned int uint;
 class PropertiesWindow : public EditorWindow
 {
 public:
     PropertiesWindow();
     void OnImGuiDraw() override;
-    static void DrawGamepadFontSizeInput();
-    static void DrawGamepadShiftTimingsInput();
+    bool DrawFontSizeGamepadPopup();
+    bool DrawShiftTimingsGamepadPopup();
+    bool DrawDefaultColorsGamepadPopup(int aSelectedSlider);
+    bool DrawSingerColorsGamepadPopup(int aSelectedSlider, bool anIsLocal, std::string anEditingName);
+    // Shorthand for Serialization::KaraokeDocument::Get().GetEffectAliases();
+    const Serialization::KaraokeAliasMap& GetDocumentEffectAliases();
+    const Serialization::KaraokeAliasMap& GetLocalEffectAliases();
 
 private:
     enum TabIndex
@@ -23,11 +34,14 @@ private:
     void ShiftTimingsPopupDraw();
     void DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect* anEffect);
     void ApplyEdit(Serialization::KaraokeEffect* anEffect);
+    bool DrawGamepadColorComponent(const char* aLabel, bool aIsSelected, int& aColorComponent);
+    bool DrawColorGamepadMenu(int aSelectedSlider, uint& aStartColor, uint& anEndColor);
 
     bool myShiftTimingsPopupOpen;
-    static inline int ourShiftTimingsValue;
+    int myShiftTimingsValue;
     TabIndex myCurrentTab;
     std::string myEditingEffect;
     std::string myNewEffectName;
-    std::unordered_map<std::string, Serialization::KaraokeEffect*> myLocalEffectAliases;
+    Serialization::KaraokeColorEffect* myNewEffectToAdd = nullptr;
+    Serialization::KaraokeAliasMap myLocalEffectAliases;
 };

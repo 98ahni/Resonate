@@ -13,5 +13,31 @@
 #define Gamepad_Tap(button) (Gamepad::GetButtonUp(button) && Gamepad::GetTimeSinceToggled(button) < 0.5f)
 #define Gamepad_Hold(button) (Gamepad::GetButton(button) && Gamepad::GetTimeSinceToggled(button) > 0.5f)
 #define Gamepad_RepeatDelayed(button, rate, delay) (Gamepad::GetButtonDown(button) || (Gamepad::GetButtonRepeating(button, rate) && Gamepad::GetTimeSinceToggled(button) > delay))
+typedef unsigned int ImU32;
+struct ImVec2;
+struct ImDrawList;
+#ifndef IM_COL32_WHITE
+#define IM_COL32_WHITE 0xFFFFFFFF
+#endif
 
+namespace HUDSprite
+{
+    enum HUDSpriteID
+    {
+        DocColor, PreviewBtn, ShiftTimes, FontSize, Latency,
+        MenuBtn, EffectBtn, SyllableBtn, TimeEnd, TimeStart,
+        SpeedUp, SpeedDown, LineTagPlus, LineTagMinus, NoEffectBtn, SingerBtn, ImageBtn,
+        LineMoveUp, LineMoveDown, LineMergeUp, LineMergeDown, LineDuplicate, LineSplit, LineRemove,
+        CaseCapital, CaseMajus, CaseMinus, CaseToggle, MenuToggle,
+        StopBtn, PlayBtn, PauseBtn, RW5sBtn, FF5sBtn, SeekToMarkBtn, LayoutBtn, AdjustBtn,
+        BtnPadBGPS, DPadBGPS, BtnPadBG, DPadBG, StickSpinBG, StickFlickBG,
+        DPadFillPSY, DPadFillPSX, DPadFillY, DPadFillX,
+        //DPadFillPSYR, DPadFillPSXR, DPadFillYR, DPadFillXR,       // Might be useful later
+        ArrowUpBtn, ArrowDownBtn, ArrowLeftBtn, ArrowRightBtn,
+        SpinIcon, BumperFill, TriggerFill, BtnFill
+    };
+}
+
+void DrawHudSprite(HUDSprite::HUDSpriteID aSprite, ImVec2 aSize, ImU32 aColor = IM_COL32_WHITE);
+void AddHudSpriteTo(ImDrawList* aDrawList, HUDSprite::HUDSpriteID aSprite, ImVec2 aScreenPosition, ImVec2 aSize, ImU32 aColor = IM_COL32_WHITE);
 void DoGamepadActions();

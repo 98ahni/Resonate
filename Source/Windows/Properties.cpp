@@ -78,7 +78,7 @@ void PropertiesWindow::OnImGuiDraw()
         if(ImGui::Button("Shift Timings"))
         {
             ImGui::OpenPopup("Shift Timings");
-            ourShiftTimingsValue = 0;
+            myShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = true;
         }
     }
@@ -118,54 +118,73 @@ void PropertiesWindow::OnImGuiDraw()
     Gui_End();
 }
 
-void PropertiesWindow::DrawGamepadFontSizeInput()
+bool PropertiesWindow::DrawFontSizeGamepadPopup()
 {
-    int fontSize = Serialization::KaraokeDocument::Get().GetFontSize();
-    if(ImGui::InputInt("##Latency", &fontSize))
+    if(ImGui::BeginPopupModal("Font Size##Gamepad"))
     {
-        Serialization::KaraokeDocument::Get().myFontSize = fontSize;
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        DrawHudSprite(HUDSprite::ArrowLeftBtn, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        ImGui::SameLine();
+        PropertiesWindow::DrawFontSizeGamepadPopup();
+        int fontSize = Serialization::KaraokeDocument::Get().GetFontSize();
+        if(ImGui::InputInt("##FontSize", &fontSize))
+        {
+            Serialization::KaraokeDocument::Get().myFontSize = fontSize;
+        }
+        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+        {
+            Serialization::KaraokeDocument::Get().myFontSize = fontSize - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+        }
+        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+        {
+            Serialization::KaraokeDocument::Get().myFontSize = fontSize + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+        }
+        ImGui::SameLine();
+        DrawHudSprite(HUDSprite::ArrowRightBtn, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Cross) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5)));
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
+        {
+            ImGui::Text("(X) / (O) Close");
+        }
+        else
+        {
+            ImGui::Text("(A) / (B) Close");
+        }
+        ImGui::EndPopup();
+        return true;
     }
-    if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
-    {
-        Serialization::KaraokeDocument::Get().myFontSize = fontSize - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
-    }
-    if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
-    {
-        Serialization::KaraokeDocument::Get().myFontSize = fontSize + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
-    }
+    return false;
 }
 
-void PropertiesWindow::DrawGamepadShiftTimingsInput()
+bool PropertiesWindow::DrawShiftTimingsGamepadPopup()
 {
-    ImGui::Dummy({0, DPI_SCALED(5)});
-    ImGui::Text("If the syllables light up too early, enter a positive offset.");
-    ImGui::Text("If the syllables light up after the audio, enter a negative offset.");
-    ImGui::Dummy({0, DPI_SCALED(10)});
-    if(ImGui::InputInt("##Latency", &ourShiftTimingsValue))
+    if(ImGui::BeginPopupModal("Shift Timings##Gamepad"))
     {
-    }
-    if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
-    {
-        ourShiftTimingsValue -= (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
-    }
-    if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
-    {
-        ourShiftTimingsValue += (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
-    }
-    if(Gamepad::GetButtonDown(Gamepad::A))
-    {
-        Serialization::KaraokeDocument::Get().ShiftTimings(ourShiftTimingsValue);
-        Serialization::KaraokeDocument::Get().MakeDirty();
-        ourShiftTimingsValue = 0;
-    }
-}
-
-void PropertiesWindow::ShiftTimingsPopupDraw()
-{
-    if(ImGui::BeginPopupModal("Shift Timings", &myShiftTimingsPopupOpen))
-    {
-        //ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        if(ImGui::Ext::StepInt("Offset (cs)", ourShiftTimingsValue, 1, 10))
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        DrawHudSprite(HUDSprite::ArrowLeftBtn, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        ImGui::SameLine();
+        ImGui::Dummy({0, DPI_SCALED(5)});
+        ImGui::Text("If the syllables light up too early, enter a positive offset.");
+        ImGui::Text("If the syllables light up after the audio, enter a negative offset.");
+        ImGui::Dummy({0, DPI_SCALED(10)});
+        bool valChanged = ImGui::InputInt("##ShiftTime", &myShiftTimingsValue);
+        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+        {
+            myShiftTimingsValue -= (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            valChanged = true;
+        }
+        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+        {
+            myShiftTimingsValue += (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            valChanged = true;
+        }
+        if(valChanged)
         {
             Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
             Serialization::KaraokeToken& token = doc.GetToken(0, 0);
@@ -173,9 +192,283 @@ void PropertiesWindow::ShiftTimingsPopupDraw()
             {
                 token = doc.GetTimedTokenAfter(0, 0);
             }
-            if(((int)token.myStartTime) < -ourShiftTimingsValue)
+            if(((int)token.myStartTime) < -myShiftTimingsValue)
             {
-                ourShiftTimingsValue = -(int)token.myStartTime;
+                myShiftTimingsValue = -(int)token.myStartTime;
+            }
+        }
+        ImGui::SameLine();
+        DrawHudSprite(HUDSprite::ArrowRightBtn, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        if(Gamepad::GetButtonDown(Gamepad::A))
+        {
+            Serialization::KaraokeDocument::Get().ShiftTimings(myShiftTimingsValue);
+            Serialization::KaraokeDocument::Get().MakeDirty();
+            myShiftTimingsValue = 0;
+            ImGui::CloseCurrentPopup();
+        }
+        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5)));
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
+        {
+            ImGui::Text("(X) Apply   (O) Close");
+        }
+        else
+        {
+            ImGui::Text("(A) Apply   (B) Close");
+        }
+        ImGui::EndPopup();
+        return true;
+    }
+    return false;
+}
+
+bool PropertiesWindow::DrawDefaultColorsGamepadPopup(int aSelectedSlider)
+{
+    if(ImGui::BeginPopupModal("Default Colors##Gamepad"))
+    {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        if(DrawColorGamepadMenu(aSelectedSlider, doc.myBaseStartColor, doc.myBaseEndColor))
+        {
+            doc.MakeDirty();
+        }
+        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::A) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5)));
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
+        {
+            ImGui::Text("(X) / (O) Close");
+        }
+        else
+        {
+            ImGui::Text("(A) / (B) Close");
+        }
+        ImGui::EndPopup();
+        return true;
+    }
+    return false;
+}
+
+bool PropertiesWindow::DrawSingerColorsGamepadPopup(int aSelectedSlider, bool anIsLocal, std::string anEditingName)
+{
+    if(ImGui::BeginPopupModal("Edit Singer##Gamepad"))
+    {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        if(anEditingName == "")
+        {
+            if(!myNewEffectToAdd)
+            {
+                myNewEffectToAdd = new Serialization::KaraokeColorEffect();
+                myNewEffectToAdd->myType = Serialization::KaraokeEffect::Color;
+                myNewEffectToAdd->myStartColor = 0x0038F97C;
+                myNewEffectToAdd->myHasEndColor = false;
+                myNewEffectToAdd->myEndColor = 0x30FFCCE9;
+            }
+            ImGui::InputText("Name: ", &myNewEffectName);
+        }
+        else
+        {
+            if(!myNewEffectToAdd)
+            {
+                myNewEffectToAdd = (Serialization::KaraokeColorEffect*)(anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[anEditingName];
+            }
+            ImGui::SeparatorText(anEditingName.data());
+        }
+        DrawColorGamepadMenu(aSelectedSlider, myNewEffectToAdd->myStartColor, myNewEffectToAdd->myEndColor);
+        if((Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::A)) && (anEditingName != "" || myNewEffectName != ""))
+        {
+            myCurrentTab = (TabIndex)anIsLocal;
+            myNewEffectName = anEditingName == "" ? myNewEffectName : anEditingName;
+            ApplyEdit(myNewEffectToAdd);
+            (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName] = myNewEffectToAdd;
+            if(Gamepad::GetButtonDown(Gamepad::X))
+            {
+                myCurrentTab = (TabIndex)!anIsLocal;
+                ApplyEdit(myNewEffectToAdd);
+                (!anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName] = myNewEffectToAdd;
+            }
+            myNewEffectToAdd = nullptr;
+            myNewEffectName = "";
+            ImGui::CloseCurrentPopup();
+        }
+        if(Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            if(Gamepad::GetButton(Gamepad::Triangle))
+            {
+                if(anEditingName == "")
+                {
+                    delete myNewEffectToAdd;
+                }
+                else
+                {
+                    delete (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName];
+                    (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases).erase(myNewEffectName);
+                }
+            }
+            myNewEffectToAdd = nullptr;
+            myNewEffectName = "";
+            ImGui::CloseCurrentPopup();
+        }
+
+        Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5)));
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
+        {
+            if(anIsLocal) ImGui::Text("(X) Apply   (O) Cancel   ([]) Add to project   (/\\) + (O) Delete");
+            else          ImGui::Text("(X) Apply   (O) Cancel   ([]) Store local   (/\\) + (O) Delete");
+        }
+        else
+        {
+            if(anIsLocal) ImGui::Text("(A) Apply   (B) Cancel   (X) Add to project   (Y) + (B) Delete");
+            else          ImGui::Text("(A) Apply   (B) Cancel   (X) Store local   (Y) + (B) Delete");
+        }
+        ImGui::EndPopup();
+        return true;
+    }
+    return false;
+}
+
+const Serialization::KaraokeAliasMap &PropertiesWindow::GetDocumentEffectAliases()
+{
+    return Serialization::KaraokeDocument::Get().GetEffectAliases();
+}
+
+const Serialization::KaraokeAliasMap &PropertiesWindow::GetLocalEffectAliases()
+{
+    return myLocalEffectAliases;
+}
+
+bool PropertiesWindow::DrawColorGamepadMenu(int aSelectedSlider, uint& aStartColor, uint& anEndColor)
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    int startR = IM_COL32_GET_R(aStartColor);
+    int startG = IM_COL32_GET_G(aStartColor);
+    int startB = IM_COL32_GET_B(aStartColor);
+    int startA = 255 - IM_COL32_GET_A(aStartColor);
+    bool changed = false;
+    ImGui::Dummy({5, ImGui::GetTextLineHeightWithSpacing()});
+    if(DrawGamepadColorComponent("##startR", aSelectedSlider == 0, startR))
+    {
+        IM_COL32_GET_R(aStartColor) = startR;
+        changed = true;
+    }
+    ImGui::SameLine();
+    if(DrawGamepadColorComponent("##startG", aSelectedSlider == 1, startG))
+    {
+        IM_COL32_GET_G(aStartColor) = startG;
+        changed = true;
+    }
+    ImGui::SameLine();
+    if(DrawGamepadColorComponent("##startB", aSelectedSlider == 2, startB))
+    {
+        IM_COL32_GET_B(aStartColor) = startB;
+        changed = true;
+    }
+    ImGui::SameLine();
+    if(DrawGamepadColorComponent("##startA", aSelectedSlider == 3, startA))
+    {
+        IM_COL32_GET_A(aStartColor) = ~(ImU8)startA;
+        changed = true;
+    }
+    ImGui::SameLine();
+    float halfX = ImGui::GetCursorPosX();
+    ImGui::Spacing();
+    ImGui::SameLine();
+    ImGui::Spacing();
+    ImGui::SameLine();
+    int endR = IM_COL32_GET_R(anEndColor);
+    int endG = IM_COL32_GET_G(anEndColor);
+    int endB = IM_COL32_GET_B(anEndColor);
+    int endA = 255 - IM_COL32_GET_A(anEndColor);
+    if(DrawGamepadColorComponent("##endR", aSelectedSlider == 4, endR))
+    {
+        IM_COL32_GET_R(anEndColor) = endR;
+        changed = true;
+    }
+    ImGui::SameLine();
+    if(DrawGamepadColorComponent("##endG", aSelectedSlider == 5, endG))
+    {
+        IM_COL32_GET_G(anEndColor) = endG;
+        changed = true;
+    }
+    ImGui::SameLine();
+    if(DrawGamepadColorComponent("##endB", aSelectedSlider == 6, endB))
+    {
+        IM_COL32_GET_B(anEndColor) = endB;
+        changed = true;
+    }
+    ImGui::SameLine();
+    if(DrawGamepadColorComponent("##endA", aSelectedSlider == 7, endA))
+    {
+        IM_COL32_GET_A(anEndColor) = ~(ImU8)endA;
+        changed = true;
+    }
+    ImGui::Dummy({5, ImGui::GetTextLineHeightWithSpacing()});
+    ImGui::ColorButton("##startCol", ImGui::ColorConvertU32ToFloat4(IM_COL32_FROM_DOC(aStartColor)), ImGuiColorEditFlags_AlphaBar, {halfX, ImGui::GetTextLineHeightWithSpacing()});
+    ImGui::SameLine();
+    ImGui::ColorButton("##endCol", ImGui::ColorConvertU32ToFloat4(IM_COL32_FROM_DOC(anEndColor)), ImGuiColorEditFlags_AlphaBar, {halfX, ImGui::GetTextLineHeightWithSpacing()});
+    return changed;
+}
+
+bool PropertiesWindow::DrawGamepadColorComponent(const char* aLabel, bool aIsSelected, int &aColorComponent)
+{
+    bool changed = false;
+    if(aIsSelected)
+    {
+        if(Gamepad::GetButtonRepeating(Gamepad::D_Up) || Gamepad::GetButtonRepeating(Gamepad::D_Down))
+        {
+            int val = aColorComponent + (Gamepad::GetButton(Gamepad::D_Up) ? (Gamepad::GetTimeSinceToggled(Gamepad::D_Up) < 1 ? 1 : 5) : (Gamepad::GetTimeSinceToggled(Gamepad::D_Down) < 1 ? -1 : -5));
+            aColorComponent = clamp(val, 0, 255);
+            changed = true;
+        }
+        ImVec2 topLeft = ImGui::GetCursorPos();
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        topLeft.x += ImGui::GetWindowPos().x;
+        topLeft.y += ImGui::GetWindowPos().y;
+        drawList->AddRect(
+            {topLeft.x - DPI_SCALED(5), topLeft.y - DPI_SCALED(5)},
+            {topLeft.x + ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5), topLeft.y + DPI_SCALED(155)},
+            ImGui::GetColorU32(ImGuiCol_NavHighlight), ImGui::GetStyle().FrameRounding + DPI_SCALED(2), 0, ImGui::GetStyle().WindowBorderSize);
+        AddHudSpriteTo(drawList, HUDSprite::ArrowUpBtn, {(topLeft.x - DPI_SCALED(10)) + (ImGui::GetTextLineHeightWithSpacing() * .5f), topLeft.y - DPI_SCALED(20)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowDownBtn, {(topLeft.x - DPI_SCALED(10)) + (ImGui::GetTextLineHeightWithSpacing() * .5f), topLeft.y + DPI_SCALED(150)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowLeftBtn, {topLeft.x - DPI_SCALED(20), topLeft.y + DPI_SCALED(65)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowRightBtn, {topLeft.x + DPI_SCALED(0) + ImGui::GetTextLineHeightWithSpacing(), topLeft.y + DPI_SCALED(65)}, {DPI_SCALED(20), DPI_SCALED(20)});
+    }
+    if(ImGui::VSliderInt(aLabel, {ImGui::GetTextLineHeightWithSpacing(), DPI_SCALED(150)}, &aColorComponent, 0, 255, "", ImGuiSliderFlags_AlwaysClamp))
+    {
+        changed = true;
+    }
+    ImGui::SameLine();
+    ImGui::Spacing();
+    return changed;
+}
+
+void PropertiesWindow::ShiftTimingsPopupDraw()
+{
+    if(ImGui::BeginPopupModal("Shift Timings", &myShiftTimingsPopupOpen))
+    {
+        //ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        if(ImGui::Ext::StepInt("Offset (cs)", myShiftTimingsValue, 1, 10))
+        {
+            Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+            Serialization::KaraokeToken& token = doc.GetToken(0, 0);
+            if(doc.IsNull(token) || !token.myHasStart)
+            {
+                token = doc.GetTimedTokenAfter(0, 0);
+            }
+            if(((int)token.myStartTime) < -myShiftTimingsValue)
+            {
+                myShiftTimingsValue = -(int)token.myStartTime;
             }
         }
         ImGui::Dummy({0, DPI_SCALED(5)});
@@ -184,15 +477,15 @@ void PropertiesWindow::ShiftTimingsPopupDraw()
         ImGui::Dummy({0, DPI_SCALED(10)});
         if(ImGui::Button("Shift"))
         {
-            Serialization::KaraokeDocument::Get().ShiftTimings(ourShiftTimingsValue);
+            Serialization::KaraokeDocument::Get().ShiftTimings(myShiftTimingsValue);
             Serialization::KaraokeDocument::Get().MakeDirty();
-            ourShiftTimingsValue = 0;
+            myShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = false;
         }
         ImGui::SameLine();
         if(ImGui::Button("Cancel"))
         {
-            ourShiftTimingsValue = 0;
+            myShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = false;
         }
         ImGui::EndPopup();

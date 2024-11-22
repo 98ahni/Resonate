@@ -12,6 +12,7 @@ public:
     void OnImGuiDraw();
     static void InitLatencyVisualization();
     static int DrawLatencyVisualization(ImVec2 aSize);
+    static void StopLatencyVisualization();
 
 private:
     int DrawLatencyWidget();

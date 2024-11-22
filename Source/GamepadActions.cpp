@@ -3,6 +3,7 @@
 
 #include "GamepadActions.h"
 #include "Extensions/imguiExt.h"
+#include <misc/cpp/imgui_stdlib.h>
 #include "Serialization/KaraokeData.h"
 #include <Serialization/Preferences.h>
 #include "Windows/MainWindow.h"
@@ -14,6 +15,7 @@
 #include "Defines.h"
 #include "StringTools.h"
 #include "EditMenu.h"
+using namespace HUDSprite;
 
 enum Layer
 {
@@ -29,28 +31,19 @@ EffectSpinType g_effectSpinType = Singer;
 MenuSpinType g_menuSpinType = Document;
 
 bool g_hasLocalEffects = false;
-Serialization::KaraokeAliasMap g_localEffects = {};
+bool g_hasInitMetronome = false;
+std::string g_editingEffectName = "";
 std::vector<std::string> g_localEffectNames = {};
 std::vector<std::string> g_docEffectNames = {};
+PropertiesWindow* g_properties = nullptr;
 int g_lastAddedEffect = -1;
+int g_selectedColorSlider = 0;
+int g_imageShiftTime = 0;
+int g_imageFadeTime = 0;
 
 ImExtTexture g_menuBGTexture = {};
 ImExtTexture g_hudTexture = {};
 bool g_showOverlay = true;
-enum HUDSprite
-{
-    DocColor, PreviewBtn, ShiftTimes, FontSize, Latency,
-    MenuBtn, EffectBtn, SyllableBtn, TimeEnd, TimeStart,
-    SpeedUp, SpeedDown, LineTagPlus, LineTagMinus, NoEffectBtn, SingerBtn, ImageBtn,
-    LineMoveUp, LineMoveDown, LineMergeUp, LineMergeDown, LineDuplicate, LineSplit, LineRemove,
-    CaseCapital, CaseMajus, CaseMinus, CaseToggle, MenuToggle,
-    StopBtn, PlayBtn, PauseBtn, RW5sBtn, FF5sBtn, SeekToMarkBtn, LayoutBtn, AdjustBtn,
-    BtnPadBGPS, DPadBGPS, BtnPadBG, DPadBG, StickSpinBG, StickFlickBG,
-    DPadFillPSY, DPadFillPSX, DPadFillY, DPadFillX,
-    //DPadFillPSYR, DPadFillPSXR, DPadFillYR, DPadFillXR,       // Might be useful later
-    ArrowUpBtn, ArrowDownBtn, ArrowLeftBtn, ArrowRightBtn,
-    SpinIcon, BumperFill, TriggerFill, BtnFill
-};
 ImVec2 g_hudStartUVs[] = {
     {.0f, .0f}, {.0f, .1f}, {.0f, .2f}, {.0f, .3f}, {.0f, .4f},
     {.1f, .0f}, {.2f, .0f}, {.3f, .0f}, {.4f, .0f}, {.5f, .0f},
@@ -80,20 +73,11 @@ ImVec2 g_hudEndUVs[] = {
 
 void SetUpLocalEffectData()
 {
-    if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
+    if(!g_properties) { g_properties = new PropertiesWindow(); }
+    g_localEffectNames.clear();
+    for(const auto& [alias, effect] : g_properties->GetLocalEffectAliases())
     {
-        g_hasLocalEffects = true;
-        g_localEffectNames.clear();
-        std::vector<std::string> keys = StringTools::Split(Serialization::Preferences::GetString("StyleProperties/Keys"), ",");
-        std::string uniqueKeys = "";
-        for(std::string key : keys)
-        {
-            if(key == "" || g_localEffects.contains(key)) continue;
-            uniqueKeys += uniqueKeys == "" ? key : ("," + key);
-            g_localEffects[key] = Serialization::KaraokeDocument::ParseEffectProperty(Serialization::Preferences::GetString("StyleProperties/" + key));
-            g_localEffectNames.push_back(key);
-        }
-        if(uniqueKeys != "") { Serialization::Preferences::SetString("StyleProperties/Keys", uniqueKeys); }
+        g_localEffectNames.push_back(alias);
     }
 }
 void SetUpDocumentEffectData()
@@ -106,14 +90,28 @@ void SetUpDocumentEffectData()
 }
 
 void CheckGamepadActions();
+void DoStandardAdjustActions();
+void DoSettingsActions();
+void DoEffectsActions();
+void DoLayoutActions();
 int StickMenu(float aScroll, std::vector<std::string> someLabels);
-void DrawImagePopup();
-void DrawLatencyPopup();
-void DrawFontSizePopup();
-void DrawDocColorsPopup();
-void DrawTimeShiftPopup();
-void DrawSingerPopup();
+bool DrawImagePopup();
+bool DrawLatencyPopup();
+bool DrawFontSizePopup();
+bool DrawDocColorsPopup();
+bool DrawTimeShiftPopup();
+bool DrawSingerPopup();
 void DrawOverlay();
+
+void DrawHudSprite(HUDSprite::HUDSpriteID aSprite, ImVec2 aSize, ImU32 aColor)
+{
+    ImGui::Image(g_hudTexture.myID, aSize, g_hudStartUVs[aSprite], g_hudEndUVs[aSprite], ImGui::ColorConvertU32ToFloat4(aColor));
+}
+
+void AddHudSpriteTo(ImDrawList *aDrawList, HUDSprite::HUDSpriteID aSprite, ImVec2 aScreenPosition, ImVec2 aSize, ImU32 aColor)
+{
+    aDrawList->AddImage(g_hudTexture.myID, aScreenPosition, {aScreenPosition.x + aSize.x, aScreenPosition.y + aSize.y}, g_hudStartUVs[aSprite], g_hudEndUVs[aSprite], aColor);
+}
 
 void DoGamepadActions()
 {
@@ -123,6 +121,24 @@ void DoGamepadActions()
         ImGui::Ext::LoadImage("##MenuHUDTexture", "GamepadSprites/IconSprites.png");
         ImGui::Ext::RenderTexture("##MenuHUDTexture", g_hudTexture);
     }
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
+    if( DrawImagePopup() ||
+        DrawLatencyPopup() ||
+        DrawFontSizePopup() ||
+        DrawDocColorsPopup() ||
+        DrawTimeShiftPopup() ||
+        DrawSingerPopup())
+    {
+        ImGui::PopStyleColor();
+        TimingEditor::Get().SetInputUnsafe(true);
+        return;
+    }
+    TimingEditor::Get().SetInputUnsafe(false);
+    ImGui::PopStyleColor();
+    DoStandardAdjustActions();
+    DoSettingsActions();
+    DoEffectsActions();
+    DoLayoutActions();
     CheckGamepadActions();
     if(!g_showOverlay) { return; }
     DrawOverlay();
@@ -198,7 +214,6 @@ void CheckGamepadActions()
     - [Confirm] - Split/Join
     */
 
-    Layer layer = g_layerLastFrame;
     if(!Gamepad::GetButton(Gamepad::Square) && !Gamepad::GetButton(Gamepad::Triangle) && !Gamepad::GetButton(Gamepad::L2) && !Gamepad::GetButton(Gamepad::R2))
     {
         g_layerLastFrame = Standard;
@@ -219,18 +234,21 @@ void CheckGamepadActions()
     {
         g_layerLastFrame = Adjust;
     }
+}
 
-    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    if(layer == Standard || layer == Adjust)
+void DoStandardAdjustActions()
+{
+    if(g_layerLastFrame == Standard || g_layerLastFrame == Adjust)
     {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         if(Gamepad::GetButtonDown(Gamepad::D_Up)) TimingEditor::Get().MoveMarkerUp();
         if(Gamepad::GetButtonDown(Gamepad::D_Down)) TimingEditor::Get().MoveMarkerDown();
-        if(Gamepad::GetButtonDown(Gamepad::D_Left)) TimingEditor::Get().MoveMarkerLeft(layer == Adjust);
-        if(Gamepad::GetButtonDown(Gamepad::D_Right)) TimingEditor::Get().MoveMarkerRight(layer == Adjust);
+        if(Gamepad::GetButtonDown(Gamepad::D_Left)) TimingEditor::Get().MoveMarkerLeft(g_layerLastFrame == Adjust);
+        if(Gamepad::GetButtonDown(Gamepad::D_Right)) TimingEditor::Get().MoveMarkerRight(g_layerLastFrame == Adjust);
         if(Gamepad::GetButtonDown(Gamepad::Circle)) TimingEditor::Get().RecordEndTime();
         if(Gamepad::GetButtonDown(Gamepad::Cross))
         {
-            if(layer == Standard) TimingEditor::Get().RecordStartTime();
+            if(g_layerLastFrame == Standard) TimingEditor::Get().RecordStartTime();
             else TimingEditor::Get().ToggleTokenHasTime();
         }
 
@@ -261,8 +279,13 @@ void CheckGamepadActions()
             AudioPlayback::SetPlaybackProgress(doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myStartTime);
         }
     }
-    else if(layer == Settings)
+}
+
+void DoSettingsActions()
+{
+    if(g_layerLastFrame == Settings)
     {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         if(Gamepad_Tap(Gamepad::Square))
         {
             // Show/Hide overlay
@@ -270,7 +293,7 @@ void CheckGamepadActions()
         }
         else if(Gamepad_Hold(Gamepad::Square))
         {
-            if(Gamepad::GetButtonDown(Gamepad::D_Up)) { Settings::InitLatencyVisualization(); ImGui::OpenPopup("Latency##Gamepad"); }
+            if(Gamepad::GetButtonDown(Gamepad::D_Up)) { g_hasInitMetronome = false; ImGui::OpenPopup("Latency##Gamepad"); }
             if(Gamepad::GetButtonDown(Gamepad::D_Down)) { ImGui::OpenPopup("Shift Timings##Gamepad"); }
             if(Gamepad::GetButtonDown(Gamepad::D_Left)) { ImGui::OpenPopup("Font Size##Gamepad"); }
             if(Gamepad::GetButtonDown(Gamepad::D_Right)) { ImGui::OpenPopup("Default Colors##Gamepad"); }
@@ -311,7 +334,7 @@ void CheckGamepadActions()
                 }
                 else
                 {
-                    Serialization::KaraokeColorEffect* effect = (Serialization::KaraokeColorEffect*)((g_menuSpinType == Document ? doc.GetEffectAliases() : g_localEffects).at(options[index]));
+                    Serialization::KaraokeColorEffect* effect = (Serialization::KaraokeColorEffect*)((g_menuSpinType == Document ? doc.GetEffectAliases() : g_properties->GetLocalEffectAliases()).at(options[index]));
                     if(effect->myHasEndColor)
                     {
                         drawList->AddRectFilled(
@@ -350,10 +373,20 @@ void CheckGamepadActions()
                         break;
                     case 1:
                         printf("Add New\n");
+                        g_editingEffectName = "";
+                        ImGui::OpenPopup("Edit Singer##Gamepad");
                         break;
                     default:
-                        if(g_menuSpinType == Document) { printf("%s\n", g_docEffectNames[index - 2].data()); }
-                        else                           { printf("%s\n", g_localEffectNames[index - 2].data()); }
+                        if(g_menuSpinType == Document)
+                        {
+                            g_editingEffectName = g_docEffectNames[index - 2];
+                            ImGui::OpenPopup("Edit Singer##Gamepad");
+                        }
+                        else
+                        {
+                            g_editingEffectName = g_localEffectNames[index - 2];
+                            ImGui::OpenPopup("Edit Singer##Gamepad");
+                        }
                         break;
                 }
                 g_validSpin = false;
@@ -361,17 +394,40 @@ void CheckGamepadActions()
             }
         }
     }
-    else if(layer == Effects)
+}
+
+void DoEffectsActions()
+{
+    if(g_layerLastFrame == Effects)
     {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         if(Gamepad_Tap(Gamepad::Triangle))
         {
             if(doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue.starts_with("image "))
             {
-                // Open image options
+                std::string timeStr = StringTools::Split(doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue, " ")[1];
+                g_imageFadeTime = (int)(std::stof(timeStr) * 100);
+                g_editingEffectName = doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue.substr(("image " + timeStr + " ").size());
+                g_imageShiftTime = 0;
+                ImGui::OpenPopup("Image##Gamepad");
             }
             else if(doc.IsEffectToken(doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken())))
             {
                 doc.GetLine(TimingEditor::Get().GetMarkedLine()).erase(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken());
+                //std::vector<std::string> tags = StringTools::Split(doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue.data(), std::regex("<[A-Za-z0-9#\"= -]+>"), true);
+                //for(int i = 0; i < tags.size(); i++)
+                //{
+                //    if(tags[i].empty()) continue;
+                //    std::string possibleAlias = tags[i];
+                //    StringTools::EraseSubString(possibleAlias, "<");
+                //    StringTools::EraseSubString(possibleAlias, ">");
+                //    if(doc.GetEffectAliases().contains(possibleAlias))
+                //    {
+                //        g_menuSpinType = Document;
+                //        g_editingEffectName = possibleAlias;
+                //        ImGui::OpenPopup("Edit Singer##Gamepad");
+                //    }
+                //}
             }
             else if(g_lastAddedEffect != -1)
             {
@@ -448,8 +504,20 @@ void CheckGamepadActions()
             {
                 g_effectSpinType = (!PreviewWindow::GetHasVideo() && PreviewWindow::GetBackgroundElementPaths().size() > 1) ? (EffectSpinType)!g_effectSpinType : Singer;
             }
+            //bool hasRemoveOption = false;
+            // Force menu when on image
+            if(doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue.starts_with("image "))
+            {
+                g_effectSpinType = Image;
+                //hasRemoveOption = true;
+            }
+            //else if(doc.IsEffectToken(doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken())))
+            //{
+            //    hasRemoveOption = true;
+            //}
             float mag = Gamepad_Magnitude(Gamepad::LeftStick);
             std::vector<std::string> options = g_effectSpinType == Singer ? g_docEffectNames : PreviewWindow::GetBackgroundElementPaths();
+            //if(hasRemoveOption) { options.emplace(options.begin(), "Remove"); }
             options.emplace(options.begin(), "Cancel");
             float adjustedSpin = g_currentSpin + .5f;
             while(adjustedSpin < 0) { adjustedSpin += options.size();}
@@ -466,6 +534,10 @@ void CheckGamepadActions()
                 {
                     // Cancel symbol
                 }
+                //else if(hasRemoveOption && index == 1)
+                //{
+                //    // Remove symbol
+                //}
                 else if(g_effectSpinType == Singer)
                 {
                     Serialization::KaraokeColorEffect* effect = (Serialization::KaraokeColorEffect*)doc.GetEffectAliases().at(options[index]);
@@ -507,15 +579,69 @@ void CheckGamepadActions()
                     case 0:
                         printf("Cancel\n");
                         break;
+                    //case 1:
+                    //    if(hasRemoveOption)
+                    //    {
+                    //        doc.RemoveLine(TimingEditor::Get().GetMarkedLine());
+                    //        if(doc.GetLine(TimingEditor::Get().GetMarkedLine()).size() == 1 && doc.IsPauseToken(TimingEditor::Get().GetMarkedLine(), 0))
+                    //        {
+                    //            doc.RemoveLine(TimingEditor::Get().GetMarkedLine());
+                    //        }
+                    //        doc.MakeDirty();
+                    //        printf("Remove\n");
+                    //        break;
+                    //    }
                     default:
                         if(g_effectSpinType == Singer)
                         {
-                            Serialization::KaraokeToken& token = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken());
-                            doc.GetLine(TimingEditor::Get().GetMarkedLine()).insert(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken(),
-                                {("<" + g_docEffectNames[index - 1] + ">").data(), true, token.myStartTime});
-                            printf("%s\n", g_docEffectNames[index - 1].data());
+                            //if(hasRemoveOption)
+                            //{
+                            //    doc.GetLine(TimingEditor::Get().GetMarkedLine()).erase(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken());
+                            //}
+                            //else
+                            //{
+                                Serialization::KaraokeToken& token = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken());
+                                doc.GetLine(TimingEditor::Get().GetMarkedLine()).insert(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken(),
+                                    {("<" + options[index] + ">").data(), true, token.myStartTime});
+                            //}
                         }
-                        else { printf("%s\n", PreviewWindow::GetBackgroundElementPaths()[index - 1].data()); }
+                        else
+                        {
+                            //if(hasRemoveOption)
+                            //{
+                            //    std::string timeStr = StringTools::Split(doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue, " ")[1];
+                            //    doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue = "image " + timeStr + " " + PreviewWindow::GetBackgroundElementPaths()[index - 2];
+                            //    printf("Replace with %s\n", PreviewWindow::GetBackgroundElementPaths()[index - 2].data());
+                            //}
+                            //else
+                            //{
+                                uint imgTime = doc.GetThisOrNextTimedToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myStartTime;
+                                for(int line = TimingEditor::Get().GetMarkedLine(); line < doc.GetData().size(); line++)
+                                {
+                                    Serialization::KaraokeToken& compToken = doc.GetThisOrNextTimedToken(line, 0);
+                                    if(doc.IsNull(compToken)) {break;}
+                                    if(compToken.myStartTime >= imgTime)
+                                    {
+                                        Serialization::KaraokeLine& checkLine = doc.GetValidLineBefore(line);
+                                        if(!doc.IsNull(checkLine) && checkLine[0].myValue.starts_with("image "))
+                                        {
+                                            line--;
+                                        }
+                                        Serialization::KaraokeToken newToken = {};
+                                        newToken.myValue = "";
+                                        newToken.myHasStart = true;
+                                        newToken.myStartTime = imgTime;
+                                        doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                                        newToken.myValue = "image 0.2 " + PreviewWindow::GetBackgroundElementPaths()[index - 1];
+                                        newToken.myHasStart = false;
+                                        newToken.myStartTime = 0;
+                                        doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                                        break;
+                                    }
+                                }
+                            //}
+                        }
+                        doc.MakeDirty();
                         break;
                 }
                 g_validSpin = false;
@@ -523,7 +649,11 @@ void CheckGamepadActions()
             }
         }
     }
-    else if(layer == Layout)
+}
+
+void DoLayoutActions()
+{
+    if(g_layerLastFrame == Layout)
     {
         if(Gamepad::GetButtonDown(Gamepad::D_Up)) Menu::Edit_MoveLineUp();
         if(Gamepad::GetButtonDown(Gamepad::D_Down)) Menu::Edit_MoveLineDown();
@@ -578,25 +708,146 @@ int StickMenu(float aScroll, std::vector<std::string> someLabels)
     return -1;
 }
 
-void DrawImagePopup()
+bool DrawImagePopup()
 {
     if(ImGui::BeginPopupModal("Image##Gamepad"))
     {
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        ImVec2 topLeft = ImGui::GetCursorPos();
+        if(g_selectedColorSlider == 0)
+        {
+            if(Gamepad::GetButtonRepeating(Gamepad::D_Left) || Gamepad::GetButtonRepeating(Gamepad::D_Right))
+            {
+                g_imageShiftTime += Gamepad::GetButton(Gamepad::D_Right) ? 1 : -1;
+            }
+        }
+        ImGui::Text("Shift Start Time (cs)");
+        ImGui::SameLine();
+        ImGui::DragInt("##Shift Start Time (cs)", &g_imageShiftTime);
+        ImVec2 size = ImGui::GetItemRectSize();
+        if(g_selectedColorSlider == 1)
+        {
+            topLeft = ImGui::GetCursorPos();
+            if(Gamepad::GetButtonRepeating(Gamepad::D_Left) || Gamepad::GetButtonRepeating(Gamepad::D_Right))
+            {
+                g_imageFadeTime += Gamepad::GetButton(Gamepad::D_Right) ? 1 : -1;
+            }
+        }
+        ImGui::Text("Fade Duration (cs)");
+        ImGui::SameLine();
+        ImGui::DragInt("##Fade Duration (cs)", &g_imageFadeTime);
         ImDrawList* drawList = ImGui::GetWindowDrawList();
+        topLeft.x += ImGui::GetWindowPos().x;
+        topLeft.y += ImGui::GetWindowPos().y;
+        drawList->AddRect(
+            {topLeft.x - DPI_SCALED(5), topLeft.y - DPI_SCALED(5)},
+            {topLeft.x + size.x + DPI_SCALED(5), topLeft.y + size.y + DPI_SCALED(5)},
+            ImGui::GetColorU32(ImGuiCol_NavHighlight), ImGui::GetStyle().FrameRounding + DPI_SCALED(2), 0, ImGui::GetStyle().WindowBorderSize);
+        AddHudSpriteTo(drawList, HUDSprite::ArrowUpBtn, {(topLeft.x - DPI_SCALED(10)) + (size.x * .5f), topLeft.y - DPI_SCALED(20)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowDownBtn, {(topLeft.x - DPI_SCALED(10)) + (size.x * .5f), topLeft.y + size.y + DPI_SCALED(0)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowLeftBtn, {topLeft.x - DPI_SCALED(20), topLeft.y + (size.y * .5f) - DPI_SCALED(10)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowRightBtn, {topLeft.x + DPI_SCALED(0) + size.x, topLeft.y + (size.y * .5f) - DPI_SCALED(10)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        if(Gamepad::GetButtonDown(Gamepad::A) || Gamepad::GetButtonDown(Gamepad::Circle))
+        {
+            uint imgTime = 0;
+            if(doc.GetLine(TimingEditor::Get().GetMarkedLine() + 1).size() == 1 && doc.IsPauseToken(TimingEditor::Get().GetMarkedLine() + 1, 0))
+            {
+                imgTime = doc.GetToken(TimingEditor::Get().GetMarkedLine() + 1, 0).myStartTime;
+            }
+            else
+            {
+                imgTime = doc.GetThisOrNextTimedToken(TimingEditor::Get().GetMarkedLine() + 1, 0).myStartTime;
+                imgTime = imgTime < 200 ? 0 : (imgTime - 200);
+            }
+            if((Gamepad::GetButton(Gamepad::A) && g_imageShiftTime != 0) || Gamepad::GetButton(Gamepad::Triangle))
+            {
+                doc.RemoveLine(TimingEditor::Get().GetMarkedLine());
+                if(doc.GetLine(TimingEditor::Get().GetMarkedLine()).size() == 1 && doc.IsPauseToken(TimingEditor::Get().GetMarkedLine(), 0))
+                {
+                    doc.RemoveLine(TimingEditor::Get().GetMarkedLine());
+                }
+            }
+            if(Gamepad::GetButton(Gamepad::A))
+            {
+                if(g_imageShiftTime == 0)
+                {
+                    doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue = "image " + std::to_string(((float)g_imageFadeTime * .01f)) + " " + g_editingEffectName;
+                }
+                else
+                {
+                    imgTime = (int)imgTime < -g_imageShiftTime ? 0 : (imgTime + g_imageShiftTime);
+                    for(int line = 0; line < doc.GetData().size(); line++)
+                    {
+                        Serialization::KaraokeToken& compToken = doc.GetThisOrNextTimedToken(line, 0);
+                        if(doc.IsNull(compToken)) {break;}
+                        if(compToken.myStartTime >= imgTime)
+                        {
+                            Serialization::KaraokeLine& checkLine = doc.GetValidLineBefore(line);
+                            if(!doc.IsNull(checkLine) && checkLine[0].myValue.starts_with("image "))
+                            {
+                                line--;
+                            }
+                            Serialization::KaraokeToken newToken = {};
+                            newToken.myValue = "";
+                            newToken.myHasStart = true;
+                            newToken.myStartTime = imgTime;
+                            doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                            newToken.myValue = "image " + std::to_string(((float)g_imageFadeTime * .01f)) + " " + g_editingEffectName;
+                            newToken.myHasStart = false;
+                            newToken.myStartTime = 0;
+                            doc.GetData().insert(doc.GetData().begin() + line, {newToken});
+                            doc.MakeDirty();
+                            break;
+                        }
+                    }
+                }
+            }
+            g_editingEffectName = "";
+            g_imageFadeTime = 0;
+            g_imageShiftTime = 0;
+            ImGui::CloseCurrentPopup();
+        }
+        if(Gamepad::GetButtonDown(Gamepad::D_Up))
+        {
+            g_selectedColorSlider--;
+        }
+        if(Gamepad::GetButtonDown(Gamepad::D_Down))
+        {
+            g_selectedColorSlider++;
+        }
+        g_selectedColorSlider = g_selectedColorSlider < 0 ? 0 : g_selectedColorSlider > 1 ? 1 : g_selectedColorSlider;
 
+        Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5)));
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
+        {
+            ImGui::Text("(X) Apply   (O) Cancel   (/\\) + (O) Remove");
+        }
+        else
+        {
+            ImGui::Text("(A) Apply   (B) Cancel   (Y) + (B) Remove");
+        }
         ImGui::EndPopup();
+        return true;
     }
+    return false;
 }
 
-void DrawLatencyPopup()
+bool DrawLatencyPopup()
 {
     if(ImGui::BeginPopupModal("Latency##Gamepad"))
     {
+        if(!g_hasInitMetronome)
+        {
+            g_hasInitMetronome = true;
+            Settings::InitLatencyVisualization();
+        }
         ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
         int latency = TimingEditor::Get().GetLatencyOffset();
         ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
         ImGui::SameLine();
-        if(ImGui::InputInt("##Latency", &latency))
+        if(ImGui::DragInt("##Latency", &latency))
         {
             TimingEditor::Get().SetLatencyOffset(latency);
         }
@@ -604,7 +855,7 @@ void DrawLatencyPopup()
         ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
         if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
         {
-            TimingEditor::Get().SetLatencyOffset(latency - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5));
+            TimingEditor::Get().SetLatencyOffset(latency - (Gamepad::GetTimeSinceToggled(Gamepad::D_Left) < 3 ? 1 : 5));
         }
         if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
         {
@@ -642,60 +893,79 @@ void DrawLatencyPopup()
                 TimingEditor::Get().SetLatencyOffset(timeRaw - 200);
             }
         }
-        ImGui::EndPopup();
-    }
-}
 
-void DrawFontSizePopup()
-{
-    if(ImGui::BeginPopupModal("Font Size##Gamepad"))
-    {
-        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
-        ImGui::SameLine();
-        PropertiesWindow::DrawGamepadFontSizeInput();
-        ImGui::SameLine();
-        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
-        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (ImGui::GetTextLineHeightWithSpacing() + DPI_SCALED(5)));
+        if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
         {
-            ImGui::CloseCurrentPopup();
+            ImGui::Text("(O) Close");
+        }
+        else
+        {
+            ImGui::Text("(B) Close");
         }
         ImGui::EndPopup();
+        return true;
     }
+    else if(g_hasInitMetronome)
+    {
+        Settings::StopLatencyVisualization();
+        g_hasInitMetronome = false;
+    }
+    return false;
 }
 
-void DrawDocColorsPopup()
+bool DrawFontSizePopup()
 {
-    if(ImGui::BeginPopupModal("Default Colors##Gamepad"))
+    if(g_properties->DrawFontSizeGamepadPopup())
     {
-        ImGui::EndPopup();
+        return true;
     }
+    return false;
 }
 
-void DrawTimeShiftPopup()
+bool DrawDocColorsPopup()
 {
-    if(ImGui::BeginPopupModal("Shift Timings##Gamepad"))
+    if(g_properties->DrawDefaultColorsGamepadPopup(g_selectedColorSlider))
     {
-        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
-        ImGui::SameLine();
-        PropertiesWindow::DrawGamepadShiftTimingsInput();
-        ImGui::SameLine();
-        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
-        if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
+        if(Gamepad::GetButtonDown(Gamepad::D_Left))
         {
-            ImGui::CloseCurrentPopup();
+            g_selectedColorSlider--;
         }
-        ImGui::EndPopup();
+        if(Gamepad::GetButtonDown(Gamepad::D_Right))
+        {
+            g_selectedColorSlider++;
+        }
+        g_selectedColorSlider = g_selectedColorSlider < 0 ? 0 : g_selectedColorSlider > 7 ? 7 : g_selectedColorSlider;
+        return true;
     }
+    return false;
 }
 
-void DrawSingerPopup()
+bool DrawTimeShiftPopup()
 {
-    if(ImGui::BeginPopupModal("Edit Singer##Gamepad"))
+    if(g_properties->DrawShiftTimingsGamepadPopup())
     {
-        ImGui::EndPopup();
+        return true;
     }
+    return false;
+}
+
+bool DrawSingerPopup()
+{
+    if(g_properties->DrawSingerColorsGamepadPopup(g_selectedColorSlider, g_menuSpinType == MenuSpinType::Local, g_editingEffectName))
+    {
+        if(Gamepad::GetButtonDown(Gamepad::D_Left))
+        {
+            g_selectedColorSlider--;
+        }
+        if(Gamepad::GetButtonDown(Gamepad::D_Right))
+        {
+            g_selectedColorSlider++;
+        }
+        g_selectedColorSlider = g_selectedColorSlider < 0 ? 0 : g_selectedColorSlider > 7 ? 7 : g_selectedColorSlider;
+        return true;
+    }
+    return false;
 }
 
 void DrawOverlay()
@@ -730,10 +1000,10 @@ void DrawOverlay()
 #define DrawBumperRight(sprite, alpha) DrawHudSprite(sprite, .55f, .06f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
 #define DrawTriggerLeftScale(sprite, alpha, Y) DrawHudSprite(sprite, .35f, (.05f - Y), .1f, Y, IM_COL32(alpha, alpha, 255, alpha))
 #define DrawTriggerRightScale(sprite, alpha, Y) DrawHudSprite(sprite, .55f, (.05f - Y), .1f, Y, IM_COL32(alpha, alpha, 255, alpha))
-#define DrawLStickUp(sprite, alpha) DrawHudSprite(sprite, .3f, .25f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
-#define DrawLStickRight(sprite, alpha) DrawHudSprite(sprite, .2f, .35f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
-#define DrawLStickLeft(sprite, alpha) DrawHudSprite(sprite, .4f, .35f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
-#define DrawLStickDown(sprite, alpha) DrawHudSprite(sprite, .3f, .45f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickUp(sprite, alpha) DrawHudSprite(sprite, .3f, (.25f - clamp(remap(clampedLStick.y, -1, 1, -.2f, .1f), .0f, .07f)), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickRight(sprite, alpha) DrawHudSprite(sprite, (.2f + clamp(remap(clampedLStick.x, -1, 1, -.1f, .2f), -.07f, .0f)), .35f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickLeft(sprite, alpha) DrawHudSprite(sprite, (.4f + clamp(remap(clampedLStick.x, -1, 1, -.2f, .1f), .0f, .07f)), .35f, .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
+#define DrawLStickDown(sprite, alpha) DrawHudSprite(sprite, .3f, (.45f - clamp(remap(clampedLStick.y, -1, 1, -.1f, .2f), -.07f, .0f)), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
 #define DrawLStickCenter(sprite, alpha) DrawHudSprite(sprite, (.3f + (clampedLStick.x * .1f)), (.35f - (clampedLStick.y * .1f)), .1f, .1f, IM_COL32(alpha, alpha, 255, alpha))
 
     DrawHudSprite(MapSwitch(DPadBGPS, DPadBGPS, DPadBG, BtnPadBG), .0f, .0f, .3f, .3f, IM_COL32_WHITE);
