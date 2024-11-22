@@ -19,6 +19,7 @@ namespace ImGui{
         void SetVideoSpeed(const char* anID, int aSpeed);
         bool IsVideoPaused(const char* anID);
         void LoadImage(const char* anID, const char* anFSPath);
+        void LoadImageFromURL(const char* anID, const char* aURL);
         bool RenderTexture(const char* anID, ImExtTexture& aTexture);
         bool DeleteTexture(const char* anID, ImExtTexture& aTexture);
     }

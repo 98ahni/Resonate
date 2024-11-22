@@ -127,6 +127,32 @@ EM_JS(bool, is_video_paused, (emscripten::EM_VAL id), {
     }
     return vid.paused;
 });
+EM_JS(emscripten::EM_VAL, load_image_from_url, (emscripten::EM_VAL id, emscripten::EM_VAL url), {
+    return Emval.toHandle(new Promise(async(resolve, reject)=>{
+    let imid = Emval.toValue(id);
+    let img = document.getElementById(imid);
+    const imgURL = Emval.toValue(url);
+    if(img === null){
+        img = document.createElement('img');
+        img.id = imid;
+        img.crossOrigin = "anonymous";
+        img.referrerPolicy = 'origin';
+        document.body.insertBefore(img, document.getElementById('canvas'));
+    }
+    img.style.position = 'fixed';
+    img.style.width = 1 + 'px';
+    img.style.height = 1 + 'px';
+    img.src = imgURL;
+    try{
+        await img.decode();
+        resolve();
+    }
+    catch(e){
+        console.error('Image failed to decode!');
+        reject();
+    }
+    }));
+});
 EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL fs_path), {
     return Emval.toHandle(new Promise(async(resolve, reject)=>{
     let imid = Emval.toValue(id);
@@ -137,24 +163,10 @@ EM_JS(emscripten::EM_VAL, load_image, (emscripten::EM_VAL id, emscripten::EM_VAL
             console.error('File not found: ', fsPath);
             reject();
         }
-        img = document.createElement('img');
-        img.id = imid;
-        document.body.insertBefore(img, document.getElementById('canvas'));
     }
-    img.style.position = 'fixed';
-    img.style.width = 1 + 'px';
-    img.style.height = 1 + 'px';
 	const imgData = FS.readFile(fsPath);
     const imgBlob = new Blob([imgData.buffer], {type: 'application/octet-binary'});
-    img.src = URL.createObjectURL(imgBlob);
-    try{
-        await img.decode();
-        resolve();
-    }
-    catch(e){
-        console.error('Image failed to decode!');
-        reject();
-    }
+    Emval.toValue(load_image_from_url(Emval.toHandle(imid), Emval.toHandle(URL.createObjectURL(imgBlob)))).then(resolve, reject);
     }));
 });
 EM_JS(ImExtTexture&, render_image, (emscripten::EM_VAL id, ImExtTexture& texture), {
@@ -379,6 +391,11 @@ bool ImGui::Ext::IsVideoPaused(const char *anID)
 void ImGui::Ext::LoadImage(const char *anID, const char *anFSPath)
 {
     VAR_FROM_JS(load_image(VAR_TO_JS(anID), VAR_TO_JS(anFSPath))).await();
+}
+
+void ImGui::Ext::LoadImageFromURL(const char *anID, const char *aURL)
+{
+    VAR_FROM_JS(load_image_from_url(VAR_TO_JS(anID), VAR_TO_JS(aURL))).await();
 }
 
 bool ImGui::Ext::RenderTexture(const char *anID, ImExtTexture& aTexture)

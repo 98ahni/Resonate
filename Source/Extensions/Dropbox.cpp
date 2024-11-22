@@ -48,6 +48,10 @@ EM_JS(void, db_refresh_token, (emscripten::EM_VAL token_callback), {
     global_db_auth.refreshAccessToken().then(() => {callback_func(Emval.toHandle(global_db_auth.getAccessTokenExpiresAt()));});
 });
 
+EM_JS(emscripten::EM_VAL, revoke_db_token, (), {
+    return Emval.toHandle(global_db_api.authTokenRevoke());
+});
+
 EM_JS(bool, has_db_token, (), {
     return global_db_auth.getAccessToken() !== undefined;
 });
@@ -123,6 +127,7 @@ void Dropbox::RequestToken(bool aShowPopup, std::string aTokenCallback)
 
 void Dropbox::LogOut()
 {
+    VAR_FROM_JS(revoke_db_token()).await();
 }
 
 void Dropbox::LoadProject(std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName, bool aShouldUseIframe)

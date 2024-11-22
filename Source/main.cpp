@@ -42,6 +42,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void ShowInputDebugger() { g_showInputDebugger =
 EM_JS(void, show_input_debugger, (), {_ShowInputDebugger(); });
 
 std::string g_userName = "(Anon)";
+ImExtTexture g_userImage = {};
 bool g_hasGoogleAcc = false;
 bool g_hasDropboxAcc = false;
 bool g_fileTabOpenedThisFrame = true; // Only use in File tab!
@@ -105,6 +106,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE void GoogleTokenExpirationCallback(emscripten::E
     Serialization::Preferences::SetDouble("Google/ExpirationDate", VAR_FROM_JS(aTime).as<double>());
     Serialization::Preferences::SetBool("Google/IsLoggedIn", true);
     g_userName = VAR_FROM_JS(aUserName).as<std::string>();
+    std::string imgURL = VAR_FROM_JS(aProfilePhotoURL).as<std::string>();
+    if(imgURL != "") ImGui::Ext::LoadImageFromURL("##ProfileImage", imgURL.data());
+    else ImGui::Ext::LoadImageFromURL("##ProfileImage", "icons/ResonateIconLarge.png");
+    ImGui::Ext::RenderTexture("##ProfileImage", g_userImage);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LogInToGoogle()
 {
@@ -118,6 +123,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE void DropboxTokenExpirationCallback(emscripten::
     Serialization::Preferences::SetDouble("Dropbox/ExpirationDate", VAR_FROM_JS(aTime).as<double>());
     Serialization::Preferences::SetBool("Dropbox/IsLoggedIn", true);
     g_userName = VAR_FROM_JS(aUserName).as<std::string>();
+    std::string imgURL = VAR_FROM_JS(aProfilePhotoURL).as<std::string>();
+    if(imgURL != "") ImGui::Ext::LoadImageFromURL("##ProfileImage", imgURL.data());
+    else ImGui::Ext::LoadImageFromURL("##ProfileImage", "icons/ResonateIconLarge.png");
+    ImGui::Ext::RenderTexture("##ProfileImage", g_userImage);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LogInToDropbox()
 {
@@ -225,6 +234,11 @@ void loop(void* window){
             {
                 ImGui::SeparatorText("Google Drive");
                 // Profile info + logout
+                if(g_userImage.myID != 0)
+                {
+                    ImGui::Image(g_userImage.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+                    ImGui::SameLine();
+                }
                 ImGui::Text(g_userName.data());
                 if(ImGui::MenuItem("Log Out"))
                 {
@@ -251,6 +265,11 @@ void loop(void* window){
             {
                 ImGui::SeparatorText("Dropbox");
                 // Profile info + logout
+                if(g_userImage.myID != 0)
+                {
+                    ImGui::Image(g_userImage.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+                    ImGui::SameLine();
+                }
                 ImGui::Text(g_userName.data());
                 if(ImGui::MenuItem("Log Out"))
                 {
@@ -419,6 +438,7 @@ void loop(void* window){
                 {
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0), {"<no effect>", false, 0});
                 }
+                doc.MakeDirty();
             }
             if(ImGui::MenuItem("Display Line", "<line#>", hasLineTag, !TimingEditor::Get().GetInputUnsafe()))
             {
@@ -430,6 +450,7 @@ void loop(void* window){
                 {
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin(), {"<line#1>", false, 0});
                 }
+                doc.MakeDirty();
             }
             ImGui::BeginDisabled();
             ImGui::SeparatorText("Text Effects");
@@ -440,6 +461,7 @@ void loop(void* window){
                 {
                     Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
+                    doc.MakeDirty();
                 }
             }
             ImGui::EndMenu();

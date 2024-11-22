@@ -16,8 +16,8 @@ EM_JS(bool, gapi_loaded, (), {
         return true;
     }
     if(!Object.hasOwn(window, 'gapi')){
-        alert('GAPI is slow to load.');
-        //console.log('GAPI is slow to load.');
+        //alert('GAPI is slow to load.');
+        console.log('GAPI is slow to load.');
         return false;
     }
     gapi.load('client', ()=>{
@@ -38,8 +38,8 @@ EM_JS(bool, gis_loaded, (), {
         return true;
     }
     if(!Object.hasOwn(window, 'google')){
-        alert('GSI is slow to load.');
-        //console.log('GSI is slow to load.');
+        //alert('GSI is slow to load.');
+        console.log('GSI is slow to load.');
         return false;
     }
     global_client_token = google.accounts.oauth2.initTokenClient({
