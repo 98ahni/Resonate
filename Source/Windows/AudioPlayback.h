@@ -47,6 +47,7 @@ private:            // Is defined as public in AudioPlayback.cpp
     bool myIsPlaying = false;
     bool myWaitingToPlay = false;
     bool myWantToSetSpeed = false;
+    bool mySelectingSpeed = false;
     std::string myPath = "";
     int mySpeed;
     uint myProgress;

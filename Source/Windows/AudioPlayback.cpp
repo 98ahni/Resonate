@@ -291,6 +291,7 @@ void AudioPlayback::SetPlaybackSpeed(int aSpeed)
 
 void AudioPlayback::Play()
 {
+    if(!ourInstance->myHasAudio) { return; }
     if(VAR_FROM_JS(is_audio_stretched(VAR_TO_JS(ourInstance->mySpeed))).as<bool>())
     {
         ourInstance->myDuration = 100 * ourInstance->myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
@@ -437,7 +438,7 @@ void AudioPlayback::DrawPlaybackSpeed()
     ImGui::Text("%i0%%", mySpeed);
     ImGui::SameLine();
     float width = ImGui::GetWindowSize().x - ImGui::GetCursorPosX();
-    bool disable = myWaitingToPlay || !myHasAudio;
+    bool disable = (myWaitingToPlay && !mySelectingSpeed) || !myHasAudio;
     if(disable) ImGui::BeginDisabled();
     ImGui::SetNextItemWidth(width - 20);
     if((ImGui::SliderInt("##SpeedBar", &mySpeed, 1, 10, "", ImGuiSliderFlags_NoInput) || (myWantToSetSpeed && !disable)) && myHasAudio)
@@ -465,6 +466,7 @@ void AudioPlayback::DrawPlaybackSpeed()
             }
         }
     }
+    mySelectingSpeed = ImGui::IsItemActive();
     if((ImGui::IsItemDeactivatedAfterEdit() || (myWantToSetSpeed && !disable)) && EM_ASM_INT(return global_audio_completion[($0) - 1] ? 1 : 0;, mySpeed) == false)
     {
         if(myEngine == ProcessEngine::Default)
