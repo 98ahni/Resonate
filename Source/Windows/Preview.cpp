@@ -346,10 +346,10 @@ int PreviewWindow::AssembleLanes(float aWidth)
             if(myAssemblyLanes[lane - 1].myWidth < 0.5f)
             {
                 lane--;
-                printf("Removed an empty lane at end of line %i.\n", myNextAddLineIndex);
+                //printf("Removed an empty lane at end of line %i.\n", myNextAddLineIndex);
             }
-            printf("Line %i (size: %i) assembled and takes %i lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size(), lane);
-            printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
+            //printf("Line %i (size: %i) assembled and takes %i lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size(), lane);
+            //printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
             return lane;
         }
         myAssemblyLanes[lane].myLine = myNextAddLineIndex;
@@ -389,10 +389,10 @@ int PreviewWindow::AssembleLanes(float aWidth)
         nextStartToken = lastSpaceToken == -1 ? nextStartToken : (lastSpaceToken + 1);
         myAssemblyLanes[lane].myEndToken = nextStartToken;
         lastSpaceToken = -1;
-        printf("Lane %i has size %f\n", lane, myAssemblyLanes[lane].myWidth);
+        //printf("Lane %i has size %f\n", lane, myAssemblyLanes[lane].myWidth);
     }
-    printf("Line %i (lenght: %i) assembled and takes all 7 lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size());
-    printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
+    //printf("Line %i (lenght: %i) assembled and takes all 7 lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size());
+    //printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
     return 7;
 }
 
@@ -453,7 +453,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     {
         for(int i = 0; i < nextLineNeeds; i++)
         {
-            printf("Moving %i tokens from line %i to back lane %i\n", myAssemblyLanes[i].myEndToken - myAssemblyLanes[i].myStartToken, myAssemblyLanes[i].myLine, i + foundPlace);
+            //printf("Moving %i tokens from line %i to back lane %i\n", myAssemblyLanes[i].myEndToken - myAssemblyLanes[i].myStartToken, myAssemblyLanes[i].myLine, i + foundPlace);
             myBackLanes[i + foundPlace] = myAssemblyLanes[i];
         }
         myNextAddLineIndex++;
@@ -509,7 +509,7 @@ bool PreviewWindow::TryDisplayLanes()
         {
             for(int j = currentStartLane; currentStartLane != -1 && checkingLine != -1 && j < lane; j++)
             {
-                printf("Moving line %i to display lane %i\n", myBackLanes[j].myLine, j);
+                //printf("Moving line %i to display lane %i\n", myBackLanes[j].myLine, j);
                 myLanes[j] = myBackLanes[j];
                 myBackLanes[j].myLine = -1;
                 displayedNewLines = true;
@@ -550,7 +550,7 @@ bool PreviewWindow::RemoveOldLanes(uint someCurrentTime, uint aDelay)
 		if(myLanes[lane].myLine == -1 || doc.IsNull(doc.GetLine(myLanes[lane].myLine))) {continue;}
         if(myLanes[lane].myEndTime + aDelay < someCurrentTime)
         {
-            printf("Line %i is removed from lane %i\n", myLanes[lane].myLine, lane);
+            //printf("Line %i is removed from lane %i\n", myLanes[lane].myLine, lane);
             myLanes[lane].myLine = -1;
             output = true;
         }
