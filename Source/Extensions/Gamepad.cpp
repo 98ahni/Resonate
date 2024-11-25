@@ -44,7 +44,11 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsGamepadConnected(emscripten::EM_VAL aGamep
         name.contains("XInput") || name.contains("Xbox") ? Gamepad::Xinput : (
             name.contains("054c") ? (name.contains("09cc") || name.contains("0ba0") || name.contains("05c4") ? Gamepad::DualShock3 : (name.contains("0df2") || name.contains("0ce6") ? Gamepad::DualSense : (name.contains("0268") ? Gamepad::DualShock3 : Gamepad::PSClassic))) : (
                 name.contains("057e") ? (name.contains("2009") ? Gamepad::SwitchPro : (name.contains("200e") ? Gamepad::JoyConPair : (name.contains("2006") ? Gamepad::JoyConL : (name.contains("2007") ? Gamepad::JoyConR : Gamepad::Other)))) : (
-                    gamepad["standardMap"].as<bool>() ? Gamepad::Standard : Gamepad::Other
+                    name.contains("DUALSHOCK 3") ? Gamepad::DualShock3 : (name.contains("DUALSHOCK 4") ? Gamepad::DualShock4 : (name.contains("DUALSENSE") ? Gamepad::DualSense : (
+                        name.contains("Pro") ? Gamepad::SwitchPro : (name.contains("JoyCon") ? (name.contains("L") ? (name.contains("R") ? Gamepad::JoyConPair : Gamepad::JoyConL) : Gamepad::JoyConR) : (
+                            gamepad["standardMap"].as<bool>() ? Gamepad::Standard : Gamepad::Other
+                        ))
+                    )))
                 )
             )
         );
