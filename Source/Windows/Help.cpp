@@ -150,12 +150,35 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Keyboard Controls");
-    Keybind("[Space]       ", "Set timing at text marker and advance. ");
-    Keybind("[Ctrl]+[Space]", "Add or remove a syllable split. ");
-    Keybind("[Enter]       ", "Insert or set a pause to time at text marker. ");
-    Keybind("Arrow keys    ", "Move text marker in specified direction one syllable at a time. ");
-    Keybind("[Ctrl]+Arrows ", "Move text marker in specified direction one character at a time. ");
-    Keybind("[Shift]+Click ", "Set Audio Playback progress to the time of the syllable clicked. ");
+    Keybind("[Space]           ", "Set timing at text marker and advance. ");
+    Keybind("[Enter]           ", "Insert or set a pause to time at text marker. ");
+    Keybind("Arrow keys        ", "Move text marker in specified direction one syllable at a time. ");
+    Keybind("[Ctrl]+[Space]    ", "Add or remove a syllable split. ");
+    Keybind("[Ctrl]+Arrows     ", "Move text marker in specified direction one character at a time. ");
+    Keybind("[Shift]+Click     ", "Set Audio Playback progress to the time of the syllable clicked. ");
+    Keybind("[Shift]+[Space]   ", "Play/Pause the Audio Playback. ");
+    Keybind("[Shift]+[Enter]   ", "Stop the Audio Playback. ");
+    Keybind("[Shift]+Up/Down   ", "Increse/Decrese the speed of the Audio Playback. ");
+    Keybind("[Shift]+Left/Right", "Rewind/Fast forward the Audio Playback by five seconds of listening. ");
+    Keybind("[Alt]+[Space]     ", "Duplicate the current line. ");
+    Keybind("[Alt]+[Enter]     ", "Insert a linebreak at the text marker. ");
+    Keybind("[Alt]+Up/Down     ", "Move line up/down. ");
+    Keybind("[Alt]+Left/Right  ", "Merge line up/down. ");
+    Keybind("[Alt]+[Backspace] ", "Remove line. ");
+    Keybind("[Alt]+[Shift]+Up  ", "Format word as MAJUSCULE. ");
+    Keybind("[Alt]+[Shift]+Down", "Format word as minuscule. ");
+    Keybind("[Alt]+[Shift]+Left", "Format word as Capital. ");
+    Keybind("[Alt]+[Shft]+Right", "Toggel case of current character. ");
+    EndTreeNode
+
+    StartTreeNode("Gamepad Controls");
+    ImGui::TextWrapped("Most of Resonate's functionality can be reached from a gamepad. "
+    "In order to make as much as possible available there are four layers which are as follows:");
+    Keybind("PS:(/\\) X/N:(Y)       ", "Effects. Tapping lets you do quick actions. Holding accesses the effect control layer. ");
+    Keybind("    Quick actions     ", "Opens an image, removes an effect tag or inserts the last one used. ");
+    Keybind("PS:([]) X/N:(X)       ", "Settings. Tapping toggles the overlay. Holding accesses the setting control layer. ");
+    Keybind("PS:(L2) X:(LT) N:(ZL) ", "Layout. Holding lets you edit lines like holding [Alt]. ");
+    Keybind("PS:(R2) X:(RT) N:(ZR) ", "Adjust. Holding lets you move the text marker by the character and change syllabification. ");
     EndTreeNode
 
     ImGui::PopFont();
