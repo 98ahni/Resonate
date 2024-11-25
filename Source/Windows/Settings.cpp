@@ -228,7 +228,7 @@ int Settings::DrawLatencyVisualization(ImVec2 aSize)
     drawList->AddCircleFilled(center, size * .4f * radiusMult, ImGui::ColorConvertFloat4ToU32(color));
     color.w = .9f * alphaMult;
     drawList->AddCircleFilled(center, size * .2f * radiusMult, ImGui::ColorConvertFloat4ToU32(color));
-    return 0;
+    return timeRaw;
 }
 
 void Settings::StopLatencyVisualization()
