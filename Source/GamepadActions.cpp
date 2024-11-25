@@ -281,6 +281,24 @@ void DoStandardAdjustActions()
     }
 }
 
+void TogglePreview()        // These two functions has to be separated out to make DoSettingsActions() fit in a 4kB stack.
+{
+    if(WindowManager::GetWindow("Preview") != nullptr)
+    {
+        WindowManager::DestroyWindow(WindowManager::GetWindow("Preview"));
+    }
+    else
+    {
+        WindowManager::AddWindow<PreviewWindow>("Preview");
+    }
+}
+std::vector<std::string> ConstructOptions()
+{
+    std::vector<std::string> options = g_menuSpinType == Document ? g_docEffectNames : g_localEffectNames;
+    options.emplace(options.begin(), "Add New");
+    options.emplace(options.begin(), "Cancel");
+    return options;
+}
 void DoSettingsActions()
 {
     if(g_layerLastFrame == Settings)
@@ -299,20 +317,14 @@ void DoSettingsActions()
             if(Gamepad::GetButtonDown(Gamepad::D_Right)) { ImGui::OpenPopup("Default Colors##Gamepad"); }
             if(Gamepad::GetButtonDown(Gamepad::Cross))
             {
-                if(WindowManager::GetWindow("Preview") != nullptr)
-                {
-                    WindowManager::DestroyWindow(WindowManager::GetWindow("Preview"));
-                }
-                else
-                {
-                    WindowManager::AddWindow<PreviewWindow>("Preview");
-                }
+                TogglePreview();
             }
             if(Gamepad::GetButtonDown(Gamepad::LeftStick)) {g_menuSpinType = (MenuSpinType)!g_menuSpinType;}
             float mag = Gamepad_Magnitude(Gamepad::LeftStick);
-            std::vector<std::string> options = g_menuSpinType == Document ? g_docEffectNames : g_localEffectNames;
-            options.emplace(options.begin(), "Add New");
-            options.emplace(options.begin(), "Cancel");
+            std::vector<std::string> options = ConstructOptions();
+            //std::vector<std::string> options = g_menuSpinType == Document ? g_docEffectNames : g_localEffectNames;
+            //options.emplace(options.begin(), "Add New");
+            //options.emplace(options.begin(), "Cancel");
             float adjustedSpin = g_currentSpin + .5f;
             while(adjustedSpin < 0) { adjustedSpin += options.size();}
             int index = ((int)adjustedSpin) % options.size();
@@ -1047,25 +1059,29 @@ void DrawOverlay()
     }
     if(g_layerLastFrame == Standard)   // Only the ones that are unique to Standard
     {
+        float effectX = MapSwitch(.8125f, .8125f, .625f, .625f);
+        float effectY = MapSwitch(-.075f, -.075f, .1125f, .1125f);
+        float menuX = MapSwitch(.625f, .625f, .8125f, .8125f);
+        float menuY = MapSwitch(.1125f, .1125f, -.075f, -.075f);
         DrawFaceButtonEffect(EffectBtn, 255);
         if(Serialization::KaraokeDocument::Get().GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue.starts_with("image "))
         {
-            DrawHudSprite(BtnFill, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
-            DrawHudSprite(ImageBtn, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(BtnFill, effectX, effectY, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(ImageBtn, effectX, effectY, .075f, .075f, IM_COL32_WHITE);
         }
         else if(Serialization::KaraokeDocument::Get().IsEffectToken(Serialization::KaraokeDocument::Get().GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken())))
         {
-            DrawHudSprite(BtnFill, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
-            DrawHudSprite(EffectBtn, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE); // TODO: Switch out for a remove symbol. 
+            DrawHudSprite(BtnFill, effectX, effectY, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(EffectBtn, effectX, effectY, .075f, .075f, IM_COL32_WHITE); // TODO: Switch out for a remove symbol. 
         }
         else if(g_lastAddedEffect != -1)
         {
-            DrawHudSprite(BtnFill, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
-            DrawHudSprite(SingerBtn, .8125f, -.075f, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(BtnFill, effectX, effectY, .075f, .075f, IM_COL32_WHITE);
+            DrawHudSprite(SingerBtn, effectX, effectY, .075f, .075f, IM_COL32_WHITE);
         }
         DrawFaceButtonSetting(MenuBtn, 255);
-        DrawHudSprite(BtnFill, .625f, .1125f, .075f, .075f, IM_COL32_WHITE);
-        DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), .625f, .1125f, .075f, .075f, IM_COL32_WHITE);
+        DrawHudSprite(BtnFill, menuX, menuY, .075f, .075f, IM_COL32_WHITE);
+        DrawHudSprite(MapSwitch(BtnPadBG, BtnPadBGPS, BtnPadBG, BtnPadBG), menuX, menuY, .075f, .075f, IM_COL32_WHITE);
         DrawTriggerLeftScale(LayoutBtn, 255, .1f);
     }
     if(g_layerLastFrame == Settings)
