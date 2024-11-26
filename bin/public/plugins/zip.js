@@ -1,3 +1,6 @@
+// Original by 'pwasystem' at https://github.com/pwasystem/zip using Unlicense.
+// Modified by '98ahni'.
+
 class Zip {
 
 	constructor(name) {

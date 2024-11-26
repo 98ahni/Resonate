@@ -2,6 +2,7 @@
 //  <Copyright (C) 2024 98ahni> Original file author
 
 #include "License.h"
+#include "MainWindow.h"
 
 char* g_firstPartyLicense = 
 "      <Resonate. Copyright (C) 2024 98ahni and Resonate Autohrs>\n"
@@ -811,6 +812,41 @@ char* g_thirdPartyLicenses =
 "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
 "SOFTWARE.\n"
 "\n"
+"\n"
+"Dropbox API:\n"
+"\n"
+"Copyright (c) 2020 Dropbox Inc., http://www.dropbox.com/\n"
+"\n"
+"Permission is hereby granted, free of charge, to any person obtaining a copy\n"
+"of this software and associated documentation files (the \"Software\"), to deal\n"
+"in the Software without restriction, including without limitation the rights\n"
+"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
+"copies of the Software, and to permit persons to whom the Software is\n"
+"furnished to do so, subject to the following conditions:\n"
+"\n"
+"The above copyright notice and this permission notice shall be included in all\n"
+"copies or substantial portions of the Software.\n"
+"\n"
+"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
+"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
+"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
+"SOFTWARE.\n"
+"\n"
+"\n"
+"Rager font EULA:\n"
+"\n"
+"This font (Rager Hevvy) is distributed as a no cost license for private or\n"
+"personal, non commercial, use. It is not free for distribution without permission.\n"
+"Do not modify or reverse engineer.\n"
+"If you have any questions please feel free to contact us at:\n"
+"the_fontry@yahoo.com\n"
+"And, check out the Fontry at:\n"
+"http://www.thefontry.com/\n"
+"\n"
+"\n"
 "Fredoka fonts:\n"
 "\n"
 "Copyright 2016 The Fredoka Project Authors (https://github.com/hafontia/Fredoka-One)\n"
@@ -935,9 +971,9 @@ LicenseWindow::LicenseWindow()
 void LicenseWindow::OnImGuiDraw()
 {
     ImGui::SetNextWindowSize({
-        std::min(ImGui::GetContentRegionAvail().x * .95f, ImGui::CalcTextSize("free software which everyone can redistribute and change under these terms.     ").x), 
-        std::min(ImGui::GetContentRegionAvail().y * .95f, 400.f)
-    }, ImGuiCond_FirstUseEver);
+        std::min(MainWindow::SwapWidth * .95f, ImGui::CalcTextSize("free software which everyone can redistribute and change under these terms.     ").x), 
+        std::min(MainWindow::SwapHeight * .85f, 400.f)
+    }, ImGuiCond_Once);
     Gui_Begin(ImGuiWindowFlags_HorizontalScrollbar);
     if(ImGui::Button("Resonate License"))
     {
