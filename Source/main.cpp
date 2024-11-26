@@ -516,6 +516,17 @@ void loop(void* window){
                     WindowManager::AddWindow<TouchControl>("Touch Control");
                 }
             }
+            if(ImGui::MenuItem("Raw Text", 0, WindowManager::GetWindow("Raw Text") != nullptr))
+            {
+                if(WindowManager::GetWindow("Raw Text") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Raw Text"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<TextEditor>("Raw Text");
+                }
+            }
             if(ImGui::MenuItem("Settings", 0, WindowManager::GetWindow("Settings") != nullptr))
             {
                 if(WindowManager::GetWindow("Settings") != nullptr)
@@ -755,7 +766,7 @@ int main(){
     }
 
     WindowManager::Init();
-    WindowManager::AddWindow<TextEditor>("Raw Text");
+    //WindowManager::AddWindow<TextEditor>("Raw Text");
     TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
     WindowManager::AddWindow<AudioPlayback>("Audio");
     ImGui::SetWindowFocus("Timing");
