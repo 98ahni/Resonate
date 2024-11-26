@@ -128,7 +128,7 @@ EM_JS(bool, is_video_paused, (emscripten::EM_VAL id), {
     return vid.paused;
 });
 EM_JS(emscripten::EM_VAL, load_image_from_url, (emscripten::EM_VAL id, emscripten::EM_VAL url), {
-    return Emval.toHandle(new Promise(async(resolve, reject)=>{
+    return Emval.toHandle(new Promise(async(resolve)=>{
     let imid = Emval.toValue(id);
     let img = document.getElementById(imid);
     const imgURL = Emval.toValue(url);
@@ -149,7 +149,7 @@ EM_JS(emscripten::EM_VAL, load_image_from_url, (emscripten::EM_VAL id, emscripte
     }
     catch(e){
         console.error('Image failed to decode!');
-        reject();
+        resolve();
     }
     }));
 });
