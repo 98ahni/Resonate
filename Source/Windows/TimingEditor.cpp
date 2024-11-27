@@ -336,9 +336,9 @@ void TimingEditor::MoveMarkerRight(bool aIsCharmode)
         {
             //myMarkedLine = myMarkedLine + 1 < doc.GetData().size() ? myMarkedLine + 1 : (doc.GetData().size() - 1);
             myMarkedLine = myMarkedLine + 1;
-            if(myMarkedLine >= doc.GetData().size())
+            if(doc.IsNull(doc.GetValidLineAfter(myMarkedLine)) && (myMarkedLine >= doc.GetData().size() || doc.GetLine(myMarkedLine).size() == 0))
             {
-                myMarkedLine = doc.GetData().size() - 1;
+                myMarkedLine = (myMarkedLine >= doc.GetData().size() ? doc.GetData().size() : myMarkedLine) - 1;
                 myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
                 if(!doc.IsPauseToken(myMarkedLine, myMarkedToken))
                 {
@@ -375,13 +375,13 @@ void TimingEditor::CheckMarkerIsSafe(bool aIsMovingRight)
     }
     if(myMarkedToken < 0) myMarkedToken = 0;
     if(myMarkedToken >= doc.GetLine(myMarkedLine).size()) myMarkedToken = doc.GetLine(myMarkedLine).size() - 1;
-    if(doc.IsPauseToken(myMarkedLine, myMarkedToken) && !doc.IsNull(doc.GetValidLineAfter(myMarkedLine)))
+    if(doc.IsPauseToken(myMarkedLine, myMarkedToken) && !doc.IsNull(doc.GetTokenAfter(myMarkedLine, myMarkedToken)))
     {
         if(aIsMovingRight)
         {
             myMarkedToken != doc.GetLine(myMarkedLine).size() - 1 || (doc.GetLine(myMarkedLine).size() == 1 && (myMarkedLine < doc.GetData().size() - 1)) ? MoveMarkerRight() : MoveMarkerLeft();
         }
-        else
+        else// if(!aIsMovingRight && !doc.IsNull(doc.GetTokenBefore(myMarkedLine, myMarkedToken)))
         {
             MoveMarkerLeft();
         }
