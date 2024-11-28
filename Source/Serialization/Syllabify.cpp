@@ -128,7 +128,7 @@ namespace Serialization
         {
             for (int j = 1; j <= wrappedWord.size() - i && j <= PatternData::myMaxPatternSize[aLevel]; ++j)
             {
-                if (i + j < wrappedWord.size() && ispunct(wrappedWord[i + j - 1]))
+                if (i + j < wrappedWord.size() && iscntrl(static_cast<unsigned char>(wrappedWord[i + j - 1])))
                     continue;  // A pattern that ends with "a" must not match "ä"
 
                 const auto it = PatternData::myPatterns[aLevel].find(wrappedWord.substr(i, j));
@@ -232,8 +232,8 @@ namespace Serialization
 
             char currentChar = aText[i];
 
-            if (ispunct(currentChar))
-                continue;
+            //if (ispunct(static_cast<unsigned char>(currentChar)))
+            //    continue;
 
             //const QChar::Script script = QChar::script(currentChar);
             bool isAlNum = isalnum(currentChar);
