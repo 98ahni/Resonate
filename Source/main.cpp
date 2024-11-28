@@ -481,7 +481,11 @@ void loop(void* window){
                         text = StringTools::Join(tokenList, "[00:00:00]");
                         printf("Done syllabifying.\n");
                         printf("%s\n", text.data());
-                        doc.Parse("[00:00:00]" + text + "[00:00:00]");
+                        doc.Parse("[00:00:00]" + text);
+                        if(doc.GetData().front().size() == 1 && doc.IsPauseToken(doc.GetData().front().front()))
+                        {
+                            doc.GetData().front().erase(doc.GetData().front().begin());
+                        }
                         doc.MakeDirty();
                     }
                 }
