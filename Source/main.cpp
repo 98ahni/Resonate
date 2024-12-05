@@ -637,6 +637,8 @@ void loop(void* window){
         //char* logs = &get_console_logs();
         //ImGui::Text(logs);
         //free(logs);
+
+        ImGui::Image(MainWindow::Font->ContainerAtlas->TexID, {ImGui::GetWindowHeight() - ImGui::GetCursorPosY(), ImGui::GetWindowHeight() - ImGui::GetCursorPosY()});
         ImGui::End();
     }
 

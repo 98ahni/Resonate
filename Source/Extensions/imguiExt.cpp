@@ -569,7 +569,7 @@ void ImGui::Ext::StopLoadingScreen()
     EM_ASM(Module.hide_loading_screen(););
 }
 
-bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha)
+bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha, float anOutlineSize, float aMaxGrowFactor)
 {
     ImVec2 size = CalcTextSize(aValue.data());
     ImVec2 pos = GetCursorScreenPos();
@@ -577,30 +577,74 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     float end = anEndTime;
     ImVec2 timeStartPos = {pos.x, pos.y + (size.y * 1.1f)};
     ImVec2 timeEndPos = {remap(clamp((float)aCurrentTime, start, end), start, end, pos.x, pos.x + size.x), pos.y + (size.y * 1.1f)};
+    float scale = aMaxGrowFactor == 1 ? 1 : remap(sinf(remap(clamp((float)aCurrentTime, start, end), start, end, 0, 3.14159)), 0, 1, 1, aMaxGrowFactor);
+    pos.x -= (size.x * (scale - 1) * .5f);
+    pos.y -= (size.y * (scale - 1) * .7f);
+    ImDrawList* drawList = GetWindowDrawList();
+    //static ImDrawList* drawList = new ImDrawList(GetDrawListSharedData());
+    //drawList->AddDrawCmd();
+    //drawList->PushTextureID(GetFont()->ContainerAtlas->TexID);
+    if(anOutlineSize != 0 && aCurrentTime < end)
+    {
+        //ImDrawList* drawList = GetWindowDrawList();
+        for(int i = 0; i < 5; i++)
+        {
+            drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale * scale, {pos.x + (cosf(i * (6.28318 * .2f)) * anOutlineSize), pos.y + (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
+            //drawList->AddText({(cosf(i * (6.28318 * .2f)) * anOutlineSize), (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
+        }
+    }
     if(aCurrentTime < start)
     {
         uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000));
+        startCol = IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000);
+        //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000));
+        //drawList->AddText({0, 0}, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000), aValue.data());
+        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale, pos, startCol, aValue.data());
     }
     else if(aCurrentTime < end)
     {
         uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();
-        if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
+        startCol = IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000);
+        uint endCol = Serialization::KaraokeDocument::Get().GetEndColor();
+        endCol = IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000);
+        if(startCol == endCol)
         {
-            ImGui::PushStyleColor(ImGuiCol_Text, {0.87f, 0.8f, 1.f, 1.f});
+            if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
+            {
+                startCol = IM_COL32(210, 190, 255, 255);
+            }
+            else
+            {
+                startCol = IM_COL32_WHITE;
+            }
         }
-        else
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
-        }
+        ImVec4 startColClip = {timeEndPos.x, 0, FLT_MAX, FLT_MAX};
+        ImVec4 endColClip = {0, 0, timeEndPos.x, FLT_MAX};
+        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale * scale, pos, startCol, aValue.data(), nullptr, 0, &startColClip);
+        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale * scale, pos, endCol, aValue.data(), nullptr, 0, &endColClip);
+        //if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
+        //{
+        //    ImGui::PushStyleColor(ImGuiCol_Text, {0.87f, 0.8f, 1.f, 1.f});
+        //    //drawList->AddText({0, 0}, IM_COL32(210, 190, 255, 255), aValue.data());
+        //}
+        //else
+        //{
+        //    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
+        //    //drawList->AddText({0, 0}, IM_COL32_WHITE, aValue.data());
+        //}
     }
     else
     {
         uint endCol = Serialization::KaraokeDocument::Get().GetEndColor();
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000));
+        endCol = IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000);
+        //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000));
+        //drawList->AddText({0, 0}, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000), aValue.data());
+        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale, pos, endCol, aValue.data());
     }
-    Text(aValue.data());
-    ImGui::PopStyleColor();
+    //Text(aValue.data());
+    //drawList->PopTextureID();
+    Dummy(size);
+    //ImGui::PopStyleColor();
     bool clicked = IsItemClicked(0);
     float triangleSize = DPI_SCALED(5);
     if(aShowProgress)
@@ -614,8 +658,46 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         {
             drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + triangleSize, timeStartPos.y + triangleSize}, {timeStartPos.x, timeStartPos.y + triangleSize}, IM_COL32_WHITE);
             drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, DPI_SCALED(2));
+            //drawList->AddLine({0, 0}, size, IM_COL32_WHITE, DPI_SCALED(2));
         }
     }
+    //ImDrawData drawData = {};
+    //drawData.Valid = true;
+    //drawData.AddDrawList(drawList);
+    //drawData.DisplayPos = {};
+    //drawData.DisplaySize = size;
+    //
+    //static GLint temp_texture;
+    //GLint last_texture;
+    //GLint last_active_texture;
+    //
+	//glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+    //glGetIntegerv(GL_ACTIVE_TEXTURE, &last_active_texture);
+    //glActiveTexture(GL_TEXTURE0);
+    ////if(temp_texture == 0)
+    //{
+	//    glGenTextures(1, &temp_texture);
+    //}
+	//glBindTexture(GL_TEXTURE_2D, temp_texture);
+    ////if(temp_texture == 0)
+    //{
+	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#ifdef GL_UNPACK_ROW_LENGTH // Not on WebGL/ES
+	    //glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    //}
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, timeEndPos.y - pos.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	//glClearColor(1, 1, 1, 1);
+	//glClear(GL_COLOR_BUFFER_BIT);
+    //MainWindow_RenderCustomDrawData(&drawData, size.x, timeEndPos.y - pos.y);
+    //glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, size.x, timeEndPos.y - pos.y, 0);
+	//glBindTexture(GL_TEXTURE_2D, last_texture);
+    //glActiveTexture(last_active_texture);
+    //GetWindowDrawList()->AddImage((ImTextureID)temp_texture, pos, {size.x, timeEndPos.y - pos.y});
+    //drawList->_ClearFreeMemory();
     return clicked;
 }
 

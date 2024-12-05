@@ -5,6 +5,7 @@
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
 #include <Serialization/KaraokeData.h>
+#include <Serialization/Preferences.h>
 #include <Defines.h>
 #include "MainWindow.h"
 #include "AudioPlayback.h"
@@ -81,6 +82,10 @@ PreviewWindow::PreviewWindow()
     myNextAddLineIndex = 0;
     myShouldDebugDraw = false;
     Resetprogress();
+    if(!Serialization::Preferences::HasKey("Preview/UseOutline"))
+    {
+        Serialization::Preferences::SetBool("Preview/UseOutline", true);
+    }
 }
 
 void PreviewWindow::OnImGuiDraw()
@@ -153,20 +158,27 @@ void PreviewWindow::OnImGuiDraw()
 	float lanePosY = contentSize.y / (float)lanesShown;
     float laneHeight = (lanePosY - ImGui::GetTextLineHeightWithSpacing()) * .5f;
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
+    bool hasNoEffect = false;
+    bool useOutline = Serialization::Preferences::GetBool("Preview/UseOutline");
     for(int lane = 0; lane < 7; lane++)
     {
         if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
         ImGui::SetCursorPosY((lanePosY * lane) + laneHeight + contentOffset.y);
         float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * DPI_SCALED(textScale))) * .5f) + contentOffset.x;
         ImGui::SetCursorPosX(cursorStartX);
+
         for(int token = myLanes[lane].myStartToken; token < myLanes[lane].myEndToken; token++)
         {
             uint start = doc.GetToken(myLanes[lane].myLine, token).myStartTime;
             uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
             if(!doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)))
             {
-                ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, true);
+                ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, true, useOutline ? DPI_SCALED(2 * textScale) : 0, hasNoEffect ? 1 : 1.15f);
                 ImGui::SameLine();
+            }
+            else if(doc.GetToken(myLanes[lane].myLine, token).myValue.starts_with("<no effect>"))
+            {
+                hasNoEffect = true;
             }
         }
         if(lane >= lanesShown) {break;}
@@ -174,6 +186,7 @@ void PreviewWindow::OnImGuiDraw()
         if(lane == 7 || myLanes[lane].myLine != myLanes[lane + 1].myLine)
         {
             doc.PopColor();
+            hasNoEffect = false;
         }
     }
     ImGui::PopStyleVar();

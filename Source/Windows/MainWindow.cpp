@@ -440,6 +440,41 @@ void MainWindow_RenderFrame()
 	}
 }
 
+void MainWindow_RenderCustomDrawData(ImDrawData *drawData, unsigned int aWidth, unsigned int aHeight)
+{
+	if(MainWindow::HasWebGPU)
+	{
+		WGPURenderPassColorAttachment color_attachments = {};
+		color_attachments.loadOp = WGPULoadOp_Clear;
+		color_attachments.storeOp = WGPUStoreOp_Store;
+		color_attachments.clearValue = {1, 1, 1, 1};
+		color_attachments.view = wgpuSwapChainGetCurrentTextureView(MainWindow::SwapChain);
+		WGPURenderPassDescriptor render_pass_desc = {};
+		render_pass_desc.colorAttachmentCount = 1;
+		render_pass_desc.colorAttachments = &color_attachments;
+		render_pass_desc.depthStencilAttachment = nullptr;
+
+		WGPUCommandEncoderDescriptor enc_desc = {};
+		WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(MainWindow::Device, &enc_desc);
+
+		WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &render_pass_desc);
+		ImGui_ImplWGPU_RenderDrawData(drawData, pass);
+		wgpuRenderPassEncoderEnd(pass);
+
+		WGPUCommandBufferDescriptor cmd_buffer_desc = {};
+		WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(encoder, &cmd_buffer_desc);
+		WGPUQueue queue = wgpuDeviceGetQueue(MainWindow::Device);
+		wgpuQueueSubmit(queue, 1, &cmd_buffer);
+	}
+	else
+	{
+		glViewport(0, 0, aWidth, aHeight);
+		glClearColor(1, 1, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_RenderDrawData(drawData);
+	}
+}
+
 bool MainWindow_IsPlatform(MainWindow_Platform platform)
 {
     return MainWindow::RuntimePlatform & platform;

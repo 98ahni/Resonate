@@ -68,6 +68,10 @@ Settings::Settings()
 {
     setup_latency_metronome();
     myTimingEditorExists = WindowManager::GetWindow("Timing") != nullptr;
+    if(!Serialization::Preferences::HasKey("Preview/UseOutline"))
+    {
+        Serialization::Preferences::SetBool("Preview/UseOutline", true);
+    }
 }
 
 void Settings::OnImGuiDraw()
@@ -128,21 +132,41 @@ void Settings::OnImGuiDraw()
         AudioPlayback::SetEngine(AudioPlayback::Default);
     }
     ImGui::Indent();
-    ImGui::TextDisabled("Fast and consistent on all devices. (Recomended)");
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Fast and consistent on all devices. (Recomended)");
+    ImGui::EndDisabled();
     ImGui::Unindent();
     if(ImGui::RadioButton("RubberBand", AudioPlayback::GetEngine() == AudioPlayback::RubberBand))
     {
         AudioPlayback::SetEngine(AudioPlayback::RubberBand);
     }
     ImGui::Indent();
-    ImGui::TextDisabled("The same processor used in Hibikase. \nIt's very slow and won't complete on low power devices.");
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("The same processor used in Hibikase. \nIt's very slow and won't complete on low power devices.");
+    ImGui::EndDisabled();
     ImGui::Unindent();
     if(ImGui::RadioButton("Browser", AudioPlayback::GetEngine() == AudioPlayback::Browser))
     {
         AudioPlayback::SetEngine(AudioPlayback::Browser);
     }
     ImGui::Indent();
-    ImGui::TextDisabled("Uses the browsers own functions. \nVery fast, but some browsers won't do a very good job.");
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Uses the browsers own functions. \nVery fast, but some browsers won't do a very good job.");
+    ImGui::EndDisabled();
+    ImGui::Unindent();
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+    bool previewUseOutline = Serialization::Preferences::GetBool("Preview/UseOutline");
+    if(ImGui::Ext::ToggleSwitch("Outline Lyrics in Preview", &previewUseOutline))
+    {
+        Serialization::Preferences::SetBool("Preview/UseOutline", previewUseOutline);
+    }
+    ImGui::Indent();
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Adds an outline to the text when viewed in the Preview window. Outlined text will not show transparency correctly. ");
+    ImGui::EndDisabled();
     ImGui::Unindent();
     ImGui::Spacing();
     ImGui::Spacing();
