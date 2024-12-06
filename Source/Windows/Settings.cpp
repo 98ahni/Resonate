@@ -169,6 +169,17 @@ void Settings::OnImGuiDraw()
     ImGui::EndDisabled();
     ImGui::Unindent();
     ImGui::Spacing();
+    bool timingUseCustomFont = !Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont");
+    if(ImGui::Ext::ToggleSwitch("Use Custom Font for Timing", &timingUseCustomFont))
+    {
+        Serialization::Preferences::SetBool("Timing/CanUseCustomFont", timingUseCustomFont);
+    }
+    ImGui::Indent();
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Adds an outline to the text when viewed in the Preview window. Outlined text will not show transparency correctly. ");
+    ImGui::EndDisabled();
+    ImGui::Unindent();
+    ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();

@@ -475,6 +475,19 @@ void MainWindow_RenderCustomDrawData(ImDrawData *drawData, unsigned int aWidth, 
 	}
 }
 
+void MainWindow_Invalidate()
+{
+	if(MainWindow::HasWebGPU)
+	{
+		ImGui_ImplWGPU_InvalidateDeviceObjects();
+	}
+	else
+	{
+		ImGui_ImplOpenGL3_DestroyFontsTexture();
+		//ImGui_ImplOpenGL3_CreateFontsTexture();
+	}
+}
+
 bool MainWindow_IsPlatform(MainWindow_Platform platform)
 {
     return MainWindow::RuntimePlatform & platform;

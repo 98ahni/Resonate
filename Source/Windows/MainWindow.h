@@ -33,6 +33,7 @@ void MainWindow_Init(const char* name, void** outWindow);
 void MainWindow_NewFrame(void* window);
 void MainWindow_RenderFrame();
 void MainWindow_RenderCustomDrawData(ImDrawData* drawData, unsigned int aWidth, unsigned int aHeight);
+void MainWindow_Invalidate();
 bool MainWindow_IsPlatform(MainWindow_Platform platform);
 void MainWindow_SetName(std::string name);
 void MainWindow_SetIcon(std::string iconName);

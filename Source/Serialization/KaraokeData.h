@@ -74,7 +74,7 @@ namespace Serialization
         const KaraokeAliasMap& GetEffectAliases();
 
         void Clear();
-        void Load(std::string aPath, std::string aFileID = "", bool aShouldParse = true);
+        bool Load(std::string aPath, std::string aFileID = "", bool aShouldParse = true);
         void ParseLoadedFile();
         void Parse(std::string aDocument);
         void ParseLineAndReplace(std::string aLine, size_t anIndex);

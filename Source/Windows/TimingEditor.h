@@ -11,7 +11,7 @@ public:
 
     TimingEditor();
     void OnImGuiDraw();
-    void SetFont(ImFont* aFont);
+    void SetFont(ImFont* aFont, ImFont* aCustomFont = nullptr);
     int GetMarkedLine();
     int GetMarkedToken();
     int GetMarkedChar();
@@ -37,6 +37,7 @@ private:
     static inline TimingEditor* ourInstance;
 
     ImFont* myFont;
+    ImFont* myCustomFont;
     int myMarkedLine = 0;
     int myMarkedToken = 0;
     int myMarkedChar = 0;

@@ -358,7 +358,7 @@ namespace Serialization
         }
         myTokens.clear();
     }
-    void KaraokeDocument::Load(std::string aPath, std::string aFileID, bool aShouldParse)
+    bool KaraokeDocument::Load(std::string aPath, std::string aFileID, bool aShouldParse)
     {
         //if(aPath == myPath)
         //{
@@ -369,7 +369,7 @@ namespace Serialization
         if(!std::filesystem::exists(aPath))
         {
             printf("%s does not exist!\n", aPath.c_str());
-            return;
+            return false;
         }
         if(std::filesystem::is_directory(aPath))
         {
@@ -377,12 +377,11 @@ namespace Serialization
             {
                 if (path.path().extension() == ".txt")
                 {
-                    Load(path.path().string(), aFileID);
-                    return;
+                    return Load(path.path().string(), aFileID);
                 }
             }
             printf("No text document found!\n");
-            return;
+            return false;
         }
         Clear();
         if(!aPath.contains("local"))
@@ -405,6 +404,7 @@ namespace Serialization
             }
             docFile.close();
         }
+        return true;
     }
     void KaraokeDocument::ParseLoadedFile()
     {
