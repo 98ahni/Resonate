@@ -318,7 +318,20 @@ extern"C" EMSCRIPTEN_KEEPALIVE const ImExtTexture& CreateTexture(const ImExtText
 
 void ImGui::Ext::CreateHTMLButton(const char *anID, const char *anEvent, const char *aJSFunctonName)
 {
-    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(ImGui::GetItemRectMin().x), (int)DPI_UNSCALED(ImGui::GetItemRectMin().y), (int)DPI_UNSCALED(ImGui::GetItemRectSize().x), (int)DPI_UNSCALED(ImGui::GetItemRectSize().y));
+    ImGuiWindow* window = GetCurrentContext()->CurrentWindow;
+    ImVec4 clipRect = 
+    {
+        std::max(ImGui::GetItemRectMin().x, GetWindowPos().x),
+        std::max(ImGui::GetItemRectMin().y, GetWindowPos().y),
+        std::min(ImGui::GetItemRectMax().x, GetWindowPos().x + (GetWindowWidth() - window->ScrollbarSizes.x)),
+        std::min(ImGui::GetItemRectMax().y, GetWindowPos().y + (GetWindowHeight() - window->ScrollbarSizes.y))
+    };
+    if(clipRect.z < clipRect.x || clipRect.w < clipRect.y || !IsItemVisible())
+    {
+        DestroyHTMLElement(anID);
+        return;
+    }
+    create_button(emscripten::val(anID).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(clipRect.x), (int)DPI_UNSCALED(clipRect.y), (int)DPI_UNSCALED(clipRect.z - clipRect.x), (int)DPI_UNSCALED(clipRect.w - clipRect.y));
 }
 
 void ImGui::Ext::CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char *anID, const char *anEvent, const char *aJSFunctonName)
@@ -328,6 +341,19 @@ void ImGui::Ext::CreateHTMLButton(ImVec2 aPosition, ImVec2 aSize, const char *an
 
 void ImGui::Ext::CreateHTMLInput(const char *anID, const char *aType, const char *anEvent, const char *aJSFunctonName)
 {
+    ImGuiWindow* window = GetCurrentContext()->CurrentWindow;
+    ImVec4 clipRect = 
+    {
+        std::max(ImGui::GetItemRectMin().x, GetWindowPos().x),
+        std::max(ImGui::GetItemRectMin().y, GetWindowPos().y),
+        std::min(ImGui::GetItemRectMax().x, GetWindowPos().x + (GetWindowWidth() - window->ScrollbarSizes.x)),
+        std::min(ImGui::GetItemRectMax().y, GetWindowPos().y + (GetWindowHeight() - window->ScrollbarSizes.y))
+    };
+    if(clipRect.z < clipRect.x || clipRect.w < clipRect.y || !IsItemVisible())
+    {
+        DestroyHTMLElement(anID);
+        return;
+    }
     create_input(emscripten::val(anID).as_handle(), emscripten::val(aType).as_handle(), emscripten::val(anEvent).as_handle(), emscripten::val(aJSFunctonName).as_handle(), (int)DPI_UNSCALED(ImGui::GetItemRectMin().x), (int)DPI_UNSCALED(ImGui::GetItemRectMin().y), (int)DPI_UNSCALED(ImGui::GetItemRectSize().x), (int)DPI_UNSCALED(ImGui::GetItemRectSize().y));
 }
 
