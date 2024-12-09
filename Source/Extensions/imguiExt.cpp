@@ -615,7 +615,7 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         //ImDrawList* drawList = GetWindowDrawList();
         for(int i = 0; i < 5; i++)
         {
-            drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale * scale, {pos.x + (cosf(i * (6.28318 * .2f)) * anOutlineSize), pos.y + (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
+            drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/ * scale, {pos.x + (cosf(i * (6.28318 * .2f)) * anOutlineSize), pos.y + (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
             //drawList->AddText({(cosf(i * (6.28318 * .2f)) * anOutlineSize), (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
         }
     }
@@ -625,7 +625,7 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         startCol = IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000);
         //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000));
         //drawList->AddText({0, 0}, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000), aValue.data());
-        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale, pos, startCol, aValue.data());
+        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/, pos, startCol, aValue.data());
     }
     else if(aCurrentTime < end)
     {
@@ -646,8 +646,8 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         }
         ImVec4 startColClip = {timeEndPos.x, 0, FLT_MAX, FLT_MAX};
         ImVec4 endColClip = {0, 0, timeEndPos.x, FLT_MAX};
-        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale * scale, pos, startCol, aValue.data(), nullptr, 0, &startColClip);
-        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale * scale, pos, endCol, aValue.data(), nullptr, 0, &endColClip);
+        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/ * scale, pos, startCol, aValue.data(), nullptr, 0, &startColClip);
+        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/ * scale, pos, endCol, aValue.data(), nullptr, 0, &endColClip);
         //if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
         //{
         //    ImGui::PushStyleColor(ImGuiCol_Text, {0.87f, 0.8f, 1.f, 1.f});
@@ -665,7 +665,7 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         endCol = IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000);
         //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000));
         //drawList->AddText({0, 0}, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000), aValue.data());
-        drawList->AddText(GetFont(), GetFont()->FontSize * GetFont()->Scale, pos, endCol, aValue.data());
+        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/, pos, endCol, aValue.data());
     }
     //Text(aValue.data());
     //drawList->PopTextureID();
