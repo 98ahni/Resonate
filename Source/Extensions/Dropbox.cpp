@@ -56,10 +56,11 @@ EM_JS(bool, has_db_token, (), {
     return global_db_auth.getAccessToken() !== undefined;
 });
 
-EM_JS(void, db_open_chooser, (emscripten::EM_VAL file_callback_name, emscripten::EM_VAL done_callback_name, emscripten::EM_VAL cancel_callback_name, bool use_iframe), {
+EM_JS(void, db_open_chooser, (emscripten::EM_VAL file_callback_name, emscripten::EM_VAL done_callback_name, emscripten::EM_VAL cancel_callback_name, bool use_iframe, emscripten::EM_VAL excluded_extensions), {
     const callback_func = Module[Emval.toValue(file_callback_name)];
     const done_callback_func = Module[Emval.toValue(done_callback_name)];
     const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)];
+    const ex_extensions = Emval.toValue(excluded_extensions).split(/, \\.|, |,\\.|,| \\.| |\\./);
     const options = {
         success: (files)=>{
             if(!FS.analyzePath("/Dropbox").exists){
@@ -68,6 +69,11 @@ EM_JS(void, db_open_chooser, (emscripten::EM_VAL file_callback_name, emscripten:
             let loadPromises = [];
             files.forEach(function(file) {
                 loadPromises.push(new Promise(async (resolve)=>{
+                    if(ex_extensions.includes(file.name.split(".").pop())){
+                        console.log('File has excluded file type:', file.name, ', Skipping');
+                        resolve();
+                        return;
+                    }
                     console.log('Loading file "' + file.name + '" from Dropbox.');
                     fetch(file.link).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => {
                         FS.writeFile("/Dropbox/" + file.name, new Uint8Array(buffer));
@@ -130,9 +136,9 @@ void Dropbox::LogOut()
     VAR_FROM_JS(revoke_db_token()).await();
 }
 
-void Dropbox::LoadProject(std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName, bool aShouldUseIframe)
+void Dropbox::LoadProject(std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName, bool aShouldUseIframe, std::string someExcludedExtensions)
 {
-    db_open_chooser(VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aDoneCallbackName), VAR_TO_JS(aCancelCallbackName), aShouldUseIframe);
+    db_open_chooser(VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aDoneCallbackName), VAR_TO_JS(aCancelCallbackName), aShouldUseIframe, VAR_TO_JS(someExcludedExtensions));
 }
 
 void Dropbox::SaveProject(std::string aFileID, std::string aFilePath)

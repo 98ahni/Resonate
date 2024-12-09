@@ -180,6 +180,17 @@ void Settings::OnImGuiDraw()
     ImGui::EndDisabled();
     ImGui::Unindent();
     ImGui::Spacing();
+    bool shouldLoadVideo = !Serialization::Preferences::HasKey("Preview/LoadVideo") || Serialization::Preferences::GetBool("Preview/LoadVideo");
+    if(ImGui::Ext::ToggleSwitch("Load Video Background", &shouldLoadVideo))
+    {
+        Serialization::Preferences::SetBool("Preview/LoadVideo", shouldLoadVideo);
+    }
+    ImGui::Indent();
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Some devices may not be able load or play videos correctly. If this option is turned off when loading a project the video won't be imported. ");
+    ImGui::EndDisabled();
+    ImGui::Unindent();
+    ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();

@@ -115,7 +115,7 @@ EM_JS(void, revoke_client_token, (), {
     }
 });
 
-EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_types, emscripten::EM_VAL file_callback_name, emscripten::EM_VAL done_callback_name, emscripten::EM_VAL cancel_callback_name), 
+EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_types, emscripten::EM_VAL file_callback_name, emscripten::EM_VAL done_callback_name, emscripten::EM_VAL cancel_callback_name, emscripten::EM_VAL excluded_extensions), 
 {
     //const view = new google.picker.View(google.picker.ViewId.FOLDERS);
     //view.setMimeTypes(Emval.toValue(mime_types));
@@ -126,6 +126,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
     const callback_func = Module[Emval.toValue(file_callback_name)];
     const done_callback_func = Module[Emval.toValue(done_callback_name)];
     const cancel_callback_func = Module[Emval.toValue(cancel_callback_name)];
+    const ex_extensions = Emval.toValue(excluded_extensions).split(/, \\.|, |,\\.|,| \\.| |\\./);
     const picker = new google.picker.PickerBuilder()
         //.enableFeature(google.picker.Feature.NAV_HIDDEN)
         //.enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
@@ -147,7 +148,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                 const files = [];
                 const res = await gapi.client.drive.files.list({
                     q: "'" + fileId + "' in parents",
-                    fields: 'nextPageToken, files(id, name, trashed)',
+                    fields: 'nextPageToken, files(id, name, fileExtension, trashed)',
                     spaces: 'drive'
                 });
                 console.log(JSON.stringify(res.result.files));
@@ -157,6 +158,11 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                     loadPromises.push(new Promise(async (resolve)=>{
                         if(file.trashed){
                             console.log('Found trashed file:', file.name, file.id, ', Skipping');
+                            resolve();
+                            return;
+                        }
+                        if(ex_extensions.includes(file.fileExtension)){
+                            console.log('Found excluded file type:', file.name, file.id, ', Skipping');
                             resolve();
                             return;
                         }
@@ -216,9 +222,9 @@ void GoogleDrive::LogOut()
     revoke_client_token();
 }
 
-void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName)
+void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aFileCallbackName, std::string aDoneCallbackName, std::string aCancelCallbackName, std::string someExcludedExtensions)
 {
-    create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aDoneCallbackName), VAR_TO_JS(aCancelCallbackName));
+    create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aDoneCallbackName), VAR_TO_JS(aCancelCallbackName), VAR_TO_JS(someExcludedExtensions));
 }
 
 void GoogleDrive::SaveProject(std::string aFileID, std::string aFilePath)

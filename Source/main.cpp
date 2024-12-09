@@ -84,6 +84,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
                     std::error_code ferr;
                     std::filesystem::remove(path.path(), ferr);
                     g_hasCustomFont = false;
+                    g_customFontPath = "";
                     break;
                 }
             }
@@ -96,21 +97,6 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
         if (path.path().extension() == ".ttf" || path.path().extension() == ".otf")
         {
             g_customFontPath = path.path().string();
-            //ImGui::GetIO().Fonts->AddFontFromFileTTF(path.path().string().data(), 40.0f);
-            //ImGui::GetIO().Fonts->AddFontFromFileTTF(path.path().string().data(), 40.0f);
-            //if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
-            //{
-            //    //ImGui::GetIO().Fonts->Fonts.erase(ImGui::GetIO().Fonts->Fonts.begin() + 2, ImGui::GetIO().Fonts->Fonts.end());
-            //    ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.path().string().data(), 40.0f);
-            //    timingFont->Scale = .5f;
-            //    //TimingEditor::Get().SetFont(timingFont);
-            //}
-            //else
-            //{
-            //    //ImGui::GetIO().Fonts->Fonts.erase(ImGui::GetIO().Fonts->Fonts.begin() + 2, ImGui::GetIO().Fonts->Fonts.end());
-            //}
-            //PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(path.path().string().data(), 40.0f));
-            //PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(path.path().string().data(), 40.0f));
             g_shouldRebuildFonts = true;
             g_hasCustomFont = true;
             std::filesystem::copy(path.path().string(), "/local", std::filesystem::copy_options::overwrite_existing);   
@@ -197,7 +183,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void OpenDropboxChooser()
 {
     g_shouldDeleteOnLoad = true;
     ImGui::Ext::StartLoadingScreen();
-    Dropbox::LoadProject("_LoadFileFromCloudDrive", "_LoadCompletedFromCloudDrive", "_LoadCanceledFromCloudDrive");
+    bool loadVideo = !Serialization::Preferences::HasKey("Preview/LoadVideo") || Serialization::Preferences::GetBool("Preview/LoadVideo");
+    Dropbox::LoadProject("_LoadFileFromCloudDrive", "_LoadCompletedFromCloudDrive", "_LoadCanceledFromCloudDrive", false, loadVideo ? "" : ".mp4");
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromCloudDrive(emscripten::EM_VAL aFSPath, emscripten::EM_VAL aFileID)
@@ -214,6 +201,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromCloudDrive(emscripten::EM_VAL a
                     std::error_code ferr;
                     std::filesystem::remove(path.path(), ferr);
                     g_hasCustomFont = false;
+                    g_customFontPath = "";
                     break;
                 }
             }
@@ -237,19 +225,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromCloudDrive(emscripten::EM_VAL a
     }
     else if (path.extension() == ".ttf" || path.extension() == ".otf")
     {
-        if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
-        {
-            //ImGui::GetIO().Fonts->Fonts.erase(ImGui::GetIO().Fonts->Fonts.begin() + 2, ImGui::GetIO().Fonts->Fonts.end());
-            ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.string().data(), 40.0f);
-            timingFont->Scale = .5f;
-            TimingEditor::Get().SetFont(timingFont);
-        }
-        else
-        {
-            //ImGui::GetIO().Fonts->Fonts.erase(ImGui::GetIO().Fonts->Fonts.begin() + 2, ImGui::GetIO().Fonts->Fonts.end());
-        }
-        PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(path.string().data(), 40.0f));
-        PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(path.string().data(), 40.0f));
+        g_customFontPath = path.string();
         g_shouldRebuildFonts = true;
         g_hasCustomFont = true;
         std::filesystem::copy(path.string(), "/local", std::filesystem::copy_options::overwrite_existing);
@@ -278,20 +254,27 @@ EM_JS(void, open_resonate_issues, (), {
 });
 
 void loop(void* window){
-    Gamepad::Update();
     if(g_shouldRebuildFonts)
     {
         ImGui::GetIO().Fonts->Clear();
         ImGui::GetIO().Fonts->AddFontDefault(nullptr);
         MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
         MainWindow::Font->Scale = .5f;
-        PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
-        PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
         ImFont* timingCustomFont = nullptr;
-        if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
+        if(g_customFontPath != "")
         {
-            timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f);
-            timingCustomFont->Scale = .5f;
+            PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
+            PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
+            if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
+            {
+                timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f);
+                timingCustomFont->Scale = .5f;
+            }
+        }
+        else
+        {
+            PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f));
+            PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f));
         }
         ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
         timingFont->Scale = .5f;
@@ -300,6 +283,7 @@ void loop(void* window){
         ImGui::GetIO().Fonts->Build();
         g_shouldRebuildFonts = false;
     }
+    Gamepad::Update();
     MainWindow_NewFrame(window);
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     MainWindow_SetName(doc.GetName().empty() ? "Resonate" : (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate");
@@ -361,7 +345,8 @@ void loop(void* window){
                 {
                     g_shouldDeleteOnLoad = true;
                     ImGui::Ext::StartLoadingScreen();
-                    GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromCloudDrive", "_LoadCompletedFromCloudDrive", "_LoadCanceledFromCloudDrive");
+                    bool loadVideo = !Serialization::Preferences::HasKey("Preview/LoadVideo") || Serialization::Preferences::GetBool("Preview/LoadVideo");
+                    GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromCloudDrive", "_LoadCompletedFromCloudDrive", "_LoadCanceledFromCloudDrive", loadVideo ? "" : ".mp4");
                 }
                 if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileID() != ""))
                 {
@@ -898,7 +883,7 @@ int main(){
         PreviewWindow::AddBackgroundElement("/local/");
     }
 
-    g_customFontPath = "Fonts/SCR1rahv RAGER HEVVY.otf";
+    //g_customFontPath = "";
     for (auto &path : std::filesystem::directory_iterator("/local/"))
     {
         if (path.path().extension() == ".ttf" || path.path().extension() == ".otf")
@@ -908,22 +893,23 @@ int main(){
             break;
         }
     }
+    g_shouldRebuildFonts = true;
 
-    ImGui::GetIO().Fonts->AddFontDefault(nullptr);
-    MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
-    MainWindow::Font->Scale = .5f;
-    PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
-    PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
-    ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
-    ImFont* timingCustomFont = nullptr;
-    if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
-    {
-        timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f);
-        timingCustomFont->Scale = .5f;
-    }
-    timingFont->Scale = .5f;
-    timingEditor->SetFont(timingFont, timingCustomFont);
-    ImGui::GetIO().Fonts->Build();
+    //ImGui::GetIO().Fonts->AddFontDefault(nullptr);
+    //MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
+    //MainWindow::Font->Scale = .5f;
+    //PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
+    //PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
+    //ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
+    //ImFont* timingCustomFont = nullptr;
+    //if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
+    //{
+    //    timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f);
+    //    timingCustomFont->Scale = .5f;
+    //}
+    //timingFont->Scale = .5f;
+    //timingEditor->SetFont(timingFont, timingCustomFont);
+    //ImGui::GetIO().Fonts->Build();
 
     emscripten_set_main_loop_arg(loop, (void*)_window, 0, false);
     return 0;

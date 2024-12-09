@@ -38,13 +38,14 @@ PreviewWindow::PreviewWindow()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     ourHasVideo = false;
     std::string chosenBackground = "";
+    bool allowVideo = !Serialization::Preferences::HasKey("Preview/LoadVideo") || Serialization::Preferences::GetBool("Preview/LoadVideo");
     for(auto& [path, tex] : ourBackgrounds)
     {
         std::filesystem::path fpath = path;
         if(fpath.extension() == ".mp4")
         {
-            chosenBackground = path;
-            ourHasVideo = true;
+            chosenBackground = allowVideo ? path : "ResonateIconLarger.png";
+            ourHasVideo = allowVideo;
             break;
         }
         if(doc.GetName() == fpath.filename().string())
