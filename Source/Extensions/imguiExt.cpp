@@ -841,6 +841,11 @@ bool ImGui::Ext::StepInt(const char *aLabel, int& aValue, int aSmallStep, int aL
     return output;
 }
 
+ImVector<ImVec2> ImGui::Ext::TextWrappedWithOverdraw(const char *fmt, va_list args)
+{
+    return ImVector<ImVec2>();
+}
+
 bool ImGui::Ext::TabMenu(ImVector<std::string> someLabels, int *aValue)
 {
     bool output = false;

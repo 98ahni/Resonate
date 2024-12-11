@@ -65,7 +65,8 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Simple Text Edits");
-    ImGui::TextWrapped("In the Edit menu you can split lines into two where the text marker is, merge lines with their neighbors, duplicate them and switch their places. ");
+    ImGui::TextWrapped("In the Edit menu you can split lines into two where the text marker is, merge lines with their neighbors, duplicate them and switch their places. "
+    "You can also change casing, either per word to quickly change a lot of text or per letter to get into the details. ");
     EndTreeNode
 
     StartTreeNode("Document Properties");
@@ -113,7 +114,8 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Settings");
-    ImGui::TextWrapped("In View > Settings you can set an offset to counter headphone delay, save and load internal data or restore the app to default.");
+    ImGui::TextWrapped("In View > Settings you can set an offset to counter headphone delay, choose audio processor to balance speed to quality and change rendering settings. "
+    "You can also save and load internal data to transfer your setup to another device or restore the app to default.");
     EndTreeNode
 
     StartTreeNode("Dealing with Raw Text");
@@ -128,11 +130,13 @@ void HelpWindow::OnImGuiDraw()
     "A PWA looks like a normal app on your device, without most clutter of the web browser. The process vary by browser as listed below. \n");
     Keybind("Chrome       ", "On all chromium based browsres the install button appears in the address bar on the right side. Click that button and then confirm the install. "
     "The app will open and a shortcut is added to the desktop. To uninstall, click the three dots in the upper right of the PWA and select 'Uninstall'.");
-    Keybind("Safari, iOS  ", "Tap the [↑] Share icon then select [+] Add to Homescreen in the menu. Confirm the install and the PWA will appear on your homescreen. "
+    Keybind("Safari, iOS  ", "Tap the [↑] Share icon then select \"[+] Add to Homescreen\" in the menu. Confirm the install and the PWA will appear on your homescreen. "
     "To uninstall, remove it like a normal app. ");
-    Keybind("Safari, macOS", "(Untested) Presumably same as one of the above.");
-    Keybind("Firefox      ", "(Unknown)");
-    Keybind("Android      ", "(Unknown)");
+    Keybind("Safari, macOS", "Click the [↑] Share icon or open Safari's File menu, then select \"Add to Dock\" in the menu. Confirm the install and the PWA will appear in your dock. "
+    "To uninstall, remove it like a normal app. ");
+    Keybind("Firefox      ", "You need to install an extension to use PWAs in Firefox. Install method varies depending on which one you use. ");
+    Keybind("Android      ", "Tap the three dots in the upper right corner of the screen, then select \"[+ Install app\". Confirm the install and the PWA will appear on your homescreen. "
+    "To uninstall, remove it like a normal app. ");
     EndTreeNode
 
     StartTreeNode("Additional Tricks");

@@ -33,6 +33,8 @@ namespace ImGui{
 
         bool ToggleSwitch(const char* aLabel, bool* aValue);
         bool StepInt(const char *aLabel, int& aValue, int aSmallStep, int aLargeStep);
+        // Any hash (#) or pipe (|) will be removed and hashes will be replaced with a space.
+        ImVector<ImVec2> TextWrappedWithOverdraw(const char* fmt, va_list args);
         bool TabMenu(ImVector<std::string> someLabels, int* aValue);
     }
 }
