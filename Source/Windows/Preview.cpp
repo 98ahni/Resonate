@@ -1,3 +1,6 @@
+//  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
+//  <Copyright (C) 2024-2025 98ahni> Original file author
+
 #include "Preview.h"
 #include <emscripten.h>
 #include <filesystem>
@@ -10,6 +13,7 @@
 #include "MainWindow.h"
 #include "AudioPlayback.h"
 #include "TimingEditor.h"
+#include "Console.h"
 
 extern"C" EMSCRIPTEN_KEEPALIVE void jsPlayPreviewVideo()
 {
@@ -33,9 +37,32 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsSetPreviewVideoProgress()
     }
 }
 
-PreviewWindow::PreviewWindow()
+PreviewWindow::PreviewWindow(bool anOnlyValidate)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    if(anOnlyValidate)
+    {
+        ourRulerFont->Scale = DPI_UNSCALED(((float)doc.GetFontSize() / 50.f));
+        myPlaybackProgressLastFrame = 0;
+        myNextAddLineIndex = 0;
+        myShouldDebugDraw = false;
+        Resetprogress();
+        int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
+        //for(int timer = 0; timer < 100000 && myNextAddLineIndex < doc.GetData().size(); timer += 10)
+        //{
+            while(RemoveOldLanes(INT_MAX, 50))
+            {
+                while(TryDisplayLanes())
+                {
+                    while (FillBackLanes(lanesShown))
+                    {
+                    }
+                }
+            }
+        //}
+        Console::Log("Went through " + std::to_string(myNextAddLineIndex) + " lines out of a total of " + std::to_string(doc.GetData().size()) + ". ", myNextAddLineIndex);
+        return;
+    }
     ourHasVideo = false;
     std::string chosenBackground = "";
     bool allowVideo = !Serialization::Preferences::HasKey("Preview/LoadVideo") || Serialization::Preferences::GetBool("Preview/LoadVideo");
@@ -423,6 +450,14 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     {
         return false;
     }
+    if(nextLineNeeds > aLaneCount)
+    {
+        Console::LogError("Line " + std::to_string(myNextAddLineIndex) + " is too long to fit on the screen. This will stop ECHO from displaying any lines after this. Please split the line or lower the font size. ", myNextAddLineIndex);
+    }
+    else if(nextLineNeeds > aLaneCount * .5f)
+    {
+        Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " takes up more than half the screen. This could stop other lines from displaying correctly. Please split the line or lower the font size. ", myNextAddLineIndex);
+    }
     int foundPlace = FillBackLanesSetLine(aLaneCount, nextLineNeeds);
     if(foundPlace == -3) // invalid
     {
@@ -469,6 +504,14 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
         {
             //printf("Moving %i tokens from line %i to back lane %i\n", myAssemblyLanes[i].myEndToken - myAssemblyLanes[i].myStartToken, myAssemblyLanes[i].myLine, i + foundPlace);
             myBackLanes[i + foundPlace] = myAssemblyLanes[i];
+            //if(myBackLanes[i + foundPlace].myEndTime < myLanes[i + foundPlace].myEndTime)// && myLanes[i + foundPlace].myLine != -1)
+            //{
+            //    Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " wasn't shown as it ended before the end of line " + std::to_string(myLanes[i + foundPlace].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myNextAddLineIndex);
+            //}
+            //else if(myBackLanes[i + foundPlace].myStartTime < myLanes[i + foundPlace].myEndTime)// && myLanes[i + foundPlace].myLine != -1)
+            //{
+            //    Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " wasn't shown in time as it began before the end of line " + std::to_string(myLanes[i + foundPlace].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myNextAddLineIndex);
+            //}
         }
         myNextAddLineIndex++;
         return true;
@@ -512,6 +555,8 @@ int PreviewWindow::FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds)
     return -1;
 }
 
+// For future reference;
+// The inner for loop only runs when every display lane from `currentStartLane` to `lane` are -1
 bool PreviewWindow::TryDisplayLanes()
 {
     int checkingLine = -1;
@@ -565,6 +610,16 @@ bool PreviewWindow::RemoveOldLanes(uint someCurrentTime, uint aDelay)
         if(myLanes[lane].myEndTime + aDelay < someCurrentTime)
         {
             //printf("Line %i is removed from lane %i\n", myLanes[lane].myLine, lane);
+
+            // For some reason the backLanes are -1‽
+            if(myBackLanes[lane].myEndTime < myLanes[lane].myEndTime && myBackLanes[lane].myLine != -1 && myLanes[lane].myLine != -1)
+            {
+                Console::LogWarning("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown as it ended before the end of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myBackLanes[lane].myLine);
+            }
+            else if(myBackLanes[lane].myStartTime < myLanes[lane].myEndTime && myBackLanes[lane].myLine != -1 && myLanes[lane].myLine != -1)
+            {
+                Console::LogWarning("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown in time as it began before the end of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myBackLanes[lane].myLine);
+            }
             myLanes[lane].myLine = -1;
             output = true;
         }

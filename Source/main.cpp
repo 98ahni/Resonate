@@ -16,6 +16,7 @@
 #include "Windows/Help.h"
 #include "Windows/License.h"
 #include "Windows/Preview.h"
+#include "Windows/Console.h"
 #include <webgl/webgl2.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -64,6 +65,7 @@ bool g_isSafeMode = false;
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadProject()
 {
     ImGui::Ext::StartLoadingScreen();
+    History::Clear();
     //AudioPlayback::PrepPlayback();
     std::string folderPath = FileHandler::OpenFolder();
     if(folderPath == "")
@@ -649,6 +651,17 @@ void loop(void* window){
                 else
                 {
                     WindowManager::AddWindow<Settings>("Settings");
+                }
+            }
+            if(ImGui::MenuItem("Console", 0, WindowManager::GetWindow("Console") != nullptr))
+            {
+                if(WindowManager::GetWindow("Console") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("Console"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<ConsoleWindow>("Console");
                 }
             }
             if(ImGui::MenuItem("Help", 0, WindowManager::GetWindow("Help") != nullptr))

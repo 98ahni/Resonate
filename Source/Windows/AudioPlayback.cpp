@@ -417,6 +417,35 @@ void AudioPlayback::ProcessAudio()
     set_audio_playback_buffer(VAR_TO_JS(10));
 }
 
+EM_ASYNC_JS(emscripten::EM_VAL, get_audio_volume_db, (), {
+    return Emval.toHandle(new Promise(async(resolve)=>{
+        var output = {};
+        output.peak = 0;
+        output.mean = 0;
+        if(!global_audio_completion[9]){
+            resolve(output);
+            return;
+        }
+        global_audio_context.decodeAudioData(await global_audio_blobs.arrayBuffer(), (buffer)=>{
+            for(const data of buffer.getChannelData(i)){
+                for(const sample of buffer){
+                    const sample_db = 20 * Math.log10(Math.abs(sample));
+                    if(output.peak < sample_db) { output.peak = sample_db; }
+                    output.mean += sample_db;
+                }
+            }
+            output.mean /= buffer.getChannelData(0).length * buffer.numberOfChannels;
+            resolve(output);
+        });
+    }));
+});
+
+std::pair<float, float> AudioPlayback::GetVolumeDB()
+{
+    emscripten::val volume = VAR_FROM_JS(get_audio_volume_db()).await();
+    return {volume["peak"].as<float>(), volume["mean"].as<float>()};
+}
+
 void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
 {
     ImGui::Text(Serialization::KaraokeDocument::TimeToString(myProgress).c_str());

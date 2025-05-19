@@ -34,6 +34,7 @@ public:
     static std::string GetPath();
     static void AddEventListener(std::string anEvent, std::string aJSFunctonName);
     static void RemoveEventListener(std::string anEvent, std::string aJSFunctonName);
+    static std::pair<float, float> GetVolumeDB();
 
 private:            // Is defined as public in AudioPlayback.cpp
     static inline AudioPlayback* ourInstance = nullptr;

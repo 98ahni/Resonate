@@ -7,6 +7,7 @@
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
 #include "Preview.h"
+#include "Console.h"
 #include <Defines.h>
 #include <StringTools.h>
 
@@ -42,6 +43,8 @@ void TimingEditor::OnImGuiDraw()
         if(myFont) ImGui::PushFont(useCustomFont ? myCustomFont : myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
         {
+            Console::LineMargin(line);
+            ImGui::SameLine();
             for(int token = 0; token < doc.GetLine(line).size(); token++)
             {
                 if(!myDisableInput && myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
