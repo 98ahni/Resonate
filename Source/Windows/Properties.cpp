@@ -381,12 +381,30 @@ bool PropertiesWindow::DrawSingerColorsGamepadPopup(int aSelectedSlider, bool an
             }
             myNewEffectName = anEditingName == "" ? myNewEffectName : anEditingName;
             ApplyEdit(myNewEffectToAdd);
-            (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName] = myNewEffectToAdd;
+            Serialization::KaraokeAliasMap& aliases = anIsLocal ? myLocalEffectAliases : doc.myEffectAliases;
+            if(aliases.contains(myNewEffectName))
+            {
+                delete aliases[myNewEffectName];
+            }
+            aliases[myNewEffectName] = myNewEffectToAdd;
             if(Gamepad::GetButtonDown(Gamepad::X))
             {
                 myCurrentTab = (TabIndex)!anIsLocal;
+                Serialization::KaraokeAliasMap& antiAliases = !anIsLocal ? myLocalEffectAliases : doc.myEffectAliases;
+                if(antiAliases.contains(myNewEffectName))
+                {
+                    History::AddRecord(new EffectRecord(History::Record::Edit, anEditingName, !anIsLocal));
+                }
+                else 
+                {
+                    History::AddRecord(new EffectRecord(History::Record::Insert, myNewEffectName, !anIsLocal));
+                }
                 ApplyEdit(myNewEffectToAdd);
-                (!anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName] = myNewEffectToAdd;
+                if(antiAliases.contains(myNewEffectName))
+                {
+                    delete antiAliases[myNewEffectName];
+                }
+                antiAliases[myNewEffectName] = doc.ParseEffectProperty(doc.SerializeEffectProperty(myNewEffectToAdd));
             }
             myNewEffectToAdd = nullptr;
             myNewEffectName = "";
