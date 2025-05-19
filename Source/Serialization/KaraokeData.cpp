@@ -525,7 +525,7 @@ namespace Serialization
         myTokens.erase(myTokens.begin() + anIndex);
         ParseLine(aLine);
         myTokens.insert(myTokens.begin() + anIndex, myTokens.back());
-        myTokens.erase(myTokens.end());
+        myTokens.pop_back();
     }
     void KaraokeDocument::ParseLine(std::string aLine)
     {

@@ -54,6 +54,17 @@ bool g_hasCustomFont = false;
 bool g_shouldRebuildFonts = false;
 std::string g_customFontPath = "";
 bool g_firstFrameAfterFileLoad = false;
+static const ImWchar g_FontRangesLatinAndPinyin[] =
+{
+    0x0020, 0x01FF, // Basic Latin + Latin Supplement
+    //0x2000, 0x206F, // General Punctuation
+    //0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
+    //0x31F0, 0x31FF, // Katakana Phonetic Extensions
+    //0xFF00, 0xFFEF, // Half-width characters
+    //0xFFFD, 0xFFFD, // Invalid
+    //0x4e00, 0x9FAF, // CJK Ideograms
+    0,
+};
 
 bool g_shouldHideLoadingScreen = false;
 
@@ -260,26 +271,56 @@ void loop(void* window){
     if(g_shouldRebuildFonts)
     {
         ImGui::GetIO().Fonts->Clear();
-        ImGui::GetIO().Fonts->AddFontDefault(nullptr);
-        MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
+        ImFontConfig cfg;
+        const ImWchar* range = g_FontRangesLatinAndPinyin;
+        //const ImWchar* range = &ImGui::GetIO().Fonts->GetGlyphRangesVietnamese()[0];
+        cfg.GlyphRanges = range;
+        ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+        cfg.MergeMode = true;
+        cfg.SizePixels = 12.0f;
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 12.0f, &cfg, range);
+        cfg.MergeMode = false;
+        cfg.SizePixels = 40.0f;
+        MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f, &cfg, range);
+        cfg.MergeMode = true;
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+        cfg.MergeMode = false;
         MainWindow::Font->Scale = .5f;
         ImFont* timingCustomFont = nullptr;
         if(g_customFontPath != "")
         {
-            PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
-            PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f));
+            PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range));
+            cfg.MergeMode = true;
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            cfg.MergeMode = false;
+            PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range));
+            cfg.MergeMode = true;
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            cfg.MergeMode = false;
             if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
             {
-                timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f);
+                timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range);
+                cfg.MergeMode = true;
+                ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+                cfg.MergeMode = false;
                 timingCustomFont->Scale = .5f;
             }
         }
         else
         {
-            PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f));
-            PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f));
+            PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f, &cfg, range));
+            cfg.MergeMode = true;
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            cfg.MergeMode = false;
+            PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f, &cfg, range));
+            cfg.MergeMode = true;
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            cfg.MergeMode = false;
         }
-        ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
+        ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f, &cfg, range);
+        cfg.MergeMode = true;
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+        cfg.MergeMode = false;
         timingFont->Scale = .5f;
         TimingEditor::Get().SetFont(timingFont, timingCustomFont);
         MainWindow_Invalidate();
@@ -296,6 +337,7 @@ void loop(void* window){
     {
         doc.AutoSave();
         FileHandler::SyncLocalFS();
+        Console::SearchForErrors();
     }
     if(g_firstFrameAfterFileLoad)
     {
@@ -303,6 +345,7 @@ void loop(void* window){
         Serialization::Preferences::SetString("Document/FileID", doc.GetFileID());
         doc.ParseLoadedFile();
         FileHandler::SyncLocalFS();
+        Console::SearchForErrors();
     }
 
     if(ImGui::BeginMainMenuBar())
@@ -731,6 +774,7 @@ void loop(void* window){
                 ImGui::SameLine();
             }
         }
+        ImGui::DebugTextEncoding(doc.SerializeLine(doc.GetLine(0)).c_str());
         ImGui::NewLine();
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         ImVec2 startPos = ImGui::GetCursorPos();

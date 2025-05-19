@@ -150,7 +150,7 @@ void PreviewWindow::OnImGuiDraw()
     float fontScale = (float)doc.GetFontSize() / 50.f;
     float textScale = (DPI_UNSCALED(contentSize.y) / ((50 + DPI_UNSCALED(ImGui::GetStyle().ItemSpacing.y)) * 6));
     ourFont->Scale = fontScale * ((textScale < .001f ? .001f : textScale));
-    uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset();
+    uint playbackProgress = AudioPlayback::GetPlaybackProgress() + TimingEditor::Get().GetLatencyOffset();
     if(((int)AudioPlayback::GetPlaybackProgress()) < TimingEditor::Get().GetLatencyOffset())
     {
         playbackProgress = 0;
@@ -305,8 +305,10 @@ ImExtTexture PreviewWindow::GetBackgroundTexture(std::string aBGPath, bool aShou
     if(!ourBackgrounds.contains(aBGPath) || ourBackgrounds[aBGPath].myID == 0)
     {
         std::string extension = std::filesystem::path(aBGPath).extension().string();
-        if(extension == ".mp4" || extension == ".png" || extension == ".jpg")
-        ImGui::Ext::LoadImage(("##" + aBGPath).data(), ("/local/" + aBGPath).data());
+        if(extension == ".mp4")
+            ImGui::Ext::LoadVideo(("##" + aBGPath).data(), ("/local/" + aBGPath).data());
+        if(extension == ".png" || extension == ".jpg")
+            ImGui::Ext::LoadImage(("##" + aBGPath).data(), ("/local/" + aBGPath).data());
         ourBackgrounds[aBGPath] = {};
         ImGui::Ext::RenderTexture(("##" + aBGPath).data(), ourBackgrounds[aBGPath]);
     }

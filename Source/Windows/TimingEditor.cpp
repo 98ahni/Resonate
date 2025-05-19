@@ -69,7 +69,7 @@ void TimingEditor::OnImGuiDraw()
                 {
                     DrawLineTagWidget(line, token);
                 }
-                else if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - myLatencyOffset, doc.GetLine(line)[token].myHasStart))
+                else if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() + myLatencyOffset, doc.GetLine(line)[token].myHasStart))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey_ModShift))
                     {
@@ -260,7 +260,7 @@ void TimingEditor::RecordEndTime()
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     doc.MakeDirty();
     Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
-    Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
+    Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
     if(doc.IsNull(prevToken)) return;
     int scaledLatency = (float)myLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
     int currMarkLine = myMarkedLine;
@@ -580,7 +580,7 @@ void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
     uint imgTime = doc.GetTimedTokenAfter(aLine, 0).myStartTime;
     ImGui::Ext::TimedSyllable("<               >", imgTime, imgTime + (uint)(std::stof(timeStr) * 100), AudioPlayback::GetPlaybackProgress() - myLatencyOffset, true);
     ImGui::SetCursorPos(drawPos);
-    ImGui::SetCursorPosX(DPI_SCALED(15));
+    ImGui::SetCursorPosX(ImGui::CalcTextSize("<").x + drawPos.x);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), DPI_SCALED(4)});
     if(texture.myID != 0 && ImGui::ImageButton(("##" + std::to_string(aLine)).data(), texture.myID, {ImGui::GetTextLineHeightWithSpacing() * 1.777777f /*(16/9)*/, ImGui::GetTextLineHeightWithSpacing()}))
     {
