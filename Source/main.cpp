@@ -1,6 +1,6 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Resonate. Copyright (C) 2024 98ahni and Resonate Autohrs>
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Resonate. Copyright (C) 2024-2025 98ahni and Resonate Autohrs>
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include <stdio.h>
 #include <emscripten.h>
@@ -236,6 +236,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadCompletedFromCloudDrive()
 {
     g_firstFrameAfterFileLoad = true;
     g_shouldHideLoadingScreen = true;
+    History::Clear();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void LoadCanceledFromCloudDrive()
 {
@@ -508,6 +509,8 @@ void loop(void* window){
                                 {
                                     line--;
                                 }
+                                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
+                                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
                                 Serialization::KaraokeToken newToken = {};
                                 newToken.myValue = "";
                                 newToken.myHasStart = true;
@@ -527,6 +530,7 @@ void loop(void* window){
             }
             if(ImGui::MenuItem("No Effect", "<no effect>", hasNoEffectTag, !TimingEditor::Get().GetInputUnsafe()))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
                 if(hasNoEffectTag)
                 {
                     doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0));
@@ -539,6 +543,7 @@ void loop(void* window){
             }
             if(ImGui::MenuItem("Display Line", "<line#>", hasLineTag, !TimingEditor::Get().GetInputUnsafe()))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
                 if(hasLineTag)
                 {
                     doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin());
@@ -556,6 +561,7 @@ void loop(void* window){
             {
                 if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data(), false, !TimingEditor::Get().GetInputUnsafe()))
                 {
+                    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
                     Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
                     doc.MakeDirty();
@@ -571,6 +577,10 @@ void loop(void* window){
                 {
                     if(ImGui::MenuItem(name.c_str()))
                     {
+                        for(int line = 0; line < doc.GetData().size(); line++)
+                        {
+                            History::AddRecord(new Serialization::LineRecord(History::Record::Edit, line));
+                        }
                         Serialization::BuildPatterns(code);
                         std::string text = doc.SerializeAsText();
                         printf("Done serializing.\n");
@@ -584,6 +594,7 @@ void loop(void* window){
                             doc.GetData().front().erase(doc.GetData().front().begin());
                         }
                         doc.MakeDirty();
+                        History::ForceEndRecord();
                     }
                 }
                 ImGui::EndMenu();
@@ -594,6 +605,7 @@ void loop(void* window){
                 {
                     if(ImGui::MenuItem(name.c_str()))
                     {
+                        History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                         Serialization::BuildPatterns(code);
                         std::vector<std::string> tokenList = Serialization::Syllabify(doc.SerializeLineAsText(doc.GetLine(((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine())), code);
                         doc.ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), ((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine());

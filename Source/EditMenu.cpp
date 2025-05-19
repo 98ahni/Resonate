@@ -1,13 +1,28 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include "EditMenu.h"
 #include <imgui/imgui.h>
 #include "Windows/TimingEditor.h"
+#include "Windows/MainWindow.h"
+#include "Extensions/History.h"
 #include "Serialization/KaraokeData.h"
 
 void Menu::Edit_CheckShortcuts()
 {
+    // Undo/Redo
+    if(ImGui::IsKeyDown(/*MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModSuper : */ImGuiKey_ModCtrl))
+    {                       // For some reason holding Super locks the key..?
+        if(ImGui::IsKeyPressed(ImGuiKey_Z, false))
+        {
+            History::Undo();
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_Y, false))
+        {
+            History::Redo();
+        }
+    }
+
     if(TimingEditor::Get().GetInputUnsafe()) { return; }
     bool lineMode = !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyDown(ImGuiKey_ModAlt);
     bool caseMode = ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyDown(ImGuiKey_ModAlt);
@@ -62,6 +77,7 @@ void Menu::Edit_InsertLinebreak()
     TimingEditor& timing = TimingEditor::Get();
     Serialization::KaraokeDocument::Get().InsertLineBreak(timing.GetMarkedLine(), timing.GetMarkedToken(), timing.GetMarkedChar());
     Serialization::KaraokeDocument::Get().MakeDirty();
+    History::ForceEndRecord();
 }
 
 void Menu::Edit_MergeLineUp()
@@ -72,8 +88,9 @@ void Menu::Edit_MergeLineUp()
     {
         doc.RevoveLineBreak(timing.GetMarkedLine());
         timing.MoveMarkerUp();
+        doc.MakeDirty();
+        History::ForceEndRecord();
     }
-    doc.MakeDirty();
 }
 
 void Menu::Edit_MergeLineDown()
@@ -83,8 +100,9 @@ void Menu::Edit_MergeLineDown()
     if(!(doc.GetLine(timing.GetMarkedLine() + 1).size() == 1 && doc.GetToken(timing.GetMarkedLine() + 1, 0).myValue.starts_with("image")))
     {
         doc.RevoveLineBreak(timing.GetMarkedLine() + 1);
+        doc.MakeDirty();
+        History::ForceEndRecord();
     }
-    doc.MakeDirty();
 }
 
 void Menu::Edit_MoveLineUp()
@@ -98,6 +116,7 @@ void Menu::Edit_MoveLineUp()
     }
     timing.MoveMarkerUp();
     doc.MakeDirty();
+    History::ForceEndRecord();
 }
 
 void Menu::Edit_MoveLineDown()
@@ -111,24 +130,28 @@ void Menu::Edit_MoveLineDown()
     }
     timing.MoveMarkerDown();
     doc.MakeDirty();
+    History::ForceEndRecord();
 }
 
 void Menu::Edit_DuplicateLine()
 {
     Serialization::KaraokeDocument::Get().DuplicateLine(TimingEditor::Get().GetMarkedLine());
     Serialization::KaraokeDocument::Get().MakeDirty();
+    History::ForceEndRecord();
 }
 
 void Menu::Edit_RemoveLine()
 {
     Serialization::KaraokeDocument::Get().RemoveLine(TimingEditor::Get().GetMarkedLine());
     Serialization::KaraokeDocument::Get().MakeDirty();
+    History::ForceEndRecord();
 }
 
 void Edit_WordCase(bool aToUpper, bool anInvertInitial = false)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     int markedLine = TimingEditor::Get().GetMarkedLine();
+    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, markedLine));
     // Find first token of word
     int leadingSpaceInd = TimingEditor::Get().GetMarkedToken() - 1;
     while(leadingSpaceInd >= 0 && !doc.GetToken(markedLine, leadingSpaceInd).myValue.contains(' '))
@@ -175,6 +198,7 @@ void Edit_WordCase(bool aToUpper, bool anInvertInitial = false)
         }
     }
     doc.MakeDirty();
+    History::ForceEndRecord();
 }
 
 void Menu::Edit_Majuscule()
@@ -195,8 +219,10 @@ void Menu::Edit_Capital()
 void Menu::Edit_ToggleCase()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()));
     char markedChar = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue[TimingEditor::Get().GetMarkedChar()];
     doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue[TimingEditor::Get().GetMarkedChar()] =
         std::isupper(markedChar) ? std::tolower(markedChar) : std::toupper(markedChar);
     doc.MakeDirty();
+    History::ForceEndRecord();
 }

@@ -1,5 +1,5 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include "TimingEditor.h"
 #include <Serialization/KaraokeData.h>
@@ -195,6 +195,7 @@ void TimingEditor::ToggleTokenHasTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     doc.MakeDirty();
+    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
     if(myMarkedChar != 0 || (myMarkedToken == 0 && !doc.GetToken(myMarkedLine, myMarkedToken).myHasStart))
     {
         doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken + 1, 
@@ -238,6 +239,7 @@ void TimingEditor::RecordStartTime()
             RecordEndTime();
         }
     }
+    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
     int scaledLatency = (float)myLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
     if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
     {
@@ -258,6 +260,19 @@ void TimingEditor::RecordEndTime()
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken); // Use GetTimedTokenBefore instead.
     if(doc.IsNull(prevToken)) return;
     int scaledLatency = (float)myLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
+    int currMarkLine = myMarkedLine;
+    int currMarkToken = myMarkedToken;
+    do
+    {   // This is not how the marker system is meant to be used and I don't like it...
+        MoveMarkerLeft();
+        if(doc.GetToken(myMarkedLine, myMarkedToken).myHasStart)
+        {
+            History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
+            break;
+        }
+    } while (!doc.IsNull(doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken)));
+    myMarkedToken = currMarkToken;
+    myMarkedLine = currMarkLine;
     // Space token already exists
     if(doc.IsPauseToken(prevToken))
     {

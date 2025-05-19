@@ -1,5 +1,5 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include "Properties.h"
 #include "MainWindow.h"
@@ -11,6 +11,76 @@
 #include <Extensions/TouchInput.h>
 #include <Defines.h>
 #include <GamepadActions.h>
+
+PropertiesWindow::EffectRecord::EffectRecord(History::Record::Type aType, std::string anEffectName, bool anIsLocal)
+{
+    myType = aType;
+    myIsLocal = anIsLocal;
+    myEffectName = anEffectName;
+    switch (aType)
+    {
+    case History::Record::Edit:
+    case History::Record::Remove:
+        mySerializedEffect = Serialization::KaraokeDocument::SerializeEffectProperty((anIsLocal ? myLocalEffectAliases : Serialization::KaraokeDocument::Get().myEffectAliases)[anEffectName]);
+        break;
+    case History::Record::Insert:
+        mySerializedEffect = "";
+        break;
+    }
+}
+
+void PropertiesWindow::EffectRecord::Undo()
+{
+    Serialization::KaraokeAliasMap& aliasMap = myIsLocal ? myLocalEffectAliases : Serialization::KaraokeDocument::Get().myEffectAliases;
+    switch(myType)
+    {
+        case History::Record::Remove:
+        if(!Serialization::Preferences::HasKey("StyleProperties/" + myEffectName))
+        {
+            Serialization::Preferences::SetString("StyleProperties/Keys", Serialization::Preferences::GetString("StyleProperties/Keys") + "," + myEffectName);
+        }
+        case History::Record::Edit:
+            if(myIsLocal)
+            {
+                Serialization::Preferences::SetString("StyleProperties/" + myEffectName, mySerializedEffect);
+            }
+            delete aliasMap[myEffectName];
+            aliasMap[myEffectName] = Serialization::KaraokeDocument::ParseEffectProperty(mySerializedEffect);
+            break;
+        case History::Record::Insert:
+            if(myIsLocal)
+            {
+                if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
+                {
+                    std::vector<std::string> keys = StringTools::Split(Serialization::Preferences::GetString("StyleProperties/Keys"), ",");
+                    std::string uniqueKeys = "";
+                    for(std::string key : keys)
+                    {
+                        if(myLocalEffectAliases.contains(key) || key == myEffectName) continue;
+                        uniqueKeys += uniqueKeys == "" ? key : ("," + key);
+                    }
+                    Serialization::Preferences::SetString("StyleProperties/Keys", uniqueKeys);
+                }
+            }
+            mySerializedEffect = Serialization::KaraokeDocument::SerializeEffectProperty(aliasMap[myEffectName]);
+            delete aliasMap[myEffectName];
+            aliasMap.erase(myEffectName);
+            break;
+    }
+}
+
+void PropertiesWindow::EffectRecord::Redo()
+{
+    if(myType == History::Record::Insert)
+        myType = History::Record::Remove;
+    else if(myType == History::Record::Remove)
+        myType = History::Record::Insert;
+    Undo();
+    if(myType == History::Record::Insert)
+        myType = History::Record::Remove;
+    else if(myType == History::Record::Remove)
+        myType = History::Record::Insert;
+}
 
 PropertiesWindow::PropertiesWindow()
 {
@@ -103,6 +173,7 @@ void PropertiesWindow::OnImGuiDraw()
         colorEffect->myEndColor = 0x30FFCCE9;
         myEditingEffect = myNewEffectName.data();
         aliases[myEditingEffect] = colorEffect;
+        History::AddRecord(new EffectRecord(History::Record::Insert, myEditingEffect, myCurrentTab == LocalTab), true);
         ApplyEdit(colorEffect);
         myNewEffectName = "";
     }
@@ -129,20 +200,24 @@ bool PropertiesWindow::DrawFontSizeGamepadPopup()
         int fontSize = Serialization::KaraokeDocument::Get().GetFontSize();
         if(ImGui::InputInt("##FontSize", &fontSize))
         {
+            History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
             Serialization::KaraokeDocument::Get().myFontSize = fontSize;
         }
         if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
         {
+            History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
             Serialization::KaraokeDocument::Get().myFontSize = fontSize - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
         }
         if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
         {
+            History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
             Serialization::KaraokeDocument::Get().myFontSize = fontSize + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
         }
         ImGui::SameLine();
         DrawHudSprite(HUDSprite::ArrowRightBtn, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
         if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Cross) || Gamepad::GetButtonDown(Gamepad::Circle))
         {
+            History::ForceEndRecord();
             ImGui::CloseCurrentPopup();
         }
 
@@ -202,6 +277,7 @@ bool PropertiesWindow::DrawShiftTimingsGamepadPopup()
         if(Gamepad::GetButtonDown(Gamepad::A))
         {
             Serialization::KaraokeDocument::Get().ShiftTimings(myShiftTimingsValue);
+            History::ForceEndRecord();
             Serialization::KaraokeDocument::Get().MakeDirty();
             myShiftTimingsValue = 0;
             ImGui::CloseCurrentPopup();
@@ -233,12 +309,18 @@ bool PropertiesWindow::DrawDefaultColorsGamepadPopup(int aSelectedSlider)
     {
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        if(DrawColorGamepadMenu(aSelectedSlider, doc.myBaseStartColor, doc.myBaseEndColor))
+        uint startCol = doc.myBaseStartColor;
+        uint endCol = doc.myBaseEndColor;
+        if(DrawColorGamepadMenu(aSelectedSlider, startCol, endCol))
         {
+            History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
+            doc.myBaseStartColor = startCol;
+            doc.myBaseEndColor = endCol;
             doc.MakeDirty();
         }
         if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::A) || Gamepad::GetButtonDown(Gamepad::Circle))
         {
+            History::ForceEndRecord();
             ImGui::CloseCurrentPopup();
         }
 
@@ -281,6 +363,7 @@ bool PropertiesWindow::DrawSingerColorsGamepadPopup(int aSelectedSlider, bool an
             if(!myNewEffectToAdd)
             {
                 myNewEffectToAdd = (Serialization::KaraokeColorEffect*)(anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[anEditingName];
+                myNewEffectToAdd = (Serialization::KaraokeColorEffect*)doc.ParseEffectProperty(doc.SerializeEffectProperty(myNewEffectToAdd));
             }
             ImGui::SeparatorText(anEditingName.data());
         }
@@ -288,6 +371,14 @@ bool PropertiesWindow::DrawSingerColorsGamepadPopup(int aSelectedSlider, bool an
         if((Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::A)) && (anEditingName != "" || myNewEffectName != ""))
         {
             myCurrentTab = (TabIndex)anIsLocal;
+            if(anEditingName == "")
+            {
+                History::AddRecord(new EffectRecord(History::Record::Insert, myNewEffectName, anIsLocal));
+            }
+            else 
+            {
+                History::AddRecord(new EffectRecord(History::Record::Edit, anEditingName, anIsLocal));
+            }
             myNewEffectName = anEditingName == "" ? myNewEffectName : anEditingName;
             ApplyEdit(myNewEffectToAdd);
             (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName] = myNewEffectToAdd;
@@ -311,6 +402,7 @@ bool PropertiesWindow::DrawSingerColorsGamepadPopup(int aSelectedSlider, bool an
                 }
                 else
                 {
+                    History::AddRecord(new EffectRecord(History::Record::Remove, myNewEffectName, anIsLocal));
                     delete (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases)[myNewEffectName];
                     (anIsLocal ? myLocalEffectAliases : doc.myEffectAliases).erase(myNewEffectName);
                 }
@@ -478,6 +570,7 @@ void PropertiesWindow::ShiftTimingsPopupDraw()
         if(ImGui::Button("Shift"))
         {
             Serialization::KaraokeDocument::Get().ShiftTimings(myShiftTimingsValue);
+            History::ForceEndRecord();
             Serialization::KaraokeDocument::Get().MakeDirty();
             myShiftTimingsValue = 0;
             myShiftTimingsPopupOpen = false;
@@ -520,6 +613,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
             ImGui::Text("Start Color"); ImGui::SameLine();
             if(ImGui::ColorEdit4("##Start Color", &startCol.x))
             {
+                History::AddRecord(new EffectRecord(History::Record::Edit, anEffectAlias, myCurrentTab == LocalTab));
                 colorEffect->myStartColor = ImGui::ColorConvertFloat4ToU32(startCol);
                 colorEffect->myStartColor = IM_COL32_FROM_DOC(colorEffect->myStartColor);
                 ApplyEdit(anEffect);
@@ -529,6 +623,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
             ImGui::Text("End Color"); ImGui::SameLine();
             if(ImGui::ColorEdit4("##End Color", &endCol.x))
             {
+                History::AddRecord(new EffectRecord(History::Record::Edit, anEffectAlias, myCurrentTab == LocalTab));
                 colorEffect->myEndColor = ImGui::ColorConvertFloat4ToU32(endCol);
                 colorEffect->myEndColor = IM_COL32_FROM_DOC(colorEffect->myEndColor);
                 ApplyEdit(anEffect);
@@ -537,6 +632,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
             ImGui::SameLine();
             if(ImGui::Ext::ToggleSwitch("##UseEndCol", &(colorEffect->myHasEndColor)))
             {
+                History::AddRecord(new EffectRecord(History::Record::Edit, anEffectAlias, myCurrentTab == LocalTab));
                 ApplyEdit(anEffect);
             }
         }
@@ -555,10 +651,12 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         if(myCurrentTab == LocalTab)
         {
+            History::AddRecord(new EffectRecord(doc.myEffectAliases.contains(anEffectAlias) ? History::Record::Edit : History::Record::Insert, anEffectAlias, myCurrentTab == LocalTab));
             doc.myEffectAliases[anEffectAlias] = doc.ParseEffectProperty(doc.SerializeEffectProperty(anEffect));
         }
         else
         {
+            History::AddRecord(new EffectRecord(History::Record::Remove, anEffectAlias, myCurrentTab == LocalTab));
             delete doc.myEffectAliases[anEffectAlias];
             doc.myEffectAliases.erase(anEffectAlias);
         }

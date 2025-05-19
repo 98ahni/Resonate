@@ -1,8 +1,9 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include "Base/EditorWindow.h"
 #include <unordered_map>
+#include <Extensions/History.h>
 
 namespace Serialization
 {
@@ -14,6 +15,16 @@ typedef unsigned int uint;
 class PropertiesWindow : public EditorWindow
 {
 public:
+    struct EffectRecord : public History::Record
+    {
+        std::string myEffectName;
+        std::string mySerializedEffect;
+        bool myIsLocal;
+        EffectRecord(History::Record::Type aType, std::string anEffectName, bool anIsLocal);
+        void Undo() override;
+        void Redo() override;
+    };
+
     PropertiesWindow();
     void OnImGuiDraw() override;
     bool DrawFontSizeGamepadPopup();
@@ -43,5 +54,5 @@ private:
     std::string myEditingEffect;
     std::string myNewEffectName;
     Serialization::KaraokeColorEffect* myNewEffectToAdd = nullptr;
-    Serialization::KaraokeAliasMap myLocalEffectAliases;
+    static inline Serialization::KaraokeAliasMap myLocalEffectAliases;
 };

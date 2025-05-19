@@ -1,5 +1,5 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include "GamepadActions.h"
 #include "Extensions/imguiExt.h"
@@ -250,6 +250,7 @@ void DoStandardAdjustActions()
         {
             if(g_layerLastFrame == Standard) TimingEditor::Get().RecordStartTime();
             else TimingEditor::Get().ToggleTokenHasTime();
+            History::ForceEndRecord();
         }
 
         if(Gamepad::GetButtonDown(Gamepad::L1)) AudioPlayback::SetPlaybackSpeed(AudioPlayback::GetPlaybackSpeed() - 1);
@@ -425,6 +426,7 @@ void DoEffectsActions()
             }
             else if(doc.IsEffectToken(doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken())))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                 doc.GetLine(TimingEditor::Get().GetMarkedLine()).erase(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken());
                 //std::vector<std::string> tags = StringTools::Split(doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken()).myValue.data(), std::regex("<[A-Za-z0-9#\"= -]+>"), true);
                 //for(int i = 0; i < tags.size(); i++)
@@ -443,6 +445,7 @@ void DoEffectsActions()
             }
             else if(g_lastAddedEffect != -1)
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                 Serialization::KaraokeToken& token = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken());
                 doc.GetLine(TimingEditor::Get().GetMarkedLine()).insert(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken(),
                     {("<" + g_docEffectNames[g_lastAddedEffect] + ">").data(), true, token.myStartTime});
@@ -462,6 +465,7 @@ void DoEffectsActions()
             }
             if(Gamepad::GetButtonDown(Gamepad::D_Up) || Gamepad::GetButtonDown(Gamepad::D_Down))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                 if(hasLineTag)
                 {
                     bool changed = false;
@@ -503,6 +507,7 @@ void DoEffectsActions()
             }
             if(Gamepad::GetButtonDown(Gamepad::Circle))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                 if(hasNoEffectTag)
                 {
                     doc.GetLine(TimingEditor::Get().GetMarkedLine()).erase(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + (hasLineTag ? 1 : 0));
@@ -612,6 +617,7 @@ void DoEffectsActions()
                             //}
                             //else
                             //{
+                                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                                 Serialization::KaraokeToken& token = doc.GetToken(TimingEditor::Get().GetMarkedLine(), TimingEditor::Get().GetMarkedToken());
                                 doc.GetLine(TimingEditor::Get().GetMarkedLine()).insert(doc.GetLine(TimingEditor::Get().GetMarkedLine()).begin() + TimingEditor::Get().GetMarkedToken(),
                                     {("<" + options[index] + ">").data(), true, token.myStartTime});
@@ -639,6 +645,8 @@ void DoEffectsActions()
                                         {
                                             line--;
                                         }
+                                        History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
+                                        History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
                                         Serialization::KaraokeToken newToken = {};
                                         newToken.myValue = "";
                                         newToken.myHasStart = true;
@@ -784,6 +792,7 @@ bool DrawImagePopup()
             {
                 if(g_imageShiftTime == 0)
                 {
+                    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()));
                     doc.GetToken(TimingEditor::Get().GetMarkedLine(), 0).myValue = "image " + std::to_string(((float)g_imageFadeTime * .01f)) + " " + g_editingEffectName;
                 }
                 else
@@ -801,6 +810,8 @@ bool DrawImagePopup()
                                 line--;
                             }
                             Serialization::KaraokeToken newToken = {};
+                            History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
+                            History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
                             newToken.myValue = "";
                             newToken.myHasStart = true;
                             newToken.myStartTime = imgTime;
@@ -818,6 +829,7 @@ bool DrawImagePopup()
             g_editingEffectName = "";
             g_imageFadeTime = 0;
             g_imageShiftTime = 0;
+            History::ForceEndRecord();
             ImGui::CloseCurrentPopup();
         }
         if(Gamepad::GetButtonDown(Gamepad::D_Up))

@@ -1,9 +1,10 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2025 98ahni> Original file author
 
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <Extensions/History.h>
 
 typedef unsigned int uint;
 class PropertiesWindow;
@@ -31,6 +32,14 @@ namespace Serialization
     {
         std::string myImageName;
     };
+    struct LineRecord : public History::Record
+    {
+        std::string myRecordedLine;
+        size_t myRecordedLineNumber;
+        LineRecord(History::Record::Type aType, size_t aLineNumber);
+        void Undo() override;
+        void Redo() override;
+    };
     struct KaraokeToken
     {
         std::string myValue;
@@ -42,6 +51,18 @@ namespace Serialization
     typedef std::unordered_map<std::string, KaraokeEffect*> KaraokeAliasMap;
     class KaraokeDocument
     {
+        struct EchoRecord : public History::Record
+        {
+            bool myUseDirectText = false;
+            uint myFontSize = 50;
+            bool myHasBaseStartColor = false;
+            uint myBaseStartColor = 0x0038F97C;
+            bool myHasBaseEndColor = false;
+            uint myBaseEndColor = 0x30FFCCE9;
+            EchoRecord();
+            void Undo() override;
+            void Redo() override;
+        };
     public:
         static KaraokeDocument& Get();
         KaraokeData& GetData();
@@ -79,6 +100,7 @@ namespace Serialization
         void Parse(std::string aDocument);
         void ParseLineAndReplace(std::string aLine, size_t anIndex);
         std::string Serialize();
+        std::string SerializeLine(KaraokeLine& aLine);
         std::string SerializeAsText();
         std::string SerializeLineAsText(KaraokeLine& aLine);
         std::string Save();
