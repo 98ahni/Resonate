@@ -154,7 +154,7 @@ static void print_wgpu_error(WGPUErrorType error_type, const char* message, void
 {
 	if(TouchInput_HasTouch())
 	{
-		EM_ASM(let errString = 'Undefined';
+		EM_ASM(let error_type = $0; let errString = 'Undefined';
 		if(error_type === 1) errString = 'Validation';
 		else if(error_type === 2) errString = 'Out of memory';
 		else if(error_type === 4) errString = 'Unknown';
@@ -413,6 +413,7 @@ void MainWindow_RenderFrame()
 		color_attachments.loadOp = WGPULoadOp_Clear;
 		color_attachments.storeOp = WGPUStoreOp_Store;
 		color_attachments.clearValue = {1, 1, 1, 1};
+		color_attachments.depthSlice = -1;
 		color_attachments.view = wgpuSwapChainGetCurrentTextureView(MainWindow::SwapChain);
 		WGPURenderPassDescriptor render_pass_desc = {};
 		render_pass_desc.colorAttachmentCount = 1;

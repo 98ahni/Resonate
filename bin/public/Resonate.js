@@ -989,27 +989,27 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4051769: () => { return Date.now(); },  
- 4051790: () => { return Date.now(); },  
- 4051811: () => { return Date.now(); },  
- 4051832: () => { location.reload() },  
- 4051850: () => { location.reload(); },  
- 4051869: ($0) => { init_gapi_with_key($0); },  
- 4051895: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4052018: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4052120: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4052160: () => { Module.hide_loading_screen(); },  
- 4052190: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4052253: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4052346: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4052442: () => { return global_audio_element.paused ? 1 : 0; },  
- 4052486: () => { return global_audio_element.paused ? 1 : 0; },  
- 4052530: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4052580: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4052836: () => { let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4053105: () => { audio_element_pause(); },  
- 4053128: () => { audio_element_play(); },  
- 4053150: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4069079: () => { return Date.now(); },  
+ 4069100: () => { return Date.now(); },  
+ 4069121: () => { return Date.now(); },  
+ 4069142: () => { location.reload() },  
+ 4069160: () => { location.reload(); },  
+ 4069179: ($0) => { init_gapi_with_key($0); },  
+ 4069205: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4069328: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4069430: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4069470: () => { Module.hide_loading_screen(); },  
+ 4069500: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4069563: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4069656: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4069752: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4069796: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4069840: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4069890: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4070146: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4070436: () => { audio_element_pause(); },  
+ 4070459: () => { audio_element_play(); },  
+ 4070481: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function show_input_debugger() {_ShowInputDebugger(); }
 function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
@@ -1081,6 +1081,7 @@ function audio_element_play() { global_audio_element.play(); }
 function audio_element_pause() { global_audio_element.pause(); }
 function get_audio_samples_hybrid(stretch_index,crude_engine,fine_engine) { const crudeEngine = Emval.toValue(crude_engine); const fineEngine = Emval.toValue(fine_engine); const stretchIndex = Emval.toValue(stretch_index); var useCrude = crudeEngine !== ''; var audioWorker = new Worker('plugins/audiostretchworker.js'); audioWorker.postMessage(global_audio_worker_setup_data); audioWorker.postMessage(['Work', useCrude ? crudeEngine : fineEngine, stretchIndex, useCrude]); audioWorker.onmessage = (result) => { if(useCrude){get_audio_samples_hybrid(Emval.toHandle(stretchIndex), Emval.toHandle(''), Emval.toHandle(fineEngine));} global_audio_blobs[result.data[1] - 1] = result.data[0]; global_audio_completion[result.data[1] - 1] = true; _jsUpdateAudioBuffer(Emval.toHandle(result.data[1])); audioWorker.postMessage(['Revive']); audioWorker.onmessage = (result) => { audioWorker.terminate(); if(useCrude){ console.log('Resetting corse engine ' + result.data[0]); } else { console.log('Resetting fine engine ' + result.data[0]); } }; }; }
 function __asyncjs__get_audio_samples_setup(fs_path) { return Asyncify.handleAsync(async () => { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' }); global_audio_blobs.length = 10; global_audio_completion = [false, false, false, false, false, false, false, false, false, false]; global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{ const isSafari = !!window['safari'] && safari !== 'undefined'; global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate); global_audio_completion[9] = true; set_audio_playback_buffer(Emval.toHandle(10)); if(_IsWaitingToPlay()){ audio_element_play(); } var audioDatas = []; audioDatas.length = buffer.numberOfChannels; for(var i = 0; i < buffer.numberOfChannels; i++){ audioDatas[i] = buffer.getChannelData(i); } global_audio_worker_setup_data = ['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]; }); }); }
+function __asyncjs__get_audio_volume_db() { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise(async(resolve)=>{ var output = {}; output.peak = 0; output.mean = 0; if(!global_audio_completion[9]){ resolve(output); return; } global_audio_context.decodeAudioData(await global_audio_blobs.arrayBuffer(), (buffer)=>{ for(const data of buffer.getChannelData(i)){ for(const sample of buffer){ const sample_db = 20 * Math.log10(Math.abs(sample)); if(output.peak < sample_db) { output.peak = sample_db; } output.mean += sample_db; } } output.mean /= buffer.getChannelData(0).length * buffer.numberOfChannels; resolve(output); }); })); }); }
 function __asyncjs__init_file_system() { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { FS.mount(MEMFS, { root: '.' }, '.'); FS.mkdir('/local'); FS.mount(IDBFS, {}, '/local'); FS.syncfs(true, function (err) { if(err) { alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })); }); }
 function get_runtime_platform() { const userAgent = window.navigator.userAgent; const platform = window.navigator?.userAgentData?.platform || window.navigator.platform; const macosPlatforms = ["Macintosh", "MacIntel", "MacPPC", "Mac68K"]; const windowsPlatforms = ["Win32", "Win64", "Windows", "WinCE"]; const iosPlatforms = ["iPhone", "iPad", "iPod"]; if (macosPlatforms.indexOf(platform) !== -1) { return MAINWINDOW_PLATFORM_MAC; } else if (iosPlatforms.indexOf(platform) !== -1) { return MAINWINDOW_PLATFORM_IOS; } else if (windowsPlatforms.indexOf(platform) !== -1) { return MAINWINDOW_PLATFORM_WINDOWS; } else if (/Android/.test(userAgent)) { return MAINWINDOW_PLATFORM_ANDROID; } else if (/Linux/.test(platform)) { return MAINWINDOW_PLATFORM_LINUX; } return MAINWINDOW_PLATFORM_UNSPECIFIED; } const MAINWINDOW_PLATFORM_UNSPECIFIED = 0; const MAINWINDOW_PLATFORM_WINDOWS = 1; const MAINWINDOW_PLATFORM_MAC = 2; const MAINWINDOW_PLATFORM_IOS = 4; const MAINWINDOW_PLATFORM_ANDROID = 8; const MAINWINDOW_PLATFORM_LINUX = 16; const MAINWINDOW_PLATFORM_APPLE = 6;
 function get_has_web_gpu() { return navigator.gpu !== undefined; }
@@ -11313,6 +11314,8 @@ var wasmImports = {
   /** @export */
   __asyncjs__get_audio_samples_setup: __asyncjs__get_audio_samples_setup,
   /** @export */
+  __asyncjs__get_audio_volume_db: __asyncjs__get_audio_volume_db,
+  /** @export */
   __asyncjs__get_clipboard_content: __asyncjs__get_clipboard_content,
   /** @export */
   __asyncjs__init_file_system: __asyncjs__init_file_system,
@@ -11908,10 +11911,10 @@ var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_vii
 var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v');
+var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii');
 var dynCall_jiji = Module['dynCall_jiji'] = createExportWrapper('dynCall_jiji');
 var dynCall_iidiiii = Module['dynCall_iidiiii'] = createExportWrapper('dynCall_iidiiii');
 var dynCall_viijii = Module['dynCall_viijii'] = createExportWrapper('dynCall_viijii');
-var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii');
 var dynCall_iiiiii = Module['dynCall_iiiiii'] = createExportWrapper('dynCall_iiiiii');
 var dynCall_iiiiiiiii = Module['dynCall_iiiiiiiii'] = createExportWrapper('dynCall_iiiiiiiii');
 var dynCall_iiiiiii = Module['dynCall_iiiiiii'] = createExportWrapper('dynCall_iiiiiii');
@@ -11925,9 +11928,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3984268;
-var ___start_em_js = Module['___start_em_js'] = 4019768;
-var ___stop_em_js = Module['___stop_em_js'] = 4051769;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4000936;
+var ___start_em_js = Module['___start_em_js'] = 4036456;
+var ___stop_em_js = Module['___stop_em_js'] = 4069079;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

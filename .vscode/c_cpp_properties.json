@@ -21,14 +21,18 @@
                 "${workspaceFolder}/Source/**",
                 "${workspaceFolder}/imgui/**",
                 "${workspaceFolder}/imgui/backends/**",
-                "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/**",
-                "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/c++/v1/**",
-                "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include",
+                //"D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/**",         // old
+                //"D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include/c++/v1/**",  // old
+                //"D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/emscripten/cache/sysroot/include",            // old
+                "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/cache/sysroot/include/**",         // new
+                "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/**",  // new
+                "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/cache/sysroot/include",            // new
                 "${workspaceFolder}/Source",
                 "${workspaceFolder}/Rubberband/rubberband"
             ],
             "defines": [],
-            "compilerPath": "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/bin/clang++",
+            //"compilerPath": "D:/Documents/Visual Studio 2022/Visual Studio Projects/emsdk-main/upstream/bin/clang++",
+            "compilerPath": "${workspaceFolder}/.vscode/emsdk/upstream/bin/clang++",
             "cStandard": "c17",
             "cppStandard": "c++23",
             "intelliSenseMode": "linux-clang-x64"

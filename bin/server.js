@@ -52,6 +52,8 @@ if(WIN32)
     //execSync('cd "..\\..\\..\\Visual Studio 2022\\Visual Studio Projects\\emsdk-main\\upstream\\emscripten\\"', execOutFunc);
 }
 
+console.log(new TextDecoder().decode(execSync(compilerPath + ' --version', {env: process.env})));
+
 //(async() =>{
 //let readImguiDone = false;
 //let readSourceDone = false;
