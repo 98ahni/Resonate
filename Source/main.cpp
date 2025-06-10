@@ -543,6 +543,7 @@ void loop(void* window){
                     if(ImGui::MenuItem(PreviewWindow::GetBackgroundElementPaths()[i].data(), 0, false, !TimingEditor::Get().GetInputUnsafe()))
                     {
                         uint imgTime = doc.GetThisOrNextTimedToken(timing.GetMarkedLine(), timing.GetMarkedToken()).myStartTime;
+                        bool foundPlace = false;
                         for(int line = timing.GetMarkedLine(); line < doc.GetData().size(); line++)
                         {
                             Serialization::KaraokeToken& compToken = doc.GetThisOrNextTimedToken(line, 0);
@@ -554,20 +555,35 @@ void loop(void* window){
                                 {
                                     line--;
                                 }
-                                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
-                                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
-                                Serialization::KaraokeToken newToken = {};
+                                Serialization::KaraokeToken newToken = Serialization::KaraokeToken();
                                 newToken.myValue = "";
                                 newToken.myHasStart = true;
                                 newToken.myStartTime = imgTime;
+                                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
                                 doc.GetData().insert(doc.GetData().begin() + line, {newToken});
                                 newToken.myValue = "image 0.2 " + PreviewWindow::GetBackgroundElementPaths()[i];
                                 newToken.myHasStart = false;
                                 newToken.myStartTime = 0;
+                                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
                                 doc.GetData().insert(doc.GetData().begin() + line, {newToken});
                                 doc.MakeDirty();
                                 break;
                             }
+                        }
+                        if(!foundPlace)
+                        {
+                            Serialization::KaraokeToken newToken = Serialization::KaraokeToken();
+                            newToken.myValue = "image 0.2 " + PreviewWindow::GetBackgroundElementPaths()[i];
+                            newToken.myHasStart = false;
+                            newToken.myStartTime = 0;
+                            History::AddRecord(new Serialization::LineRecord(History::Record::Insert, doc.GetData().size()));
+                            doc.GetData().push_back({newToken});
+                            newToken.myValue = "";
+                            newToken.myHasStart = true;
+                            newToken.myStartTime = imgTime;
+                            History::AddRecord(new Serialization::LineRecord(History::Record::Insert, doc.GetData().size()), true);
+                            doc.GetData().push_back({newToken});
+                            doc.MakeDirty();
                         }
                     }
                 }

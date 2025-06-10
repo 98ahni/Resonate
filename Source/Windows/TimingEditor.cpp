@@ -252,14 +252,29 @@ void TimingEditor::RecordStartTime()
             RecordEndTime();
         }
     }
-    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
-    int scaledLatency = (float)myLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
-    if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
+    int scaledLatency = (float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
+    if(!doc.GetToken(myMarkedLine, myMarkedToken).myHasStart && doc.GetToken(myMarkedLine, myMarkedToken).myValue.starts_with("image "))
     {
+        if(doc.GetValidLineAfter(myMarkedLine).size() != 1 || !doc.IsPauseToken(doc.GetValidLineAfter(myMarkedLine)[0]))    // If the marked token is an image, recording start time 
+        {                                                                                                                   // sets or adds the time code after the image. Recording 
+            History::AddRecord(new Serialization::LineRecord(History::Record::Insert, myMarkedLine + 1));                   // end time sets the time of the previous token as expected.
+            doc.GetData().insert(doc.GetData().begin() + myMarkedLine + 1, Serialization::KaraokeLine());                   // If the marked token is after the image, reording an end
+            doc.GetLine(myMarkedLine + 1).push_back({"", true, AudioPlayback::GetPlaybackProgress() - scaledLatency});      // time sets the image time if it is discrete otherwise the 
+        }                                                                                                                   // time before it is set as would be expected.
+        else
+        {
+            History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine + 1));
+            doc.GetValidLineAfter(myMarkedLine)[0].myStartTime = AudioPlayback::GetPlaybackProgress() - scaledLatency;
+        }
+    }
+    else if(doc.IsPauseToken(myMarkedLine, myMarkedToken))
+    {
+        History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
         doc.GetTimedTokenAfter(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress() - scaledLatency;
     }
     else
     {
+        History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
         doc.GetToken(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress() - scaledLatency;
     }
     MoveMarkerRight();
@@ -272,7 +287,7 @@ void TimingEditor::RecordEndTime()
     Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
     if(doc.IsNull(prevToken)) return;
-    int scaledLatency = (float)myLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
+    int scaledLatency = (float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
     int currMarkLine = myMarkedLine;
     int currMarkToken = myMarkedToken;
     do
@@ -500,12 +515,13 @@ void TimingEditor::DrawTextMarker()
 
 void TimingEditor::DrawImagePopup()
 {
+    ImGui::SetNextWindowSize({DPI_SCALED(475), DPI_SCALED(325)}, ImGuiCond_Appearing);
     if(ImGui::BeginPopupModal("Edit Image", &myIsImagePopupOpen))
     {
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         SetInputUnsafe(true);
         if(PreviewWindow::GetHasVideo()) {ImGui::BeginDisabled();}
-        ImGui::BeginChild("##choose image", {0, DPI_SCALED(200)}, ImGuiChildFlags_Border);
+        ImGui::BeginChild("##choose image", {0, DPI_SCALED(150)}, ImGuiChildFlags_Border);
         if(PreviewWindow::GetHasVideo())
         {
             ImGui::TextWrapped("\n\nImages are not available when a video is present in the project.\n");
@@ -528,8 +544,25 @@ void TimingEditor::DrawImagePopup()
             ImGui::PopStyleColor();
         }
         ImGui::EndChild();
+        ImGui::Ext::StepInt("Fade Duration (cs)   ", myImagePopupFadeDuration, 1, 10);
         ImGui::Ext::StepInt("Shift Start Time (cs)", myImagePopupFadeStartShift, 1, 10);
-        ImGui::Ext::StepInt("Fade Duration (cs)", myImagePopupFadeDuration, 1, 10);
+        uint imgTempTime = 0;
+        if(doc.GetLine(myImagePopupEditLine + 1).size() == 1 && doc.IsPauseToken(myImagePopupEditLine + 1, 0))
+        {
+            imgTempTime = doc.GetToken(myImagePopupEditLine + 1, 0).myStartTime;
+        }
+        else
+        {
+            imgTempTime = doc.GetThisOrNextTimedToken(myImagePopupEditLine + 1, 0).myStartTime;
+            imgTempTime = imgTempTime < 200 ? 0 : (imgTempTime - 200);
+        }
+        if((int)imgTempTime < -myImagePopupFadeStartShift)
+        {
+            myImagePopupFadeStartShift = -imgTempTime;
+        }
+        imgTempTime += myImagePopupFadeStartShift;
+        ImGui::Text("    image %.2f %s\n    %s", (float)myImagePopupFadeDuration * .01f, myImagePopupSelectedPath.data(), doc.TimeToString(imgTempTime).data());
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 15);
         ImGui::PushStyleColor(ImGuiCol_Button, 0xFFFF0F2F);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, 0xFFFF1F5F);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xFFFF0F4F);
@@ -537,11 +570,14 @@ void TimingEditor::DrawImagePopup()
         if(ImGui::Button("Remove"))
         {
             myIsImagePopupOpen = false;
+            History::AddRecord(new Serialization::LineRecord(History::Record::Remove, myImagePopupEditLine));
             doc.RemoveLine(myImagePopupEditLine);
             if(doc.GetLine(myImagePopupEditLine).size() == 1 && doc.IsPauseToken(myImagePopupEditLine, 0))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Remove, myImagePopupEditLine));
                 doc.RemoveLine(myImagePopupEditLine);
             }
+            History::ForceEndRecord();
             doc.MakeDirty();
         }
         ImGui::SameLine();
@@ -559,35 +595,56 @@ void TimingEditor::DrawImagePopup()
                 imgTime = doc.GetThisOrNextTimedToken(myImagePopupEditLine + 1, 0).myStartTime;
                 imgTime = imgTime < 200 ? 0 : (imgTime - 200);
             }
+            History::AddRecord(new Serialization::LineRecord(History::Record::Remove, myImagePopupEditLine));
             doc.RemoveLine(myImagePopupEditLine);
             if(doc.GetLine(myImagePopupEditLine).size() == 1 && doc.IsPauseToken(myImagePopupEditLine, 0))
             {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Remove, myImagePopupEditLine));
                 doc.RemoveLine(myImagePopupEditLine);
             }
             imgTime = (int)imgTime < -myImagePopupFadeStartShift ? 0 : (imgTime + myImagePopupFadeStartShift);
+            bool foundPlace = false;
             for(int line = 0; line < doc.GetData().size(); line++)
             {
                 Serialization::KaraokeToken& compToken = doc.GetThisOrNextTimedToken(line, 0);
                 if(doc.IsNull(compToken)) {break;}
                 if(compToken.myStartTime >= imgTime)
                 {
+                    foundPlace = true;
                     Serialization::KaraokeLine& checkLine = doc.GetValidLineBefore(line);
                     if(!doc.IsNull(checkLine) && checkLine[0].myValue.starts_with("image "))
                     {
                         line--;
                     }
-                    Serialization::KaraokeToken newToken = {};
+                    Serialization::KaraokeToken newToken = Serialization::KaraokeToken();
                     newToken.myValue = "";
                     newToken.myHasStart = true;
                     newToken.myStartTime = imgTime;
+                    History::AddRecord(new Serialization::LineRecord(History::Record::Insert, myImagePopupEditLine));
                     doc.GetData().insert(doc.GetData().begin() + line, {newToken});
                     newToken.myValue = "image " + std::to_string(((float)myImagePopupFadeDuration * .01f)) + " " + myImagePopupSelectedPath;
                     newToken.myHasStart = false;
                     newToken.myStartTime = 0;
+                    History::AddRecord(new Serialization::LineRecord(History::Record::Insert, myImagePopupEditLine), true);
                     doc.GetData().insert(doc.GetData().begin() + line, {newToken});
                     doc.MakeDirty();
                     break;
                 }
+            }
+            if(!foundPlace)
+            {
+                Serialization::KaraokeToken newToken = Serialization::KaraokeToken();
+                newToken.myValue = "image " + std::to_string(((float)myImagePopupFadeDuration * .01f)) + " " + myImagePopupSelectedPath;
+                newToken.myHasStart = false;
+                newToken.myStartTime = 0;
+                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, doc.GetData().size()));
+                doc.GetData().push_back({newToken});
+                newToken.myValue = "";
+                newToken.myHasStart = true;
+                newToken.myStartTime = imgTime;
+                History::AddRecord(new Serialization::LineRecord(History::Record::Insert, doc.GetData().size()), true);
+                doc.GetData().push_back({newToken});
+                doc.MakeDirty();
             }
         }
         ImGui::EndPopup();
