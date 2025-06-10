@@ -84,10 +84,15 @@ void PropertiesWindow::EffectRecord::Redo()
 
 PropertiesWindow::PropertiesWindow()
 {
-    if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
+    if(Serialization::Preferences::HasKey("StyleProperties/Keys") && Serialization::Preferences::GetString("StyleProperties/Keys") != "")
     {
         std::vector<std::string> keys = StringTools::Split(Serialization::Preferences::GetString("StyleProperties/Keys"), ",");
         std::string uniqueKeys = "";
+        for(auto& [key, effect] : myLocalEffectAliases)
+        {
+            delete effect;
+        }
+        myLocalEffectAliases.clear();
         for(std::string key : keys)
         {
             if(myLocalEffectAliases.contains(key)) continue;
