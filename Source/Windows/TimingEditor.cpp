@@ -80,7 +80,7 @@ void TimingEditor::OnImGuiDraw()
                 {
                     DrawLineTagWidget(line, token);
                 }
-                else if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() + myLatencyOffset, doc.GetLine(line)[token].myHasStart))
+                else if(ImGui::Ext::TimedSyllable(doc.GetLine(line)[token].myValue, start, end, AudioPlayback::GetPlaybackProgress() - GetVisualLatencyOffset(), doc.GetLine(line)[token].myHasStart, myTokenFlash))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey_ModShift))
                     {
@@ -667,7 +667,7 @@ void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
     ImGui::SetCursorPosY(drawPos.y + DPI_SCALED(19));
     if(!myDisableInput && myMarkedLine == aLine && myMarkedToken == aToken) DrawTextMarker();
     uint imgTime = doc.GetTimedTokenAfter(aLine, 0).myStartTime;
-    ImGui::Ext::TimedSyllable("<               >", imgTime, imgTime + (uint)(std::stof(timeStr) * 100), AudioPlayback::GetPlaybackProgress() - myLatencyOffset, true);
+    ImGui::Ext::TimedSyllable("<               >", imgTime, imgTime + (uint)(std::stof(timeStr) * 100), AudioPlayback::GetPlaybackProgress() - GetVisualLatencyOffset(), true, false);
     ImGui::SetCursorPos(drawPos);
     ImGui::SetCursorPosX(ImGui::CalcTextSize("<").x + drawPos.x);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), DPI_SCALED(4)});
