@@ -5,6 +5,7 @@
 #include "Extensions/imguiExt.h"
 #include <misc/cpp/imgui_stdlib.h>
 #include "Serialization/KaraokeData.h"
+#include "Serialization/LineRecord.h"
 #include <Serialization/Preferences.h>
 #include "Windows/MainWindow.h"
 #include "Windows/TimingEditor.h"

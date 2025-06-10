@@ -345,7 +345,7 @@ void loop(void* window){
         Serialization::Preferences::SetString("Document/FileID", doc.GetFileID());
         doc.ParseLoadedFile();
         FileHandler::SyncLocalFS();
-        Console::SearchForErrors();
+        Console::ValidateProject();
     }
 
     if(ImGui::BeginMainMenuBar())

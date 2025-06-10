@@ -9,6 +9,7 @@
 #include <Extensions/FileHandler.h>
 #include <sstream>
 #include <iomanip>
+#include "LineRecord.h"
 
 namespace Serialization
 {
@@ -16,53 +17,6 @@ namespace Serialization
     KaraokeToken KaraokeDocument::ourNullToken = {"", false, 0};
     KaraokeLine KaraokeDocument::ourNullLine = KaraokeLine();
 
-    LineRecord::LineRecord(History::Record::Type aType, size_t aLineNumber)
-    {
-        myType = aType;
-        if(aType == History::Record::Type::Insert) myRecordedLine = "";
-        else myRecordedLine = KaraokeDocument::Get().SerializeLine(KaraokeDocument::Get().GetLine(aLineNumber));
-        myRecordedLineNumber = aLineNumber;
-    }
-    void LineRecord::Undo()
-    {
-        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-        std::string currentLine = doc.SerializeLine(doc.GetLine(myRecordedLineNumber));
-        switch (myType)
-        {
-        case Type::Edit:
-            doc.ParseLineAndReplace(myRecordedLine, myRecordedLineNumber);
-            myRecordedLine = currentLine;
-            break;
-        case Type::Insert:
-            myRecordedLine = currentLine;
-            doc.GetData().erase(doc.GetData().begin() + myRecordedLineNumber);
-            break;
-        case Type::Remove:
-            doc.GetData().insert(doc.GetData().begin() + myRecordedLineNumber, {});
-            doc.ParseLineAndReplace(myRecordedLine, myRecordedLineNumber);
-            break;
-        }
-    }
-    void LineRecord::Redo()
-    {
-        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-        std::string currentLine = doc.SerializeLine(doc.GetLine(myRecordedLineNumber));
-        switch (myType)
-        {
-        case Type::Edit:
-            doc.ParseLineAndReplace(myRecordedLine, myRecordedLineNumber);
-            myRecordedLine = currentLine;
-            break;
-        case Type::Insert:
-            doc.GetData().insert(doc.GetData().begin() + myRecordedLineNumber, {});
-            doc.ParseLineAndReplace(myRecordedLine, myRecordedLineNumber);
-            break;
-        case Type::Remove:
-            myRecordedLine = currentLine;
-            doc.GetData().erase(doc.GetData().begin() + myRecordedLineNumber);
-            break;
-        }
-    }
     KaraokeDocument::EchoRecord::EchoRecord()
     {
         myType = History::Record::Edit;

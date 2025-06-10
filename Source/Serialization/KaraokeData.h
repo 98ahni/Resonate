@@ -32,14 +32,6 @@ namespace Serialization
     {
         std::string myImageName;
     };
-    struct LineRecord : public History::Record
-    {
-        std::string myRecordedLine;
-        size_t myRecordedLineNumber;
-        LineRecord(History::Record::Type aType, size_t aLineNumber);
-        void Undo() override;
-        void Redo() override;
-    };
     struct KaraokeToken
     {
         std::string myValue;

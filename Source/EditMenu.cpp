@@ -7,6 +7,7 @@
 #include "Windows/MainWindow.h"
 #include "Extensions/History.h"
 #include "Serialization/KaraokeData.h"
+#include "Serialization/LineRecord.h"
 
 void Menu::Edit_CheckShortcuts()
 {
@@ -78,6 +79,7 @@ void Menu::Edit_InsertLinebreak()
     Serialization::KaraokeDocument::Get().InsertLineBreak(timing.GetMarkedLine(), timing.GetMarkedToken(), timing.GetMarkedChar());
     Serialization::KaraokeDocument::Get().MakeDirty();
     History::ForceEndRecord();
+    timing.MoveMarkerRight();
 }
 
 void Menu::Edit_MergeLineUp()
@@ -86,8 +88,13 @@ void Menu::Edit_MergeLineUp()
     TimingEditor& timing = TimingEditor::Get();
     if(!(doc.GetLine(timing.GetMarkedLine() - 1).size() == 1 && (doc.GetToken(timing.GetMarkedLine() - 1, 0).myValue.starts_with("image") || (doc.GetLine(timing.GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing.GetMarkedLine() - 2, 0).myValue.starts_with("image")))))
     {
-        doc.RevoveLineBreak(timing.GetMarkedLine());
-        timing.MoveMarkerUp();
+        int markedLine = timing.GetMarkedLine();
+        int markedToken = timing.GetMarkedToken();
+        for(int i = 0; i <= markedToken; i++)    // This moving of the marker is so that it ends 
+            timing.MoveMarkerLeft();            // up at the same token in the combined line
+        doc.RevoveLineBreak(markedLine);
+        for(int i = 0; i <= markedToken; i++)
+            timing.MoveMarkerRight();
         doc.MakeDirty();
         History::ForceEndRecord();
     }
@@ -113,6 +120,7 @@ void Menu::Edit_MoveLineUp()
     if(timing.GetMarkedLine() > 1 && doc.GetLine(timing.GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing.GetMarkedLine() - 2, 0).myValue.starts_with("image"))
     {
         doc.MoveLineUp(timing.GetMarkedLine() - 1);
+        timing.MoveMarkerUp();
     }
     timing.MoveMarkerUp();
     doc.MakeDirty();
@@ -127,6 +135,7 @@ void Menu::Edit_MoveLineDown()
     if(doc.GetLine(timing.GetMarkedLine() + 2).size() == 1 && doc.GetLine(timing.GetMarkedLine()).size() == 1 && doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("image"))
     {
         doc.MoveLineUp(timing.GetMarkedLine() + 2);
+        timing.MoveMarkerDown();
     }
     timing.MoveMarkerDown();
     doc.MakeDirty();
@@ -144,6 +153,7 @@ void Menu::Edit_RemoveLine()
 {
     Serialization::KaraokeDocument::Get().RemoveLine(TimingEditor::Get().GetMarkedLine());
     Serialization::KaraokeDocument::Get().MakeDirty();
+    TimingEditor::Get().CheckMarkerIsSafe(false);
     History::ForceEndRecord();
 }
 

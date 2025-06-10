@@ -3,6 +3,7 @@
 
 #include "TimingEditor.h"
 #include <Serialization/KaraokeData.h>
+#include <Serialization/LineRecord.h>
 #include <Serialization/Preferences.h>
 #include <Extensions/imguiExt.h>
 #include "AudioPlayback.h"
