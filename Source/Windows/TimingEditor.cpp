@@ -497,19 +497,22 @@ void TimingEditor::DrawTextMarker()
     if(endPos.x < ImGui::GetWindowPos().x)
     {
         //ImGui::SetScrollX(ImGui::GetCursorPos().x - 10);
-        //ImGui::SetScrollFromPosX()
+        //ImGui::SetScrollFromPosX(ImGui::GetTextLineHeightWithSpacing() * -4, 0);
         ImGui::SetScrollHereX(0);
     }
     else if(endPos.y < ImGui::GetWindowPos().y)
     {
+        //ImGui::SetScrollFromPosY(ImGui::GetTextLineHeightWithSpacing() * -3, 0);
         ImGui::SetScrollHereY(0);
     }
     else if((ImGui::GetWindowPos().x + ImGui::GetWindowSize().x) < endPos.x)
     {
+        //ImGui::SetScrollFromPosX(ImGui::GetTextLineHeightWithSpacing() * 4, 1);
         ImGui::SetScrollHereX(1);
     }
     else if((ImGui::GetWindowPos().y + ImGui::GetWindowSize().y) < endPos.y)
     {
+        //ImGui::SetScrollFromPosY(ImGui::GetTextLineHeightWithSpacing() * 3, 1);
         ImGui::SetScrollHereY(1);
     }
 }
