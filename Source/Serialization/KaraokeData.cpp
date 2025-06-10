@@ -531,7 +531,7 @@ namespace Serialization
             {
                 for(int t = 0; t < timeStamp.size(); t++)
                 {
-                    myTokens.back().push_back({!(token[t + 1].empty() || token[t + 1].contains('\0')) ? token[t + 1] : "", true, StringToTime(timeStamp[t])});
+                    myTokens.back().push_back({t < token.size() && !(token[t + 1].empty() || token[t + 1].contains('\0')) ? token[t + 1] : "", true, StringToTime(timeStamp[t])});
                 }
             }
             else if(token.size() && token[0] != "")

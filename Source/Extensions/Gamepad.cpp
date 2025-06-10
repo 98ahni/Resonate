@@ -119,7 +119,7 @@ int Gamepad::GetCount()
 
 std::vector<int> Gamepad::GetConnectedIDs()
 {
-    std::vector<int> output = {};
+    std::vector<int> output = std::vector<int>();
     for(auto& [id, con] : myGamepads)
     {
         output.push_back(id);

@@ -31,7 +31,9 @@ EM_JS(emscripten::EM_VAL, set_preference_value, (emscripten::EM_VAL key, emscrip
 });
 
 EM_JS(emscripten::EM_VAL, get_preference_value, (emscripten::EM_VAL key), {
-    return Emval.toHandle(global_preferences[Emval.toValue(key)]);
+    const output = global_preferences[Emval.toValue(key)];
+    if(output === '') return Emval.toHandle('');
+    return Emval.toHandle(output);
 });
 
 EM_JS(emscripten::EM_VAL, has_preference_key, (emscripten::EM_VAL key), {

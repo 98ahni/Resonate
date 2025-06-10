@@ -267,7 +267,7 @@ bool PropertiesWindow::DrawShiftTimingsGamepadPopup()
         if(valChanged)
         {
             Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-            Serialization::KaraokeToken& token = doc.GetToken(0, 0);
+            Serialization::KaraokeToken token = doc.GetToken(0, 0);
             if(doc.IsNull(token) || !token.myHasStart)
             {
                 token = doc.GetTimedTokenAfter(0, 0);

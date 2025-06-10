@@ -648,7 +648,7 @@ void DoEffectsActions()
                                         }
                                         History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
                                         History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
-                                        Serialization::KaraokeToken newToken = {};
+                                        Serialization::KaraokeToken newToken = Serialization::KaraokeToken();
                                         newToken.myValue = "";
                                         newToken.myHasStart = true;
                                         newToken.myStartTime = imgTime;
@@ -810,7 +810,7 @@ bool DrawImagePopup()
                             {
                                 line--;
                             }
-                            Serialization::KaraokeToken newToken = {};
+                            Serialization::KaraokeToken newToken = Serialization::KaraokeToken();
                             History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line));
                             History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
                             newToken.myValue = "";
