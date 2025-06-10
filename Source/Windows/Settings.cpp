@@ -171,7 +171,7 @@ void Settings::OnImGuiDraw()
     ImGui::EndDisabled();
     ImGui::Unindent();
     ImGui::Spacing();
-    bool timingUseCustomFont = !Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont");
+    bool timingUseCustomFont = Serialization::Preferences::HasKey("Timing/CanUseCustomFont") && Serialization::Preferences::GetBool("Timing/CanUseCustomFont");
     if(ImGui::Ext::ToggleSwitch("Use Custom Font for Timing", &timingUseCustomFont))
     {
         Serialization::Preferences::SetBool("Timing/CanUseCustomFont", timingUseCustomFont);

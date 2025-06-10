@@ -50,7 +50,7 @@ void TimingEditor::OnImGuiDraw()
     {
         DrawImagePopup();
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
-        bool useCustomFont = (myCustomFont != nullptr) && (!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"));
+        bool useCustomFont = (myCustomFont != nullptr) && (Serialization::Preferences::HasKey("Timing/CanUseCustomFont") && Serialization::Preferences::GetBool("Timing/CanUseCustomFont"));
         if(myFont) ImGui::PushFont(useCustomFont ? myCustomFont : myFont);
         for(int line = 0; line < doc.GetData().size(); line++)
         {

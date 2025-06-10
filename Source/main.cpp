@@ -298,7 +298,7 @@ void loop(void* window){
             cfg.MergeMode = true;
             ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
             cfg.MergeMode = false;
-            if(!Serialization::Preferences::HasKey("Timing/CanUseCustomFont") || Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
+            if(Serialization::Preferences::HasKey("Timing/CanUseCustomFont") && Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
             {
                 timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range);
                 cfg.MergeMode = true;
