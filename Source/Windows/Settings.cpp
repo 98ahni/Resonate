@@ -83,9 +83,10 @@ void Settings::OnImGuiDraw()
     }
     if(ImGui::BeginPopupModal("Auto Latency", &myLatencyPopup))
     {
-        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
+        ImGui::SetWindowSize({DPI_SCALED(450), DPI_SCALED(350)}, ImGuiCond_Once);
         int latency = DrawLatencyWidget();
-        ImGui::Text("Hit [Space] or tap the circle when the bass hits.");
+        ImGui::Text("Adjust the Display Latency so that the pulsing circle matches the beat.");
+        ImGui::Text("Hit [Space] or tap the circle when the bass hits to adjust the Input Latency.");
 
         // Visualization
         float sizeY = ImGui::GetWindowHeight() - ImGui::GetCursorPosY();
@@ -99,11 +100,11 @@ void Settings::OnImGuiDraw()
         {
             if(timeRaw < 150)
             {
-                TimingEditor::Get().SetLatencyOffset(timeRaw);
+                TimingEditor::Get().SetAudioLatencyOffset(timeRaw);
             }
             else
             {
-                TimingEditor::Get().SetLatencyOffset(timeRaw - 200);
+                TimingEditor::Get().SetAudioLatencyOffset(timeRaw - 200);
             }
         }
 
@@ -248,7 +249,7 @@ void Settings::InitLatencyVisualization()
 int Settings::DrawLatencyVisualization(ImVec2 aSize)
 {
     float timeRaw, time = timeRaw = (VAR_FROM_JS(get_audio_context_time()).as<float>() - ourLatencyStartTime) * 100;
-    time -= TimingEditor::Get().GetLatencyOffset();
+    time -= TimingEditor::Get().GetRawVisualLatencyOffset();
     time = fl_mod(time, 200);
     timeRaw = fl_mod(timeRaw, 200);
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -285,10 +286,15 @@ void Settings::StopLatencyVisualization()
 int Settings::DrawLatencyWidget()
 {
     TimingEditor& timing = TimingEditor::Get();
-    int latency = timing.GetLatencyOffset();
-    if(ImGui::Ext::StepInt("Latency (cs)", latency, 1, 5))
+    int vlatency = timing.GetRawVisualLatencyOffset();
+    if(ImGui::Ext::StepInt("Display Latency (cs)", vlatency, 1, 5))
     {
-        timing.SetLatencyOffset(latency);
+        timing.SetVisualLatencyOffset(vlatency);
+    }
+    int latency = timing.GetAudioLatencyOffset();
+    if(ImGui::Ext::StepInt("Input Latency (cs)", latency, 1, 5))
+    {
+        timing.SetAudioLatencyOffset(latency);
     }
     return latency;
 }

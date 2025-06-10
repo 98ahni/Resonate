@@ -868,22 +868,22 @@ bool DrawLatencyPopup()
             Settings::InitLatencyVisualization();
         }
         ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        int latency = TimingEditor::Get().GetLatencyOffset();
+        int latency = TimingEditor::Get().GetAudioLatencyOffset();
         ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
         ImGui::SameLine();
         if(ImGui::DragInt("##Latency", &latency))
         {
-            TimingEditor::Get().SetLatencyOffset(latency);
+            TimingEditor::Get().SetAudioLatencyOffset(latency);
         }
         ImGui::SameLine();
         ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
         if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
         {
-            TimingEditor::Get().SetLatencyOffset(latency - (Gamepad::GetTimeSinceToggled(Gamepad::D_Left) < 3 ? 1 : 5));
+            TimingEditor::Get().SetAudioLatencyOffset(latency - (Gamepad::GetTimeSinceToggled(Gamepad::D_Left) < 3 ? 1 : 5));
         }
         if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
         {
-            TimingEditor::Get().SetLatencyOffset(latency + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5));
+            TimingEditor::Get().SetAudioLatencyOffset(latency + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5));
         }
         if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
         {
@@ -910,11 +910,11 @@ bool DrawLatencyPopup()
         {
             if(timeRaw < 150)
             {
-                TimingEditor::Get().SetLatencyOffset(timeRaw);
+                TimingEditor::Get().SetAudioLatencyOffset(timeRaw);
             }
             else
             {
-                TimingEditor::Get().SetLatencyOffset(timeRaw - 200);
+                TimingEditor::Get().SetAudioLatencyOffset(timeRaw - 200);
             }
         }
 

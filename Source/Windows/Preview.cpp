@@ -150,8 +150,8 @@ void PreviewWindow::OnImGuiDraw()
     float fontScale = (float)doc.GetFontSize() / 50.f;
     float textScale = (DPI_UNSCALED(contentSize.y) / ((50 + DPI_UNSCALED(ImGui::GetStyle().ItemSpacing.y)) * 6));
     ourFont->Scale = fontScale * ((textScale < .001f ? .001f : textScale));
-    uint playbackProgress = AudioPlayback::GetPlaybackProgress() + TimingEditor::Get().GetLatencyOffset();
-    if(((int)AudioPlayback::GetPlaybackProgress()) < TimingEditor::Get().GetLatencyOffset())
+    uint playbackProgress = AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetVisualLatencyOffset();
+    if(((int)AudioPlayback::GetPlaybackProgress()) < TimingEditor::Get().GetVisualLatencyOffset())
     {
         playbackProgress = 0;
     }

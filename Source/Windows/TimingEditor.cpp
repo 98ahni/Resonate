@@ -25,10 +25,20 @@ TimingEditor::TimingEditor()
     myMarkHasMoved = false;
     myInputIsUnsafe = false;
     myDisableInput = false;
-    myLatencyOffset = 0;
+    myAudioLatencyOffset = 0;
+    myVisualLatencyOffset = 0;
+    myTokenFlash = false;
     if(Serialization::Preferences::HasKey("Timing/Latency"))
     {
-        myLatencyOffset = Serialization::Preferences::GetInt("Timing/Latency");
+        myAudioLatencyOffset = Serialization::Preferences::GetInt("Timing/Latency");
+    }
+    if(Serialization::Preferences::HasKey("Timing/VisualLatency"))
+    {
+        myVisualLatencyOffset = Serialization::Preferences::GetInt("Timing/VisualLatency");
+    }
+    if(Serialization::Preferences::HasKey("Timing/TokenFlash"))
+    {
+        myTokenFlash = Serialization::Preferences::GetInt("Timing/TokenFlash");
     }
 }
 
@@ -419,15 +429,36 @@ bool TimingEditor::GetInputUnsafe()
     return myDisableInput;
 }
 
-void TimingEditor::SetLatencyOffset(int someCentiSeconds)
+void TimingEditor::SetAudioLatencyOffset(int someCentiSeconds)
 {
-    myLatencyOffset = someCentiSeconds;
-    Serialization::Preferences::SetInt("Timing/Latency", myLatencyOffset);
+    myAudioLatencyOffset = someCentiSeconds;
+    Serialization::Preferences::SetInt("Timing/Latency", myAudioLatencyOffset);
 }
 
-int TimingEditor::GetLatencyOffset()
+int TimingEditor::GetAudioLatencyOffset()
 {
-    return myLatencyOffset;
+    return myAudioLatencyOffset;
+}
+
+void TimingEditor::SetVisualLatencyOffset(int someCentiSeconds)
+{
+    myVisualLatencyOffset = someCentiSeconds;
+    Serialization::Preferences::SetInt("Timing/VisualLatency", myVisualLatencyOffset);
+}
+
+int TimingEditor::GetVisualLatencyOffset()
+{
+    return AudioPlayback::GetIsPlaying() ? myVisualLatencyOffset : 0;
+}
+
+int TimingEditor::GetRawVisualLatencyOffset()
+{
+    return myVisualLatencyOffset;
+}
+
+void TimingEditor::SetTokenFlash(bool aShouldFlash)
+{
+    myTokenFlash = aShouldFlash;
 }
 
 void TimingEditor::DrawTextMarker()

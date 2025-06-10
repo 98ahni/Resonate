@@ -25,8 +25,12 @@ public:
     void CheckMarkerIsSafe(bool aIsMovingRight);
     void SetInputUnsafe(bool anUnsafe);
     bool GetInputUnsafe();
-    void SetLatencyOffset(int someCentiSeconds);
-    int GetLatencyOffset();
+    void SetAudioLatencyOffset(int someCentiSeconds);
+    int GetAudioLatencyOffset();
+    void SetVisualLatencyOffset(int someCentiSeconds);
+    int GetVisualLatencyOffset();
+    int GetRawVisualLatencyOffset();
+    void SetTokenFlash(bool aShouldFlash);
 
 private:
     void DrawTextMarker();
@@ -44,7 +48,9 @@ private:
     bool myMarkHasMoved = false;
     bool myInputIsUnsafe = false;
     bool myDisableInput = false;
-    int myLatencyOffset = 0;
+    int myAudioLatencyOffset = 0;
+    int myVisualLatencyOffset = 0;
+    bool myTokenFlash = false;
 
     bool myIsImagePopupOpen = false;
     int myImagePopupEditLine = 0;
