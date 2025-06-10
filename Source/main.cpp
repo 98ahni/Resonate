@@ -17,6 +17,7 @@
 #include "Windows/License.h"
 #include "Windows/Preview.h"
 #include "Windows/Console.h"
+#include "Windows/News.h"
 #include <webgl/webgl2.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -68,6 +69,7 @@ static const ImWchar g_FontRangesLatinAndPinyin[] =
 };
 
 bool g_shouldHideLoadingScreen = false;
+bool g_shouldShowNewsWindow = false;
 
 void DrawSelfTestWarningPopup();
 bool g_selfTestInProgress = true;
@@ -205,6 +207,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromCloudDrive(emscripten::EM_VAL a
 {
     if(g_shouldDeleteOnLoad)
     {
+        Serialization::KaraokeDocument::Get().Clear();
         PreviewWindow::ClearBackgroundElements();
         if(g_hasCustomFont)
         {
@@ -735,6 +738,17 @@ void loop(void* window){
                     WindowManager::AddWindow<HelpWindow>("Help");
                 }
             }
+            if(ImGui::MenuItem("News", 0, WindowManager::GetWindow("News") != nullptr))
+            {
+                if(WindowManager::GetWindow("News") != nullptr)
+                {
+                    WindowManager::DestroyWindow(WindowManager::GetWindow("News"));
+                }
+                else
+                {
+                    WindowManager::AddWindow<NewsWindow>("News");
+                }
+            }
             ImGui::MenuItem("Guidelines");
             ImGui::Ext::CreateHTMLButton("MooncatGuidelines", "click", "open_mooncat_guidelines");
             if(ImGui::MenuItem("Licence", 0, WindowManager::GetWindow("Licence") != nullptr))
@@ -833,6 +847,11 @@ void loop(void* window){
     {
         g_shouldHideLoadingScreen = false;
         ImGui::Ext::StopLoadingScreen();
+    }
+    if(g_shouldShowNewsWindow)
+    {
+        g_shouldShowNewsWindow = false;
+        WindowManager::AddWindow<NewsWindow>("News");
     }
     if(g_selfTestInProgress && !g_selfTestFailed)
     {
@@ -980,6 +999,11 @@ int main(){
         }
     }
     g_shouldRebuildFonts = true;
+
+    if(!Serialization::Preferences::HasKey("News/Version") || Serialization::Preferences::GetInt("News/Version") < RELEASE_VERSION)
+    {
+        g_shouldShowNewsWindow = true;
+    }
 
     //ImGui::GetIO().Fonts->AddFontDefault(nullptr);
     //MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f);
