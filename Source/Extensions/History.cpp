@@ -74,7 +74,7 @@ void History::Undo()
 void History::Redo()
 {
     HistoryQueue::ourNextUndo++;
-    printf("Trying to undo %i\n", HistoryQueue::ourNextUndo);
+    printf("Trying to redo %i\n", HistoryQueue::ourNextUndo);
     if(HistoryQueue::ourNextUndo >= HistoryQueue::ourQueue.size())
     {
         HistoryQueue::ourNextUndo--;
@@ -82,6 +82,6 @@ void History::Redo()
     }
     for(int cmd = 0; cmd < HistoryQueue::ourQueue[HistoryQueue::ourNextUndo].size(); cmd++)
     {
-        HistoryQueue::ourQueue[HistoryQueue::ourNextUndo][cmd]->Undo();
+        HistoryQueue::ourQueue[HistoryQueue::ourNextUndo][cmd]->Redo();
     }
 }
