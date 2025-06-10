@@ -19,6 +19,13 @@ void Console::SearchForErrors()
         for(int token = 0; token < doc.GetLine(line).size(); token++)
         {
             Serialization::KaraokeToken& currToken = doc.GetToken(line, token);
+            if(!hasSeenTimedToken && !currToken.myHasStart && currToken.myValue.starts_with("image "))
+            {
+                if(doc.GetTimedTokenAfter(line, 0).myStartTime < 20)
+                {
+                    LogWarning("An image has a start time of less than [00:00:20]. This will override the regular fade that ECHO does from the queue screen. Instead, name the first image the same as the .txt file. ", line);
+                }
+            }
             if(!hasSeenTimedToken && currToken.myHasStart)
             {
                 lineStartTime = currToken.myStartTime;
@@ -49,6 +56,19 @@ void Console::SearchForErrors()
             lastLineStartTime = lineStartTime;
         }
     }
+}
+
+void Console::ValidateProject()
+{
+    Console::ourLineToLogInds.clear();
+    Console::ourLogs.clear();
+    Console::SearchForErrors();
+    PreviewWindow p(true);
+    auto [peak, mean, clipCount] = AudioPlayback::GetVolumeDB();
+    //Console::Log("The audio has a peak volume of " + std::to_string(peak) + "db and a mean of " + std::to_string(mean) + "db but clips " + std::to_string(clipCount) + " times. ");
+    if(peak < -2) Console::LogError("The audio is too low. It needs to have a peak volume of at least -2db(A) but currently has a peak of " + std::to_string(peak) + "db(A). ");
+    else if(mean < -20) Console::LogWarning("The audio seems to have a lot of dynamic in it's volume. This might not work well when people sing the song. Consider raising the volume of the quiet parts. ");
+    if(clipCount > .001f) Console::LogWarning("The audio is too loud and might cause clipping. Please lower the volume or normalize the audio. ");
 }
 
 void Console::Log(std::string aMessage, int aLine)
@@ -93,12 +113,23 @@ void Console::LogError(std::string aMessage, int aLine)
 void Console::LineMargin(int aLine)
 {
     Severity highest = (Severity)-1;
+    int showLog = -1;
     for(int i = 0; ourLineToLogInds.contains(aLine) && i < ourLineToLogInds[aLine].size(); i++)
     {
         if(highest < ourLogs[ourLineToLogInds[aLine][i]].mySeverity)
+        {
             highest = ourLogs[ourLineToLogInds[aLine][i]].mySeverity;
+            showLog = ourLineToLogInds[aLine][i];
+        }
     }
     DrawCompactIcon(highest, ImGui::GetTextLineHeight());
+    if(ImGui::IsItemClicked())
+    {
+        if(WindowManager::GetWindow("Console") == nullptr)
+        {
+            WindowManager::AddWindow<ConsoleWindow>("Console")->myExpandedLog = showLog;
+        }
+    }
     if(highest != (Severity)-1 && ImGui::BeginItemTooltip())
     {
         ImGui::Separator();
@@ -165,10 +196,7 @@ void ConsoleWindow::OnImGuiDraw()
     {
         if(ImGui::MenuItem("Validate"))
         {
-            Console::SearchForErrors();
-            PreviewWindow p(true);
-            auto [peak, mean] = AudioPlayback::GetVolumeDB();
-            Console::Log("The audio has a peak volume of " + std::to_string(peak) + "db and a mean of " + std::to_string(mean) + "db. ");
+            Console::ValidateProject();
         }
         if(ImGui::MenuItem("Clear"))
         {

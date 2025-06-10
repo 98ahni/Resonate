@@ -422,28 +422,36 @@ EM_ASYNC_JS(emscripten::EM_VAL, get_audio_volume_db, (), {
         var output = {};
         output.peak = 0;
         output.mean = 0;
+        output.clip_count = 0;
         if(!global_audio_completion[9]){
             resolve(output);
             return;
         }
-        global_audio_context.decodeAudioData(await global_audio_blobs.arrayBuffer(), (buffer)=>{
-            for(const data of buffer.getChannelData(i)){
-                for(const sample of buffer){
-                    const sample_db = 20 * Math.log10(Math.abs(sample));
-                    if(output.peak < sample_db) { output.peak = sample_db; }
-                    output.mean += sample_db;
+        global_audio_context.decodeAudioData(await global_audio_blobs[9].arrayBuffer(), (buffer)=>{
+            for(let ind = 0; ind < buffer.numberOfChannels; ind++){
+                for(const sample of buffer.getChannelData(ind)){
+                    if(1 < Math.abs(sample)) { output.clip_count++; }
+                    else if(output.peak < Math.abs(sample)) { output.peak = Math.abs(sample); }
+                    output.mean += Math.abs(sample);
                 }
+                //let data = new Float32Array(buffer.getChannelData(ind));
+                //data.sort((a, b)=>{return Math.abs(a) - Math.abs(b);});
+                //output.peak += Math.abs(data[Math.floor(data.length * .99)]);
+                //output.mean += Math.abs(data[Math.floor(data.length * .5)]);
             }
             output.mean /= buffer.getChannelData(0).length * buffer.numberOfChannels;
+            output.clip_count /= buffer.getChannelData(0).length * buffer.numberOfChannels;
+            output.peak = 20 * Math.log10(output.peak/* / buffer.numberOfChannels*/);
+            output.mean = 20 * Math.log10(output.mean/* / buffer.numberOfChannels*/);
             resolve(output);
         });
     }));
 });
 
-std::pair<float, float> AudioPlayback::GetVolumeDB()
+std::tuple<float, float, float> AudioPlayback::GetVolumeDB()
 {
     emscripten::val volume = VAR_FROM_JS(get_audio_volume_db()).await();
-    return {volume["peak"].as<float>(), volume["mean"].as<float>()};
+    return {volume["peak"].as<float>(), volume["mean"].as<float>(), volume["clip_count"].as<float>()};
 }
 
 void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)

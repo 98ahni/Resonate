@@ -23,6 +23,7 @@ class Console
 
 public:
     static void SearchForErrors();
+    static void ValidateProject();
     static void Log(std::string aMessage, int aLine = -1);
     static void LogWarning(std::string aMessage, int aLine = -1);
     static void LogError(std::string aMessage, int aLine = -1);
@@ -45,4 +46,5 @@ public:
 
 private:
     int myExpandedLog = -1;
+    friend class Console;
 };
