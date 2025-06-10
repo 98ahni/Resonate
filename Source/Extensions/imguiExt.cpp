@@ -811,33 +811,39 @@ bool ImGui::Ext::ToggleSwitch(const char *aLabel, bool *aValue)
 bool ImGui::Ext::StepInt(const char *aLabel, int& aValue, int aSmallStep, int aLargeStep)
 {
     bool output = false;
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + DPI_SCALED(5));
     ImGui::Text(aLabel);
     ImGui::SameLine();
     ImGui::PushID(aLabel);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     if(ImGui::Button("<<", {DPI_SCALED(40), 0}))
     {
         output = true;
         aValue -= aLargeStep;
     }
     ImGui::SameLine();
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     if(ImGui::Button("<", {DPI_SCALED(40), 0}))
     {
         output = true;
         aValue -= aSmallStep;
     }
     ImGui::SameLine();
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     ImGui::SetNextItemWidth(DPI_SCALED(60));
     if(ImGui::DragInt("##StepInt", &aValue))
     {
         output = true;
     }
     ImGui::SameLine();
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     if(ImGui::Button(">", {DPI_SCALED(40), 0}))
     {
         output = true;
         aValue += aSmallStep;
     }
     ImGui::SameLine();
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(5));
     if(ImGui::Button(">>", {DPI_SCALED(40), 0}))
     {
         output = true;
