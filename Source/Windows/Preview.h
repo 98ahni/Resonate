@@ -36,6 +36,7 @@ public:
     static ImExtTexture GetBackgroundTexture(std::string aBGPath, bool aShouldReRender = false);
     static const std::vector<std::string>& GetBackgroundElementPaths();
     static void ClearBackgroundElements();
+    static void SetTokenFlash(bool aShouldFlash);
 
 private:
     void QueueImageFade();
@@ -55,11 +56,12 @@ private:
     Lane myBackLanes[7];
     Lane myAssemblyLanes[7];
     bool myShouldDebugDraw;
-
+    
     static void SaveBackgroundElementsToLocal();
     inline static ImFont* ourFont;
     static inline ImFont* ourRulerFont;
     inline static bool ourHasVideo = false;
     static inline std::vector<std::string> ourBackgroundPaths;
     inline static std::unordered_map<std::string, ImExtTexture> ourBackgrounds;
+    static inline bool ourTokenFlash;
 };

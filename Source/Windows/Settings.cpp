@@ -11,6 +11,7 @@
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
 #include <Defines.h>
+#include "Preview.h"
 
 EM_JS(emscripten::EM_VAL, setup_latency_metronome, (), {
     return Emval.toHandle(new Promise(async (resolve) => {
@@ -177,7 +178,25 @@ void Settings::OnImGuiDraw()
     }
     ImGui::Indent();
     ImGui::BeginDisabled();
-    ImGui::TextWrapped("Adds an outline to the text when viewed in the Preview window. Outlined text will not show transparency correctly. ");
+    ImGui::TextWrapped("Use the custom font (if one exists) in the Timing view. ");
+    ImGui::EndDisabled();
+    ImGui::Unindent();
+    ImGui::Spacing();
+    bool timingTokenFlash = Serialization::Preferences::HasKey("Timing/TokenFlash") && Serialization::Preferences::GetBool("Timing/TokenFlash");
+    if(ImGui::Ext::ToggleSwitch("Enhance Timing Readability", &timingTokenFlash))
+    {
+        Serialization::Preferences::SetBool("Timing/TokenFlash", timingTokenFlash);
+        TimingEditor::Get().SetTokenFlash(timingTokenFlash);
+    }
+    bool previewTokenFlash = Serialization::Preferences::HasKey("Preview/TokenFlash") && Serialization::Preferences::GetBool("Preview/TokenFlash");
+    if(ImGui::Ext::ToggleSwitch("Enhance Preview Readability", &previewTokenFlash))
+    {
+        Serialization::Preferences::SetBool("Preview/TokenFlash", previewTokenFlash);
+        PreviewWindow::SetTokenFlash(previewTokenFlash);
+    }
+    ImGui::Indent();
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Gives syllables a different color at their start time. If you find it difficult to tell if the timing is right, try turning it on. ");
     ImGui::EndDisabled();
     ImGui::Unindent();
     ImGui::Spacing();

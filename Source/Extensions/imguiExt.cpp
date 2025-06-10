@@ -595,7 +595,7 @@ void ImGui::Ext::StopLoadingScreen()
     EM_ASM(Module.hide_loading_screen(););
 }
 
-bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha, float anOutlineSize, float aMaxGrowFactor)
+bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aFlashToken, bool aUseAlpha, float anOutlineSize, float aMaxGrowFactor)
 {
     ImVec2 size = CalcTextSize(aValue.data());
     ImVec2 pos = GetCursorScreenPos();
@@ -633,16 +633,22 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         startCol = IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000);
         uint endCol = Serialization::KaraokeDocument::Get().GetEndColor();
         endCol = IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000);
-        if(startCol == endCol)
+        if(aFlashToken || startCol == endCol)
         {
-            if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
-            {
-                startCol = IM_COL32(210, 190, 255, 255);
-            }
-            else
-            {
-                startCol = IM_COL32_WHITE;
-            }
+            startCol = IM_COL32(
+                (IM_COL32_GET_R(startCol) < 200 ? 255 : 155),
+                (IM_COL32_GET_G(startCol) < 200 ? 255 : 155),
+                (IM_COL32_GET_B(startCol) < 200 ? 255 : 155),
+                255
+            );
+            //if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
+            //{
+            //    startCol = IM_COL32(210, 190, 255, 255);
+            //}
+            //else
+            //{
+            //    startCol = IM_COL32_WHITE;
+            //}
         }
         ImVec4 startColClip = {timeEndPos.x, 0, FLT_MAX, FLT_MAX};
         ImVec4 endColClip = {0, 0, timeEndPos.x, FLT_MAX};

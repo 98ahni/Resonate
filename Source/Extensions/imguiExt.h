@@ -27,7 +27,7 @@ namespace ImGui{
         void StartLoadingScreen(float someAlpha = .5f, bool aShouldAnimateIn = true);
         void StopLoadingScreen();
 
-        bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aUseAlpha = false, float anOutlineSize = 0, float aMaxGrowFactor = 1);
+        bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aFlashToken, bool aUseAlpha = false, float anOutlineSize = 0, float aMaxGrowFactor = 1);
         void SetColor(unsigned int aCol);
         void ClearColor();
 

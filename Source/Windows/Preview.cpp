@@ -26,7 +26,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsPausePreviewVideo()
 }
 extern"C" EMSCRIPTEN_KEEPALIVE void jsSetPreviewVideoProgress()
 {
-    ImGui::Ext::SetVideoProgress("##PreviewBackground", AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetLatencyOffset());
+    ImGui::Ext::SetVideoProgress("##PreviewBackground", AudioPlayback::GetPlaybackProgress() - TimingEditor::Get().GetVisualLatencyOffset());
     if(AudioPlayback::GetIsPlaying())
     {
         ImGui::Ext::PlayVideo("##PreviewBackground");
@@ -114,6 +114,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
     {
         Serialization::Preferences::SetBool("Preview/UseOutline", true);
     }
+    ourTokenFlash = Serialization::Preferences::HasKey("Preview/TokenFlash") && Serialization::Preferences::GetBool("Preview/TokenFlash");
 }
 
 void PreviewWindow::OnImGuiDraw()
@@ -201,7 +202,7 @@ void PreviewWindow::OnImGuiDraw()
             uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
             if(!doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)))
             {
-                ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, true, useOutline ? DPI_SCALED(2 * textScale) : 0, hasNoEffect ? 1 : 1.15f);
+                ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, ourTokenFlash, true, useOutline ? DPI_SCALED(2 * textScale) : 0, hasNoEffect ? 1 : 1.15f);
                 ImGui::SameLine();
             }
             else if(doc.GetToken(myLanes[lane].myLine, token).myValue.starts_with("<no effect>"))
@@ -335,6 +336,11 @@ void PreviewWindow::ClearBackgroundElements()
     //FileHandler::SyncLocalFS();
     ourBackgrounds.clear();
     ourBackgroundPaths.clear();
+}
+
+void PreviewWindow::SetTokenFlash(bool aShouldFlash)
+{
+    ourTokenFlash = aShouldFlash;
 }
 
 void PreviewWindow::QueueImageFade()
