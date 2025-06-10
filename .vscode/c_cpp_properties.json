@@ -4,8 +4,11 @@
             "name": "Emscripten",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/.vscode/emsdk/upstream/emscripten/system/include/**",
-                "${workspaceFolder}/.vscode/emsdk/upstream/include/c++/v1/**",
+                //"${workspaceFolder}/.vscode/emsdk/upstream/emscripten/system/include/**",
+                //"${workspaceFolder}/.vscode/emsdk/upstream/include/c++/v1/**",
+                "/usr/local/emsdk/upstream/emscripten/cache/sysroot/include/**",
+                "/usr/local/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/**",
+                //"/usr/local/emsdk/upstream/emscripten/cache/sysroot/include",
                 "${workspaceFolder}/Source"
             ],
             "defines": [],

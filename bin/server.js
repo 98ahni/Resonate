@@ -19,14 +19,19 @@ const SKIP_ImguiCompile = false;
 const SKIP_RubberbandCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
-const FORCE_Linking = true;
+const FORCE_Linking = false;
 
 // APIs gotten from Github Secrets
 const API_SECRETS = [
-    "GOOGLE_API_SECRET=" + process.env.GOOGLEAPIKEY,
+    "RELEASE_VERSION=9'00",  // split into major'minor'patch with two digits per
+    "GOOGLE_API_SECRET=" + (RELEASE_Build ? process.env.GOOGLE_API_KEY_RELEASE : process.env.GOOGLE_API_KEY_DEBUG),
     (WIN32 ? "NO_IMPORT_API_SECRETS=1" : "DROPBOX_API_SECRET=0"),
     (RELEASE_Build ? "_RELEASE=1" : "_DEBUG=1")
 ];
+
+console.log(API_SECRETS[0]);
+console.log(API_SECRETS[1]);
+console.log(API_SECRETS[2]);
 
 let compileErr = false;
 const execOutFunc = function(err, output)
@@ -52,7 +57,8 @@ if(WIN32)
     //execSync('cd "..\\..\\..\\Visual Studio 2022\\Visual Studio Projects\\emsdk-main\\upstream\\emscripten\\"', execOutFunc);
 }
 
-console.log(new TextDecoder().decode(execSync(compilerPath + ' --version', {env: process.env})));
+console.time('Compiled in: ');
+console.log(new TextDecoder().decode(execSync(compilerPath + ' --check', {env: process.env})));
 
 //(async() =>{
 //let readImguiDone = false;
@@ -144,7 +150,7 @@ if((!SKIP_Linking && hasUnlinkedFiles) || FORCE_Linking)
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + objectFiles.join('\" \"') + '\" -o \"' + projectPath + 'bin/public/Resonate.html\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' --shell-file \"' + projectPath + '.vscode/imgui_shell.html\" ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lglfw -lGL -lidbfs.js -sUSE_GLFW=3 -sUSE_WEBGPU=1 -sUSE_WEBGL2=1 -sASYNCIFY -sASYNCIFY_STACK_SIZE=8192 -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH --embed-file ' + projectPath + 'bin/Assets/@/', {env: process.env})));// --embed-file Emscripten/Assets/
 }
 
-console.log('Done!');
+console.timeEnd('Compiled in: ');
 
 // run the `ls` command using exec
 //exec('emcc \"/workspaces/Resonate/Source/main.cpp\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -pedantic -x c++-header -I\"/workspaces/Resonate/\" -I\"/workspaces/Resonate/imgui/\" -I\"/workspaces/Resonate/imgui/backends/\" -g -x c++ -D\"NO_FREETYPE\" -D\"DEBUG\" -D\"_DEBUG\" -D\"_DEBUG_\" -O0 -std=c++20 -o /workspaces/Resonate/bin/Resonate.html --bind -O0 --shell-file \"/workspaces/Resonate/.vscode/imgui_shell.html\" -g3', (err, output) => {
@@ -153,8 +159,14 @@ if(compileErr)
 {
     process.exit(1);
 }
-const PORT=8080;
+
 var express = require('express');
+const FILEPORT=8081;
+var source = express();
+source.use(express.static(path.join(__dirname, '..')));
+source.listen(FILEPORT);
+
+const PORT=8080;
 var app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', async(req, res) => {
