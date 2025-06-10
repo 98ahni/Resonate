@@ -29,6 +29,7 @@
 #include "Extensions/GoogleDrive.h"
 #include "Extensions/Dropbox.h"
 #include "Serialization/KaraokeData.h"
+#include "Serialization/LineRecord.h"
 #include "Serialization/Syllabify.h"
 #include "Serialization/Preferences.h"
 #include "StringTools.h"
