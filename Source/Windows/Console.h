@@ -28,14 +28,16 @@ public:
     static void LogWarning(std::string aMessage, int aLine = -1);
     static void LogError(std::string aMessage, int aLine = -1);
     static void LineMargin(int aLine);
+    static std::string MenuIcon(bool aUsePadding = false);
 
 private:
     static inline std::vector<LogContent> ourLogs;
     inline static std::unordered_map<int, std::vector<int>> ourLineToLogInds;
+    static inline Severity ourHighestSeverity = (Severity)-1;
     friend class ConsoleWindow;
 
     static void DrawIcon(Severity aType, float aSize);
-    static void DrawCompactIcon(Severity aType, float aSize);
+    static bool DrawCompactIcon(Severity aType, float aSize);
 };
 
 class ConsoleWindow : public EditorWindow

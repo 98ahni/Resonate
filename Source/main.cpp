@@ -681,7 +681,7 @@ void loop(void* window){
             }
             ImGui::EndMenu();
         }
-        if(ImGui::BeginMenu("View"))
+        if(ImGui::BeginMenu((Console::MenuIcon(true) + "View").data()))
         {
             if(ImGui::MenuItem("Touch Control", 0, WindowManager::GetWindow("Touch Control") != nullptr, !g_isSafeMode))
             {
@@ -716,7 +716,7 @@ void loop(void* window){
                     WindowManager::AddWindow<Settings>("Settings");
                 }
             }
-            if(ImGui::MenuItem("Console", 0, WindowManager::GetWindow("Console") != nullptr))
+            if(ImGui::MenuItem((Console::MenuIcon() + "Console").data(), 0, WindowManager::GetWindow("Console") != nullptr))
             {
                 if(WindowManager::GetWindow("Console") != nullptr)
                 {

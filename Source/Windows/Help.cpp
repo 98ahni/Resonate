@@ -10,6 +10,8 @@ HelpWindow::HelpWindow()
 
 }
 
+// When adding a font for keybinds, look at 0x2408 onwards and 0x2460
+
 #define StartTreeNode(label) if(ImGui::TreeNode(label)){ImGui::PopFont()
 #define EndTreeNode ImGui::TreePop();ImGui::PushFont(MainWindow::Font);}
 #define BulletWrap(text) ImGui::SetCursorPosX(ImGui::GetCursorPosX() - DPI_SCALED(10)); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + DPI_SCALED(7)); ImGui::TextWrapped(text)

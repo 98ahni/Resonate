@@ -6,6 +6,7 @@
 #include <Defines.h>
 #include "Preview.h"
 #include "AudioPlayback.h"
+#include <cmath>
 
 void Console::SearchForErrors()
 {
@@ -62,6 +63,7 @@ void Console::ValidateProject()
 {
     Console::ourLineToLogInds.clear();
     Console::ourLogs.clear();
+    Console::ourHighestSeverity = (Console::Severity)-1;
     Console::SearchForErrors();
     PreviewWindow p(true);
     auto [peak, mean, clipCount] = AudioPlayback::GetVolumeDB();
@@ -82,6 +84,7 @@ void Console::Log(std::string aMessage, int aLine)
     }
     ourLineToLogInds[aLine].push_back(ourLogs.size());
     ourLogs.push_back({Severity::Message, aMessage, aLine});
+    if(ourHighestSeverity < Severity::Message) {ourHighestSeverity = Severity::Message;}
 }
 
 void Console::LogWarning(std::string aMessage, int aLine)
@@ -95,6 +98,7 @@ void Console::LogWarning(std::string aMessage, int aLine)
     }
     ourLineToLogInds[aLine].push_back(ourLogs.size());
     ourLogs.push_back({Severity::Warning, aMessage, aLine});
+    if(ourHighestSeverity < Severity::Warning) {ourHighestSeverity = Severity::Warning;}
 }
 
 void Console::LogError(std::string aMessage, int aLine)
@@ -108,6 +112,7 @@ void Console::LogError(std::string aMessage, int aLine)
     }
     ourLineToLogInds[aLine].push_back(ourLogs.size());
     ourLogs.push_back({Severity::Error, aMessage, aLine});
+    if(ourHighestSeverity < Severity::Error) {ourHighestSeverity = Severity::Error;}
 }
 
 void Console::LineMargin(int aLine)
@@ -122,8 +127,7 @@ void Console::LineMargin(int aLine)
             showLog = ourLineToLogInds[aLine][i];
         }
     }
-    DrawCompactIcon(highest, ImGui::GetTextLineHeight());
-    if(ImGui::IsItemClicked())
+    if(DrawCompactIcon(highest, ImGui::GetTextLineHeight()) && ImGui::IsItemClicked())
     {
         if(WindowManager::GetWindow("Console") == nullptr)
         {
@@ -147,6 +151,31 @@ void Console::LineMargin(int aLine)
     }
 }
 
+std::string Console::MenuIcon(bool aUsePadding)
+{
+    if(ourHighestSeverity == -1) {return "";}
+    ImVec2 spaceSize = ImGui::CalcTextSize(" ");
+    int spaceCount = std::ceil(spaceSize.y / spaceSize.x);
+    float spaceWidth = spaceSize.x * spaceCount;
+    uint color = 0;
+    switch (ourHighestSeverity)
+    {
+    case Message:
+        color = IM_COL32(150, 150, 150, 255);
+        break;
+    case Warning:
+        color = IM_COL32(255, 255, 0, 255);
+        break;
+    case Error:
+        color = IM_COL32(255, 50, 50, 255);
+        break;
+    }
+    ImVec2 drawPos = ImGui::GetCursorScreenPos();
+    ImVec2 padding = {!aUsePadding ? -spaceSize.x * .5f : 0, aUsePadding ? ImGui::GetStyle().FramePadding.y : 0};
+    ImGui::GetForegroundDrawList()->AddCircleFilled({drawPos.x + padding.x + spaceWidth * .5f, drawPos.y + padding.y + spaceSize.y * .5f}, spaceSize.y * .45f, color);
+    return std::string(spaceCount, ' ');
+}
+
 void Console::DrawIcon(Severity aType, float aSize)
 {
     ImDrawList& drawList = *ImGui::GetWindowDrawList();
@@ -166,7 +195,7 @@ void Console::DrawIcon(Severity aType, float aSize)
     }
 }
 
-void Console::DrawCompactIcon(Severity aType, float aSize)
+bool Console::DrawCompactIcon(Severity aType, float aSize)
 {
     ImDrawList& drawList = *ImGui::GetWindowDrawList();
     ImVec2 drawPos = ImGui::GetCursorScreenPos();
@@ -183,6 +212,7 @@ void Console::DrawCompactIcon(Severity aType, float aSize)
         drawList.AddRectFilled(drawPos, {drawPos.x + (aSize * .2f), drawPos.y + aSize}, IM_COL32(255, 50, 50, 255), aSize * .1f);
         break;
     }
+    return aType != -1;
 }
 
 ConsoleWindow::ConsoleWindow()
@@ -202,6 +232,7 @@ void ConsoleWindow::OnImGuiDraw()
         {
             Console::ourLineToLogInds.clear();
             Console::ourLogs.clear();
+            Console::ourHighestSeverity = (Console::Severity)-1;
         }
         ImGui::EndMenuBar();
     }
