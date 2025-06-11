@@ -60,7 +60,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
                 }
             }
         //}
-        Console::Log("Went through " + std::to_string(myNextAddLineIndex) + " lines out of a total of " + std::to_string(doc.GetData().size()) + ". ", myNextAddLineIndex);
+        //Console::Log("Went through " + std::to_string(myNextAddLineIndex) + " lines out of a total of " + std::to_string(doc.GetData().size()) + ". ", myNextAddLineIndex);
         return;
     }
     ourHasVideo = false;
@@ -71,7 +71,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
         std::filesystem::path fpath = path;
         if(fpath.extension() == ".mp4")
         {
-            chosenBackground = allowVideo ? path : "ResonateIconLarger.png";
+            chosenBackground = allowVideo ? path : "../ResonateIconLarger.png";
             ourHasVideo = allowVideo;
             break;
         }
@@ -88,7 +88,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
         }
         else
         {
-            chosenBackground = "ResonateIconLarger.png";
+            chosenBackground = "../ResonateIconLarger.png";
         }
     }
     if(ourHasVideo)
