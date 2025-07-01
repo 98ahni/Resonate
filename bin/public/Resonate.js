@@ -993,27 +993,27 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4075144: () => { return Date.now(); },  
- 4075165: () => { return Date.now(); },  
- 4075186: () => { return Date.now(); },  
- 4075207: () => { location.reload() },  
- 4075225: () => { location.reload(); },  
- 4075244: ($0) => { init_gapi_with_key($0); },  
- 4075270: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4075393: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4075495: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4075535: () => { Module.hide_loading_screen(); },  
- 4075565: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4075628: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4075721: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4075817: () => { return global_audio_element.paused ? 1 : 0; },  
- 4075861: () => { return global_audio_element.paused ? 1 : 0; },  
- 4075905: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4075955: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4076211: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4076501: () => { audio_element_pause(); },  
- 4076524: () => { audio_element_play(); },  
- 4076546: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4075160: () => { return Date.now(); },  
+ 4075181: () => { return Date.now(); },  
+ 4075202: () => { return Date.now(); },  
+ 4075223: () => { location.reload() },  
+ 4075241: () => { location.reload(); },  
+ 4075260: ($0) => { init_gapi_with_key($0); },  
+ 4075286: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4075409: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4075511: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4075551: () => { Module.hide_loading_screen(); },  
+ 4075581: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4075644: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4075737: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4075833: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4075877: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4075921: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4075971: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4076227: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4076517: () => { audio_element_pause(); },  
+ 4076540: () => { audio_element_play(); },  
+ 4076562: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function show_input_debugger() {_ShowInputDebugger(); }
 function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
@@ -13452,9 +13452,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4004740;
-var ___start_em_js = Module['___start_em_js'] = 4040416;
-var ___stop_em_js = Module['___stop_em_js'] = 4075144;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4004756;
+var ___start_em_js = Module['___start_em_js'] = 4040432;
+var ___stop_em_js = Module['___stop_em_js'] = 4075160;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

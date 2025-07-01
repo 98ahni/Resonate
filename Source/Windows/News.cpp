@@ -19,5 +19,30 @@ void NewsWindow::OnImGuiDraw()
     Gui_Begin();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     Title(15, "ver 0.9.0-beta");
+    Title(40, "Resonate is More Responsive and Responsible!");
+    Title(30, "\nLet's start with reliving some stress");
+    ImGui::TextWrapped("Oh,no! I meant /releaving/. How ever will I undo this mistake? If only there was a shortcut, gesture or even a menu option for this.\n"
+        "What's that? There is?! That's right, you can now take the stress of making a mistake off your shoulders. Ctrl/Cmd + Z/Y now undoes or redoes your last action and, don't fret, "
+        "if you're not using a keyboard any system event (such as three-finger swipes on iOS) works as well. And if all else fails, they're under the Edit menu.");
+    Title(30, "\nWait, are these lines out of order?");
+    ImGui::TextWrapped("Oh, this line on the left seems to confirm my suspicions. And clicking on it gives shows even more info. "
+        "You can even tell it to find things that might be wrong. Like an audio file that is too quiet or that too many lines could be shown simultaneously in ECHO. "
+        "Whenever the Console wants to tell you something it'll even put a dot next to the View menu where it lives.");
+    Title(30, "\nWell that's nice and all\n   But something still seems off with the timing");
+    ImGui::TextWrapped("Luckily, I just found out that Resonate has a new setting called /Enhanced Timing Readability/. Let's turn it on and see if it makes a difference. ");
+    Title(20, "Woah! "); ImGui::SameLine(); ImGui::Text("Yeah, I timed that poorly...");
+    ImGui::TextWrapped("Maybe my latency is wrong. oOo, I have a new preview in the Latency settings and TWO offsets, one for the visual and one for input. So I wasn't imagining things...");
+    Title(30, "\nWhat is this speed?");
+    ImGui::TextWrapped("The speed slider for the audio, it's done in a split second! Is that the new audio engine that uses the GPU? It's like 100 times faster! \n"
+        "And the Raw view? It's so much faster!");
+    Title(30, "\nI wish I could read this text over and over");
+    ImGui::TextWrapped("As luck would have it, I can. It's in the View menu, next to the Help window. Handy for checking the new features at your own pace!");
+    Title(30, "\n\nMore improvements?\n    There's MORE?!");
+    BulletWrap("Locally saved effects are now saved correctly.");
+    BulletWrap("Images should no longer disappear when setting certain values.");
+    BulletWrap("Images can now be timed like regular syllables.");
+    BulletWrap("The default image in preview would not always show, it now does.");
+    BulletWrap("The buttons on the <line#> tag now work properly.");
+    BulletWrap("Stability and visual improvements.");
     Gui_End();
 }
