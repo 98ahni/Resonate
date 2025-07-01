@@ -694,40 +694,47 @@ void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
 void TimingEditor::DrawLineTagWidget(int aLine, int aToken)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    float cursorY = ImGui::GetCursorPosY() + DPI_SCALED(5);
-    ImGui::SetCursorPosY(cursorY);
+    float cursorY = ImGui::GetCursorPosY();
+    //ImGui::SetCursorPosY(cursorY);
     ImGui::Text("<line#");
     ImGui::SameLine();
     int lane = std::stoi(StringTools::Split(doc.GetToken(aLine, aToken).myValue, std::regex("[-\\d]+"), true)[0]);
     bool isNegative = lane < 0;
     bool changed = false;
+    float height = DPI_SCALED(ImGui::GetTextLineHeightWithSpacing()) * .4;
+    //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(DPI_SCALED(-10), DPI_SCALED(-20)));
+    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.55f, .47f));
+    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
+    if(ImGui::Button(("+##" + std::to_string(aLine)).data(), {height * .8f, height}))
+    {
+        lane++;
+        changed = true;
+    }
+    ImGui::PopStyleVar(2);
+    ImGui::SameLine();
+    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
     ImGui::SetNextItemWidth(DPI_SCALED(20));
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {DPI_SCALED(5), 0});
-    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
     if(ImGui::DragInt(("##" + std::to_string(aLine)).data(), &lane, 1, 2))
     {
         changed = true;
     }
     ImGui::PopStyleVar();
     ImGui::SameLine();
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
+    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
+    //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(DPI_SCALED(-10), DPI_SCALED(-20)));
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.55f, .47f));
-    ImGui::SetCursorPosY(cursorY + DPI_SCALED(2));
-    ImGui::BeginGroup();
-    float height = DPI_SCALED(ImGui::GetTextLineHeightWithSpacing()) * .5f;
-    if(ImGui::Button("+", {height, height}))
-    {
-        lane++;
-        changed = true;
-    }
-    if(ImGui::Button("-", {height, height}))
+    //ImGui::BeginGroup();
+    if(ImGui::Button(("-##" + std::to_string(aLine)).data(), {height * .8f, height}))
     {
         lane--;
         changed = true;
     }
-    ImGui::EndGroup();
-    ImGui::PopStyleVar(3);
+    //ImGui::EndGroup();
+    ImGui::PopStyleVar(2);
+    //ImGui::SetCursorPosY(cursorY - DPI_SCALED(2));
     if(changed)
     {
         int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
