@@ -25,8 +25,9 @@ public:
     void CheckMarkerIsSafe(bool aIsMovingRight);
     void SetInputUnsafe(bool anUnsafe);
     bool GetInputUnsafe();
-    void SetAudioLatencyOffset(int someCentiSeconds);
-    int GetAudioLatencyOffset();
+    void SetInputLatencyOffset(int someCentiSeconds);
+    int GetInputLatencyOffset();
+    int GetRawInputLatencyOffset();
     void SetVisualLatencyOffset(int someCentiSeconds);
     int GetVisualLatencyOffset();
     int GetRawVisualLatencyOffset();

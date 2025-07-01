@@ -253,7 +253,7 @@ void TimingEditor::RecordStartTime()
             RecordEndTime();
         }
     }
-    int scaledLatency = (float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
+    int scaledLatency = GetInputLatencyOffset();
     if(!doc.GetToken(myMarkedLine, myMarkedToken).myHasStart && doc.GetToken(myMarkedLine, myMarkedToken).myValue.starts_with("image "))
     {
         if(doc.GetValidLineAfter(myMarkedLine).size() != 1 || !doc.IsPauseToken(doc.GetValidLineAfter(myMarkedLine)[0]))    // If the marked token is an image, recording start time 
@@ -288,7 +288,7 @@ void TimingEditor::RecordEndTime()
     Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
     if(doc.IsNull(prevToken)) return;
-    int scaledLatency = (float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f;
+    int scaledLatency = GetInputLatencyOffset();
     int currMarkLine = myMarkedLine;
     int currMarkToken = myMarkedToken;
     do
@@ -445,13 +445,18 @@ bool TimingEditor::GetInputUnsafe()
     return myDisableInput;
 }
 
-void TimingEditor::SetAudioLatencyOffset(int someCentiSeconds)
+void TimingEditor::SetInputLatencyOffset(int someCentiSeconds)
 {
     myAudioLatencyOffset = someCentiSeconds;
     Serialization::Preferences::SetInt("Timing/Latency", myAudioLatencyOffset);
 }
 
-int TimingEditor::GetAudioLatencyOffset()
+int TimingEditor::GetInputLatencyOffset()
+{
+    return (int)(((float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f) + .5f);
+}
+
+int TimingEditor::GetRawInputLatencyOffset()
 {
     return myAudioLatencyOffset;
 }
@@ -464,7 +469,7 @@ void TimingEditor::SetVisualLatencyOffset(int someCentiSeconds)
 
 int TimingEditor::GetVisualLatencyOffset()
 {
-    return AudioPlayback::GetIsPlaying() ? myVisualLatencyOffset : 0;
+    return AudioPlayback::GetIsPlaying() ? (int)(((float)myVisualLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f) + .5f) : 0;
 }
 
 int TimingEditor::GetRawVisualLatencyOffset()

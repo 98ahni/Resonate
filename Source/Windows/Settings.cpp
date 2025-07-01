@@ -84,7 +84,7 @@ void Settings::OnImGuiDraw()
     }
     if(ImGui::BeginPopupModal("Auto Latency", &myLatencyPopup))
     {
-        ImGui::SetWindowSize({DPI_SCALED(450), DPI_SCALED(350)}, ImGuiCond_Once);
+        ImGui::SetWindowSize({DPI_SCALED(600), DPI_SCALED(400)}, ImGuiCond_Once);
         int latency = DrawLatencyWidget();
         ImGui::Text("Adjust the Display Latency so that the pulsing circle matches the beat.");
         ImGui::Text("Hit [Space] or tap the circle when the bass hits to adjust the Input Latency.");
@@ -92,8 +92,9 @@ void Settings::OnImGuiDraw()
         // Visualization
         float sizeY = ImGui::GetWindowHeight() - ImGui::GetCursorPosY();
         float sizeX = ImGui::GetWindowWidth();
-        float size = (sizeX < sizeY ? sizeX : sizeY) * .4f;
         int timeRaw = DrawLatencyVisualization({sizeX, sizeY});
+        sizeY = ImGui::GetWindowHeight() - ImGui::GetCursorPosY();
+        float size = (sizeX < sizeY ? sizeX : sizeY) * .4f;
 
         // Latency Detection
         ImGui::SetCursorPos({(sizeX * .5f) - size, ((sizeY * .5f) + ImGui::GetCursorPosY()) - size});
@@ -101,11 +102,11 @@ void Settings::OnImGuiDraw()
         {
             if(timeRaw < 150)
             {
-                TimingEditor::Get().SetAudioLatencyOffset(timeRaw);
+                TimingEditor::Get().SetInputLatencyOffset(timeRaw);
             }
             else
             {
-                TimingEditor::Get().SetAudioLatencyOffset(timeRaw - 200);
+                TimingEditor::Get().SetInputLatencyOffset(timeRaw - 200);
             }
         }
 
@@ -276,6 +277,27 @@ int Settings::DrawLatencyVisualization(ImVec2 aSize)
     float radiusMult = (fl_mod(time, 50) + 150) / 200;
     float sizeY = aSize.y;
     float sizeX = aSize.x;
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
+    ImGui::PushFont(MainWindow::Font);
+    ImVec2 textSize = ImGui::CalcTextSize("Don  ka  ka  ka ");
+    ImGui::SetCursorPosX((sizeX - textSize.x) * .5f);
+    //ImGui::Dummy({(sizeX - textSize.x) * .5f, textSize.y});
+    //ImGui::SameLine();
+    uint startCol = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+    Serialization::KaraokeDocument::Get().SetColor(IM_COL32_FROM_DOC(startCol), IM_COL32_FROM_DOC(startCol));
+    ImGui::Ext::TimedSyllable("Don", 0, 50, timeRaw - TimingEditor::Get().GetRawVisualLatencyOffset(), false, true, false, DPI_SCALED(2), 1.4f);
+    ImGui::SameLine();
+    //ImGui::SetCursorPosX(((sizeX - textSize.x) * .5f) + (textSize.x * .25f));
+    ImGui::Ext::TimedSyllable(" ka", 50, 70, timeRaw - TimingEditor::Get().GetRawVisualLatencyOffset(), false, true, false, DPI_SCALED(2), 1.2f);
+    ImGui::SameLine();
+    //ImGui::SetCursorPosX(sizeX * .5f);    //ImGui::SetCursorPosX(((sizeX - textSize.x) * .5f) + (textSize.x * .5f));
+    ImGui::Ext::TimedSyllable(" ka", 100, 120, timeRaw - TimingEditor::Get().GetRawVisualLatencyOffset(), false, true, false, DPI_SCALED(2), 1.2f);
+    ImGui::SameLine();
+    //ImGui::SetCursorPosX(((sizeX - textSize.x) * .5f) + (textSize.x * .75f));
+    ImGui::Ext::TimedSyllable(" ka", 150, 170, timeRaw - TimingEditor::Get().GetRawVisualLatencyOffset(), false, true, false, DPI_SCALED(2), 1.2f);
+    //sizeY -= ImGui::GetTextLineHeightWithSpacing();
+    ImGui::PopFont();
+    ImGui::PopStyleVar();
     float size = (sizeX < sizeY ? sizeX : sizeY) * .4f;
     ImVec2 center = {(sizeX * .5f) + ImGui::GetWindowPos().x, (sizeY * .5f) + ImGui::GetCursorPosY() + ImGui::GetWindowPos().y};
     ImVec4 color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
@@ -310,10 +332,10 @@ int Settings::DrawLatencyWidget()
     {
         timing.SetVisualLatencyOffset(vlatency);
     }
-    int latency = timing.GetAudioLatencyOffset();
+    int latency = timing.GetRawInputLatencyOffset();
     if(ImGui::Ext::StepInt("Input Latency (cs)", latency, 1, 5))
     {
-        timing.SetAudioLatencyOffset(latency);
+        timing.SetInputLatencyOffset(latency);
     }
     return latency;
 }

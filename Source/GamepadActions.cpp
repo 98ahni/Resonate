@@ -141,6 +141,7 @@ void DoGamepadActions()
     DoEffectsActions();
     DoLayoutActions();
     CheckGamepadActions();
+    g_selectedColorSlider = 0;
     if(!g_showOverlay) { return; }
     DrawOverlay();
 }
@@ -869,27 +870,65 @@ bool DrawLatencyPopup()
             Settings::InitLatencyVisualization();
         }
         ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        int latency = TimingEditor::Get().GetAudioLatencyOffset();
-        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowLeftBtn], g_hudEndUVs[ArrowLeftBtn]);
+        int latency = TimingEditor::Get().GetRawInputLatencyOffset();
+        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
         ImGui::SameLine();
-        if(ImGui::DragInt("##Latency", &latency))
+        ImVec2 outlinePos = ImGui::GetCursorScreenPos();
+        if(ImGui::DragInt("##AudioLatency", &latency))
         {
-            TimingEditor::Get().SetAudioLatencyOffset(latency);
+            TimingEditor::Get().SetInputLatencyOffset(latency);
+        }
+        ImVec2 outlineSize = ImGui::GetCursorScreenPos();
+        ImGui::SameLine();
+        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        latency = TimingEditor::Get().GetRawVisualLatencyOffset();
+        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        ImGui::SameLine();
+        if(g_selectedColorSlider == 1) {outlinePos = ImGui::GetCursorScreenPos();}
+        if(ImGui::DragInt("##VisualLatency", &latency))
+        {
+            TimingEditor::Get().SetVisualLatencyOffset(latency);
         }
         ImGui::SameLine();
-        ImGui::Image(g_hudTexture.myID, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()}, g_hudStartUVs[ArrowRightBtn], g_hudEndUVs[ArrowRightBtn]);
+        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        int step = 0;
         if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
         {
-            TimingEditor::Get().SetAudioLatencyOffset(latency - (Gamepad::GetTimeSinceToggled(Gamepad::D_Left) < 3 ? 1 : 5));
+            step -= (Gamepad::GetTimeSinceToggled(Gamepad::D_Left) < 3 ? 1 : 5);
+            TimingEditor::Get().SetInputLatencyOffset(latency - step);
         }
         if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
         {
-            TimingEditor::Get().SetAudioLatencyOffset(latency + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5));
+            step += (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            TimingEditor::Get().SetInputLatencyOffset(latency + step);
+        }
+        if(g_selectedColorSlider == 0 && step != 0)
+        {
+            TimingEditor::Get().SetInputLatencyOffset(TimingEditor::Get().GetRawInputLatencyOffset() + step);
+        }
+        if(g_selectedColorSlider == 1 && step != 0)
+        {
+            TimingEditor::Get().SetVisualLatencyOffset(TimingEditor::Get().GetRawVisualLatencyOffset() + step);
+        }
+        if(Gamepad::GetButtonDown(Gamepad::D_Up) || Gamepad::GetButtonDown(Gamepad::D_Down))
+        {
+            g_selectedColorSlider = g_selectedColorSlider == 0 ? 1 : 0;
         }
         if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
         {
             ImGui::CloseCurrentPopup();
         }
+        
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        drawList->AddRect(
+            {outlinePos.x - DPI_SCALED(5), outlinePos.y - DPI_SCALED(5)},
+            {outlinePos.x + outlineSize.x + DPI_SCALED(5), outlinePos.y + outlineSize.y + DPI_SCALED(5)},
+            ImGui::GetColorU32(ImGuiCol_NavHighlight), ImGui::GetStyle().FrameRounding + DPI_SCALED(2), 0, ImGui::GetStyle().WindowBorderSize);
+        AddHudSpriteTo(drawList, HUDSprite::ArrowUpBtn, {(outlinePos.x - DPI_SCALED(10)) + (outlineSize.x * .5f), outlinePos.y - DPI_SCALED(20)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowDownBtn, {(outlinePos.x - DPI_SCALED(10)) + (outlineSize.x * .5f), outlinePos.y + outlineSize.y + DPI_SCALED(0)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowLeftBtn, {outlinePos.x - DPI_SCALED(20), outlinePos.y + (outlineSize.y * .5f) - DPI_SCALED(10)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        AddHudSpriteTo(drawList, HUDSprite::ArrowRightBtn, {outlinePos.x + DPI_SCALED(0) + outlineSize.x, outlinePos.y + (outlineSize.y * .5f) - DPI_SCALED(10)}, {DPI_SCALED(20), DPI_SCALED(20)});
+
         Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
         if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
         {
@@ -911,11 +950,11 @@ bool DrawLatencyPopup()
         {
             if(timeRaw < 150)
             {
-                TimingEditor::Get().SetAudioLatencyOffset(timeRaw);
+                TimingEditor::Get().SetInputLatencyOffset(timeRaw);
             }
             else
             {
-                TimingEditor::Get().SetAudioLatencyOffset(timeRaw - 200);
+                TimingEditor::Get().SetInputLatencyOffset(timeRaw - 200);
             }
         }
 
