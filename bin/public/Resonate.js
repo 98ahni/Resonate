@@ -840,6 +840,10 @@ function createWasm() {
     //assert(wasmMemory.buffer.byteLength === 16777216);
     updateMemoryViews();
 
+    wasmTable = wasmExports['__indirect_function_table'];
+    
+    assert(wasmTable, 'table not found in wasm exports');
+
     addOnInit(wasmExports['__wasm_call_ctors']);
 
     removeRunDependency('wasm-instantiate');
@@ -989,27 +993,27 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4070573: () => { return Date.now(); },  
- 4070594: () => { return Date.now(); },  
- 4070615: () => { return Date.now(); },  
- 4070636: () => { location.reload() },  
- 4070654: () => { location.reload(); },  
- 4070673: ($0) => { init_gapi_with_key($0); },  
- 4070699: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4070822: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4070924: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4070964: () => { Module.hide_loading_screen(); },  
- 4070994: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4071057: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4071150: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4071246: () => { return global_audio_element.paused ? 1 : 0; },  
- 4071290: () => { return global_audio_element.paused ? 1 : 0; },  
- 4071334: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4071384: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4071640: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4071930: () => { audio_element_pause(); },  
- 4071953: () => { audio_element_play(); },  
- 4071975: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4075144: () => { return Date.now(); },  
+ 4075165: () => { return Date.now(); },  
+ 4075186: () => { return Date.now(); },  
+ 4075207: () => { location.reload() },  
+ 4075225: () => { location.reload(); },  
+ 4075244: ($0) => { init_gapi_with_key($0); },  
+ 4075270: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4075393: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4075495: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4075535: () => { Module.hide_loading_screen(); },  
+ 4075565: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4075628: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4075721: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4075817: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4075861: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4075905: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4075955: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4076211: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4076501: () => { audio_element_pause(); },  
+ 4076524: () => { audio_element_play(); },  
+ 4076546: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function show_input_debugger() {_ShowInputDebugger(); }
 function open_mooncat_guidelines() { window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank'); }
@@ -1080,6 +1084,7 @@ function set_audio_playback_speed(play_rate) { const audio = global_audio_elemen
 function audio_element_play() { global_audio_element.play(); }
 function audio_element_pause() { global_audio_element.pause(); }
 function get_audio_samples_hybrid(stretch_index,crude_engine,fine_engine) { const crudeEngine = Emval.toValue(crude_engine); const fineEngine = Emval.toValue(fine_engine); const stretchIndex = Emval.toValue(stretch_index); var useCrude = crudeEngine !== ''; var audioWorker = new Worker('plugins/audiostretchworker.js'); audioWorker.postMessage(global_audio_worker_setup_data); audioWorker.postMessage(['Work', useCrude ? crudeEngine : fineEngine, stretchIndex, useCrude]); audioWorker.onmessage = (result) => { if(useCrude){get_audio_samples_hybrid(Emval.toHandle(stretchIndex), Emval.toHandle(''), Emval.toHandle(fineEngine));} global_audio_blobs[result.data[1] - 1] = result.data[0]; global_audio_completion[result.data[1] - 1] = true; _jsUpdateAudioBuffer(Emval.toHandle(result.data[1])); audioWorker.postMessage(['Revive']); audioWorker.onmessage = (result) => { audioWorker.terminate(); if(useCrude){ console.log('Resetting corse engine ' + result.data[0]); } else { console.log('Resetting fine engine ' + result.data[0]); } }; }; }
+function get_audio_samples_GPU(stretch_index,kernel_name) { const kernelName = Emval.toValue(kernel_name); const stretchIndex = Emval.toValue(stretch_index); var audioBuff = Module['ShaderBuffer'].Create(); var stretchedBuff = Module['ShaderBuffer'].Create(); const audioLength = global_audio_worker_setup_data[1][0].length; const stretchedLength = Math.ceil(audioLength / (stretchIndex * .1)); var compute = Module['ComputeShader'].Load('Shaders/ResonateStretchCS.wgsl'); compute.SetBuffer('audioBuffer', audioBuff); compute.SetBuffer('stretchedBuffer', stretchedBuff); compute.SetInt("audioLength", audioLength); compute.SetInt("stretchedLength", stretchedLength); const stftBins = ( 5 < stretchIndex ? 8192 :( 4 < stretchIndex ? 6140 :( 3 < stretchIndex ? 4096 : 1576))); compute.SetInt("stftBins", stftBins); const stftHop = 1 / ( 5 < stretchIndex ? 3 :( 4 < stretchIndex ? 4.8 :( 3 < stretchIndex ? 5 : 6))); compute.SetFloat("stftHop", stftHop); compute.SetFloat("stretchFactor", 1 / (stretchIndex * 0.1)); var output = []; new Promise(async(resolveAll)=>{ for(var ch = 0; ch < global_audio_worker_setup_data[1].length; ch++) { await new Promise((resolve)=>{ audioBuff.SetData(global_audio_worker_setup_data[1][ch]); stretchedBuff.SetData(new Float32Array(stretchedLength)); compute.Dispatch(kernelName, (audioLength - stftBins) / (stftBins * stftHop), 1, 1); stretchedBuff.GetDataAsync((buffer)=>{ output[ch] = new Float32Array(buffer); resolve(); }); }); } resolveAll(); }).then(()=>{ global_audio_blobs[stretchIndex - 1] = Module.audioDataArrayToBlob(output , global_audio_worker_setup_data[3]); global_audio_completion[stretchIndex - 1] = true; _jsUpdateAudioBuffer(Emval.toHandle(stretchIndex)); audioBuff.delete(); stretchedBuff.delete(); compute.delete(); }); }
 function __asyncjs__get_audio_samples_setup(fs_path) { return Asyncify.handleAsync(async () => { const audioData = FS.readFile(Emval.toValue(fs_path)); const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' }); global_audio_blobs.length = 10; global_audio_completion = [false, false, false, false, false, false, false, false, false, false]; global_audio_context.decodeAudioData(await audioBlob.arrayBuffer(), (buffer)=>{ const isSafari = !!window['safari'] && safari !== 'undefined'; global_audio_blobs[9] = Module.audioBufferToBlob(buffer, buffer.sampleRate); global_audio_completion[9] = true; set_audio_playback_buffer(Emval.toHandle(10)); if(_IsWaitingToPlay()){ audio_element_play(); } var audioDatas = []; audioDatas.length = buffer.numberOfChannels; for(var i = 0; i < buffer.numberOfChannels; i++){ audioDatas[i] = buffer.getChannelData(i); } global_audio_worker_setup_data = ['Setup', audioDatas, audioDatas[0].length, buffer.sampleRate, isSafari]; }); }); }
 function __asyncjs__get_audio_volume_db() { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise(async(resolve)=>{ var output = {}; output.peak = 0; output.mean = 0; output.clip_count = 0; if(!global_audio_completion[9]){ resolve(output); return; } global_audio_context.decodeAudioData(await global_audio_blobs[9].arrayBuffer(), (buffer)=>{ for(let ind = 0; ind < buffer.numberOfChannels; ind++){ for(const sample of buffer.getChannelData(ind)){ if(1 < Math.abs(sample)) { output.clip_count++; } else if(output.peak < Math.abs(sample)) { output.peak = Math.abs(sample); } output.mean += Math.abs(sample); } } output.mean /= buffer.getChannelData(0).length * buffer.numberOfChannels; output.clip_count /= buffer.getChannelData(0).length * buffer.numberOfChannels; output.peak = 20 * Math.log10(output.peak ); output.mean = 20 * Math.log10(output.mean ); resolve(output); }); })); }); }
 function __asyncjs__init_file_system() { return Asyncify.handleAsync(async () => { return Emval.toHandle(new Promise((resolve) => { FS.mount(MEMFS, { root: '.' }, '.'); FS.mkdir('/local'); FS.mount(IDBFS, {}, '/local'); FS.syncfs(true, function (err) { if(err) { alert('Unable to sync IndexDB!\n' + err); } resolve(); }); })); }); }
@@ -4914,6 +4919,1626 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
     };
 
   
+  
+  var shallowCopyInternalPointer = (o) => {
+      return {
+        count: o.count,
+        deleteScheduled: o.deleteScheduled,
+        preservePointerOnDelete: o.preservePointerOnDelete,
+        ptr: o.ptr,
+        ptrType: o.ptrType,
+        smartPtr: o.smartPtr,
+        smartPtrType: o.smartPtrType,
+      };
+    };
+  
+  var throwInstanceAlreadyDeleted = (obj) => {
+      function getInstanceTypeName(handle) {
+        return handle.$$.ptrType.registeredClass.name;
+      }
+      throwBindingError(getInstanceTypeName(obj) + ' instance already deleted');
+    };
+  
+  var finalizationRegistry = false;
+  
+  var detachFinalizer = (handle) => {};
+  
+  var runDestructor = ($$) => {
+      if ($$.smartPtr) {
+        $$.smartPtrType.rawDestructor($$.smartPtr);
+      } else {
+        $$.ptrType.registeredClass.rawDestructor($$.ptr);
+      }
+    };
+  var releaseClassHandle = ($$) => {
+      $$.count.value -= 1;
+      var toDelete = 0 === $$.count.value;
+      if (toDelete) {
+        runDestructor($$);
+      }
+    };
+  
+  var downcastPointer = (ptr, ptrClass, desiredClass) => {
+      if (ptrClass === desiredClass) {
+        return ptr;
+      }
+      if (undefined === desiredClass.baseClass) {
+        return null; // no conversion
+      }
+  
+      var rv = downcastPointer(ptr, ptrClass, desiredClass.baseClass);
+      if (rv === null) {
+        return null;
+      }
+      return desiredClass.downcast(rv);
+    };
+  
+  var registeredPointers = {
+  };
+  
+  var getInheritedInstanceCount = () => Object.keys(registeredInstances).length;
+  
+  var getLiveInheritedInstances = () => {
+      var rv = [];
+      for (var k in registeredInstances) {
+        if (registeredInstances.hasOwnProperty(k)) {
+          rv.push(registeredInstances[k]);
+        }
+      }
+      return rv;
+    };
+  
+  var deletionQueue = [];
+  var flushPendingDeletes = () => {
+      while (deletionQueue.length) {
+        var obj = deletionQueue.pop();
+        obj.$$.deleteScheduled = false;
+        obj['delete']();
+      }
+    };
+  
+  var delayFunction;
+  
+  
+  var setDelayFunction = (fn) => {
+      delayFunction = fn;
+      if (deletionQueue.length && delayFunction) {
+        delayFunction(flushPendingDeletes);
+      }
+    };
+  var init_embind = () => {
+      Module['getInheritedInstanceCount'] = getInheritedInstanceCount;
+      Module['getLiveInheritedInstances'] = getLiveInheritedInstances;
+      Module['flushPendingDeletes'] = flushPendingDeletes;
+      Module['setDelayFunction'] = setDelayFunction;
+    };
+  var registeredInstances = {
+  };
+  
+  var getBasestPointer = (class_, ptr) => {
+      if (ptr === undefined) {
+          throwBindingError('ptr should not be undefined');
+      }
+      while (class_.baseClass) {
+          ptr = class_.upcast(ptr);
+          class_ = class_.baseClass;
+      }
+      return ptr;
+    };
+  var getInheritedInstance = (class_, ptr) => {
+      ptr = getBasestPointer(class_, ptr);
+      return registeredInstances[ptr];
+    };
+  
+  
+  var makeClassHandle = (prototype, record) => {
+      if (!record.ptrType || !record.ptr) {
+        throwInternalError('makeClassHandle requires ptr and ptrType');
+      }
+      var hasSmartPtrType = !!record.smartPtrType;
+      var hasSmartPtr = !!record.smartPtr;
+      if (hasSmartPtrType !== hasSmartPtr) {
+        throwInternalError('Both smartPtrType and smartPtr must be specified');
+      }
+      record.count = { value: 1 };
+      return attachFinalizer(Object.create(prototype, {
+        $$: {
+          value: record,
+          writable: true,
+        },
+      }));
+    };
+  /** @suppress {globalThis} */
+  function RegisteredPointer_fromWireType(ptr) {
+      // ptr is a raw pointer (or a raw smartpointer)
+  
+      // rawPointer is a maybe-null raw pointer
+      var rawPointer = this.getPointee(ptr);
+      if (!rawPointer) {
+        this.destructor(ptr);
+        return null;
+      }
+  
+      var registeredInstance = getInheritedInstance(this.registeredClass, rawPointer);
+      if (undefined !== registeredInstance) {
+        // JS object has been neutered, time to repopulate it
+        if (0 === registeredInstance.$$.count.value) {
+          registeredInstance.$$.ptr = rawPointer;
+          registeredInstance.$$.smartPtr = ptr;
+          return registeredInstance['clone']();
+        } else {
+          // else, just increment reference count on existing object
+          // it already has a reference to the smart pointer
+          var rv = registeredInstance['clone']();
+          this.destructor(ptr);
+          return rv;
+        }
+      }
+  
+      function makeDefaultHandle() {
+        if (this.isSmartPointer) {
+          return makeClassHandle(this.registeredClass.instancePrototype, {
+            ptrType: this.pointeeType,
+            ptr: rawPointer,
+            smartPtrType: this,
+            smartPtr: ptr,
+          });
+        } else {
+          return makeClassHandle(this.registeredClass.instancePrototype, {
+            ptrType: this,
+            ptr,
+          });
+        }
+      }
+  
+      var actualType = this.registeredClass.getActualType(rawPointer);
+      var registeredPointerRecord = registeredPointers[actualType];
+      if (!registeredPointerRecord) {
+        return makeDefaultHandle.call(this);
+      }
+  
+      var toType;
+      if (this.isConst) {
+        toType = registeredPointerRecord.constPointerType;
+      } else {
+        toType = registeredPointerRecord.pointerType;
+      }
+      var dp = downcastPointer(
+          rawPointer,
+          this.registeredClass,
+          toType.registeredClass);
+      if (dp === null) {
+        return makeDefaultHandle.call(this);
+      }
+      if (this.isSmartPointer) {
+        return makeClassHandle(toType.registeredClass.instancePrototype, {
+          ptrType: toType,
+          ptr: dp,
+          smartPtrType: this,
+          smartPtr: ptr,
+        });
+      } else {
+        return makeClassHandle(toType.registeredClass.instancePrototype, {
+          ptrType: toType,
+          ptr: dp,
+        });
+      }
+    }
+  var attachFinalizer = (handle) => {
+      if ('undefined' === typeof FinalizationRegistry) {
+        attachFinalizer = (handle) => handle;
+        return handle;
+      }
+      // If the running environment has a FinalizationRegistry (see
+      // https://github.com/tc39/proposal-weakrefs), then attach finalizers
+      // for class handles.  We check for the presence of FinalizationRegistry
+      // at run-time, not build-time.
+      finalizationRegistry = new FinalizationRegistry((info) => {
+        console.warn(info.leakWarning.stack.replace(/^Error: /, ''));
+        releaseClassHandle(info.$$);
+      });
+      attachFinalizer = (handle) => {
+        var $$ = handle.$$;
+        var hasSmartPtr = !!$$.smartPtr;
+        if (hasSmartPtr) {
+          // We should not call the destructor on raw pointers in case other code expects the pointee to live
+          var info = { $$: $$ };
+          // Create a warning as an Error instance in advance so that we can store
+          // the current stacktrace and point to it when / if a leak is detected.
+          // This is more useful than the empty stacktrace of `FinalizationRegistry`
+          // callback.
+          var cls = $$.ptrType.registeredClass;
+          info.leakWarning = new Error(`Embind found a leaked C++ instance ${cls.name} <${ptrToString($$.ptr)}>.\n` +
+          "We'll free it automatically in this case, but this functionality is not reliable across various environments.\n" +
+          "Make sure to invoke .delete() manually once you're done with the instance instead.\n" +
+          "Originally allocated"); // `.stack` will add "at ..." after this sentence
+          if ('captureStackTrace' in Error) {
+            Error.captureStackTrace(info.leakWarning, RegisteredPointer_fromWireType);
+          }
+          finalizationRegistry.register(handle, info, handle);
+        }
+        return handle;
+      };
+      detachFinalizer = (handle) => finalizationRegistry.unregister(handle);
+      return attachFinalizer(handle);
+    };
+  
+  
+  
+  var init_ClassHandle = () => {
+      Object.assign(ClassHandle.prototype, {
+        "isAliasOf"(other) {
+          if (!(this instanceof ClassHandle)) {
+            return false;
+          }
+          if (!(other instanceof ClassHandle)) {
+            return false;
+          }
+  
+          var leftClass = this.$$.ptrType.registeredClass;
+          var left = this.$$.ptr;
+          other.$$ = /** @type {Object} */ (other.$$);
+          var rightClass = other.$$.ptrType.registeredClass;
+          var right = other.$$.ptr;
+  
+          while (leftClass.baseClass) {
+            left = leftClass.upcast(left);
+            leftClass = leftClass.baseClass;
+          }
+  
+          while (rightClass.baseClass) {
+            right = rightClass.upcast(right);
+            rightClass = rightClass.baseClass;
+          }
+  
+          return leftClass === rightClass && left === right;
+        },
+  
+        "clone"() {
+          if (!this.$$.ptr) {
+            throwInstanceAlreadyDeleted(this);
+          }
+  
+          if (this.$$.preservePointerOnDelete) {
+            this.$$.count.value += 1;
+            return this;
+          } else {
+            var clone = attachFinalizer(Object.create(Object.getPrototypeOf(this), {
+              $$: {
+                value: shallowCopyInternalPointer(this.$$),
+              }
+            }));
+  
+            clone.$$.count.value += 1;
+            clone.$$.deleteScheduled = false;
+            return clone;
+          }
+        },
+  
+        "delete"() {
+          if (!this.$$.ptr) {
+            throwInstanceAlreadyDeleted(this);
+          }
+  
+          if (this.$$.deleteScheduled && !this.$$.preservePointerOnDelete) {
+            throwBindingError('Object already scheduled for deletion');
+          }
+  
+          detachFinalizer(this);
+          releaseClassHandle(this.$$);
+  
+          if (!this.$$.preservePointerOnDelete) {
+            this.$$.smartPtr = undefined;
+            this.$$.ptr = undefined;
+          }
+        },
+  
+        "isDeleted"() {
+          return !this.$$.ptr;
+        },
+  
+        "deleteLater"() {
+          if (!this.$$.ptr) {
+            throwInstanceAlreadyDeleted(this);
+          }
+          if (this.$$.deleteScheduled && !this.$$.preservePointerOnDelete) {
+            throwBindingError('Object already scheduled for deletion');
+          }
+          deletionQueue.push(this);
+          if (deletionQueue.length === 1 && delayFunction) {
+            delayFunction(flushPendingDeletes);
+          }
+          this.$$.deleteScheduled = true;
+          return this;
+        },
+      });
+    };
+  /** @constructor */
+  function ClassHandle() {
+    }
+  
+  var createNamedFunction = (name, body) => Object.defineProperty(body, 'name', {
+      value: name
+    });
+  
+  
+  var ensureOverloadTable = (proto, methodName, humanName) => {
+      if (undefined === proto[methodName].overloadTable) {
+        var prevFunc = proto[methodName];
+        // Inject an overload resolver function that routes to the appropriate overload based on the number of arguments.
+        proto[methodName] = function(...args) {
+          // TODO This check can be removed in -O3 level "unsafe" optimizations.
+          if (!proto[methodName].overloadTable.hasOwnProperty(args.length)) {
+            throwBindingError(`Function '${humanName}' called with an invalid number of arguments (${args.length}) - expects one of (${proto[methodName].overloadTable})!`);
+          }
+          return proto[methodName].overloadTable[args.length].apply(this, args);
+        };
+        // Move the previous function into the overload table.
+        proto[methodName].overloadTable = [];
+        proto[methodName].overloadTable[prevFunc.argCount] = prevFunc;
+      }
+    };
+  
+  /** @param {number=} numArguments */
+  var exposePublicSymbol = (name, value, numArguments) => {
+      if (Module.hasOwnProperty(name)) {
+        if (undefined === numArguments || (undefined !== Module[name].overloadTable && undefined !== Module[name].overloadTable[numArguments])) {
+          throwBindingError(`Cannot register public name '${name}' twice`);
+        }
+  
+        // We are exposing a function with the same name as an existing function. Create an overload table and a function selector
+        // that routes between the two.
+        ensureOverloadTable(Module, name, name);
+        if (Module.hasOwnProperty(numArguments)) {
+          throwBindingError(`Cannot register multiple overloads of a function with the same number of arguments (${numArguments})!`);
+        }
+        // Add the new function into the overload table.
+        Module[name].overloadTable[numArguments] = value;
+      }
+      else {
+        Module[name] = value;
+        if (undefined !== numArguments) {
+          Module[name].numArguments = numArguments;
+        }
+      }
+    };
+  
+  var char_0 = 48;
+  
+  var char_9 = 57;
+  var makeLegalFunctionName = (name) => {
+      if (undefined === name) {
+        return '_unknown';
+      }
+      name = name.replace(/[^a-zA-Z0-9_]/g, '$');
+      var f = name.charCodeAt(0);
+      if (f >= char_0 && f <= char_9) {
+        return `_${name}`;
+      }
+      return name;
+    };
+  
+  
+  /** @constructor */
+  function RegisteredClass(name,
+                               constructor,
+                               instancePrototype,
+                               rawDestructor,
+                               baseClass,
+                               getActualType,
+                               upcast,
+                               downcast) {
+      this.name = name;
+      this.constructor = constructor;
+      this.instancePrototype = instancePrototype;
+      this.rawDestructor = rawDestructor;
+      this.baseClass = baseClass;
+      this.getActualType = getActualType;
+      this.upcast = upcast;
+      this.downcast = downcast;
+      this.pureVirtualFunctions = [];
+    }
+  
+  
+  var upcastPointer = (ptr, ptrClass, desiredClass) => {
+      while (ptrClass !== desiredClass) {
+        if (!ptrClass.upcast) {
+          throwBindingError(`Expected null or instance of ${desiredClass.name}, got an instance of ${ptrClass.name}`);
+        }
+        ptr = ptrClass.upcast(ptr);
+        ptrClass = ptrClass.baseClass;
+      }
+      return ptr;
+    };
+  /** @suppress {globalThis} */
+  function constNoSmartPtrRawPointerToWireType(destructors, handle) {
+      if (handle === null) {
+        if (this.isReference) {
+          throwBindingError(`null is not a valid ${this.name}`);
+        }
+        return 0;
+      }
+  
+      if (!handle.$$) {
+        throwBindingError(`Cannot pass "${embindRepr(handle)}" as a ${this.name}`);
+      }
+      if (!handle.$$.ptr) {
+        throwBindingError(`Cannot pass deleted object as a pointer of type ${this.name}`);
+      }
+      var handleClass = handle.$$.ptrType.registeredClass;
+      var ptr = upcastPointer(handle.$$.ptr, handleClass, this.registeredClass);
+      return ptr;
+    }
+  
+  
+  /** @suppress {globalThis} */
+  function genericPointerToWireType(destructors, handle) {
+      var ptr;
+      if (handle === null) {
+        if (this.isReference) {
+          throwBindingError(`null is not a valid ${this.name}`);
+        }
+  
+        if (this.isSmartPointer) {
+          ptr = this.rawConstructor();
+          if (destructors !== null) {
+            destructors.push(this.rawDestructor, ptr);
+          }
+          return ptr;
+        } else {
+          return 0;
+        }
+      }
+  
+      if (!handle || !handle.$$) {
+        throwBindingError(`Cannot pass "${embindRepr(handle)}" as a ${this.name}`);
+      }
+      if (!handle.$$.ptr) {
+        throwBindingError(`Cannot pass deleted object as a pointer of type ${this.name}`);
+      }
+      if (!this.isConst && handle.$$.ptrType.isConst) {
+        throwBindingError(`Cannot convert argument of type ${(handle.$$.smartPtrType ? handle.$$.smartPtrType.name : handle.$$.ptrType.name)} to parameter type ${this.name}`);
+      }
+      var handleClass = handle.$$.ptrType.registeredClass;
+      ptr = upcastPointer(handle.$$.ptr, handleClass, this.registeredClass);
+  
+      if (this.isSmartPointer) {
+        // TODO: this is not strictly true
+        // We could support BY_EMVAL conversions from raw pointers to smart pointers
+        // because the smart pointer can hold a reference to the handle
+        if (undefined === handle.$$.smartPtr) {
+          throwBindingError('Passing raw pointer to smart pointer is illegal');
+        }
+  
+        switch (this.sharingPolicy) {
+          case 0: // NONE
+            // no upcasting
+            if (handle.$$.smartPtrType === this) {
+              ptr = handle.$$.smartPtr;
+            } else {
+              throwBindingError(`Cannot convert argument of type ${(handle.$$.smartPtrType ? handle.$$.smartPtrType.name : handle.$$.ptrType.name)} to parameter type ${this.name}`);
+            }
+            break;
+  
+          case 1: // INTRUSIVE
+            ptr = handle.$$.smartPtr;
+            break;
+  
+          case 2: // BY_EMVAL
+            if (handle.$$.smartPtrType === this) {
+              ptr = handle.$$.smartPtr;
+            } else {
+              var clonedHandle = handle['clone']();
+              ptr = this.rawShare(
+                ptr,
+                Emval.toHandle(() => clonedHandle['delete']())
+              );
+              if (destructors !== null) {
+                destructors.push(this.rawDestructor, ptr);
+              }
+            }
+            break;
+  
+          default:
+            throwBindingError('Unsupporting sharing policy');
+        }
+      }
+      return ptr;
+    }
+  
+  
+  /** @suppress {globalThis} */
+  function nonConstNoSmartPtrRawPointerToWireType(destructors, handle) {
+      if (handle === null) {
+        if (this.isReference) {
+          throwBindingError(`null is not a valid ${this.name}`);
+        }
+        return 0;
+      }
+  
+      if (!handle.$$) {
+        throwBindingError(`Cannot pass "${embindRepr(handle)}" as a ${this.name}`);
+      }
+      if (!handle.$$.ptr) {
+        throwBindingError(`Cannot pass deleted object as a pointer of type ${this.name}`);
+      }
+      if (handle.$$.ptrType.isConst) {
+          throwBindingError(`Cannot convert argument of type ${handle.$$.ptrType.name} to parameter type ${this.name}`);
+      }
+      var handleClass = handle.$$.ptrType.registeredClass;
+      var ptr = upcastPointer(handle.$$.ptr, handleClass, this.registeredClass);
+      return ptr;
+    }
+  
+  
+  /** @suppress {globalThis} */
+  function readPointer(pointer) {
+      return this['fromWireType'](HEAPU32[((pointer)>>2)]);
+    }
+  
+  
+  var init_RegisteredPointer = () => {
+      Object.assign(RegisteredPointer.prototype, {
+        getPointee(ptr) {
+          if (this.rawGetPointee) {
+            ptr = this.rawGetPointee(ptr);
+          }
+          return ptr;
+        },
+        destructor(ptr) {
+          this.rawDestructor?.(ptr);
+        },
+        'argPackAdvance': GenericWireTypeSize,
+        'readValueFromPointer': readPointer,
+        'fromWireType': RegisteredPointer_fromWireType,
+      });
+    };
+  /** @constructor
+      @param {*=} pointeeType,
+      @param {*=} sharingPolicy,
+      @param {*=} rawGetPointee,
+      @param {*=} rawConstructor,
+      @param {*=} rawShare,
+      @param {*=} rawDestructor,
+       */
+  function RegisteredPointer(
+      name,
+      registeredClass,
+      isReference,
+      isConst,
+  
+      // smart pointer properties
+      isSmartPointer,
+      pointeeType,
+      sharingPolicy,
+      rawGetPointee,
+      rawConstructor,
+      rawShare,
+      rawDestructor
+    ) {
+      this.name = name;
+      this.registeredClass = registeredClass;
+      this.isReference = isReference;
+      this.isConst = isConst;
+  
+      // smart pointer properties
+      this.isSmartPointer = isSmartPointer;
+      this.pointeeType = pointeeType;
+      this.sharingPolicy = sharingPolicy;
+      this.rawGetPointee = rawGetPointee;
+      this.rawConstructor = rawConstructor;
+      this.rawShare = rawShare;
+      this.rawDestructor = rawDestructor;
+  
+      if (!isSmartPointer && registeredClass.baseClass === undefined) {
+        if (isConst) {
+          this['toWireType'] = constNoSmartPtrRawPointerToWireType;
+          this.destructorFunction = null;
+        } else {
+          this['toWireType'] = nonConstNoSmartPtrRawPointerToWireType;
+          this.destructorFunction = null;
+        }
+      } else {
+        this['toWireType'] = genericPointerToWireType;
+        // Here we must leave this.destructorFunction undefined, since whether genericPointerToWireType returns
+        // a pointer that needs to be freed up is runtime-dependent, and cannot be evaluated at registration time.
+        // TODO: Create an alternative mechanism that allows removing the use of var destructors = []; array in
+        //       craftInvokerFunction altogether.
+      }
+    }
+  
+  /** @param {number=} numArguments */
+  var replacePublicSymbol = (name, value, numArguments) => {
+      if (!Module.hasOwnProperty(name)) {
+        throwInternalError('Replacing nonexistant public symbol');
+      }
+      // If there's an overload table for this symbol, replace the symbol in the overload table instead.
+      if (undefined !== Module[name].overloadTable && undefined !== numArguments) {
+        Module[name].overloadTable[numArguments] = value;
+      }
+      else {
+        Module[name] = value;
+        Module[name].argCount = numArguments;
+      }
+    };
+  
+  
+  
+  var dynCallLegacy = (sig, ptr, args) => {
+      assert(('dynCall_' + sig) in Module, `bad function pointer type - dynCall function not found for sig '${sig}'`);
+      if (args?.length) {
+        // j (64-bit integer) must be passed in as two numbers [low 32, high 32].
+        assert(args.length === sig.substring(1).replace(/j/g, '--').length);
+      } else {
+        assert(sig.length == 1);
+      }
+      var f = Module['dynCall_' + sig];
+      return f(ptr, ...args);
+    };
+  
+  var wasmTableMirror = [];
+  
+  var wasmTable;
+  var getWasmTableEntry = (funcPtr) => {
+      var func = wasmTableMirror[funcPtr];
+      if (!func) {
+        if (funcPtr >= wasmTableMirror.length) wasmTableMirror.length = funcPtr + 1;
+        wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
+      }
+      assert(wasmTable.get(funcPtr) == func, 'JavaScript-side Wasm function table mirror is out of date!');
+      return func;
+    };
+  var dynCall = (sig, ptr, args = []) => {
+      var rtn = dynCallLegacy(sig, ptr, args);
+      return rtn;
+    };
+  var getDynCaller = (sig, ptr) => {
+      return (...args) => dynCall(sig, ptr, args);
+    };
+  
+  var embind__requireFunction = (signature, rawFunction) => {
+      signature = readLatin1String(signature);
+  
+      function makeDynCaller() {
+        return getDynCaller(signature, rawFunction);
+      }
+  
+      var fp = makeDynCaller();
+      if (typeof fp != "function") {
+          throwBindingError(`unknown function pointer with signature ${signature}: ${rawFunction}`);
+      }
+      return fp;
+    };
+  
+  
+  
+  var extendError = (baseErrorType, errorName) => {
+      var errorClass = createNamedFunction(errorName, function(message) {
+        this.name = errorName;
+        this.message = message;
+  
+        var stack = (new Error(message)).stack;
+        if (stack !== undefined) {
+          this.stack = this.toString() + '\n' +
+              stack.replace(/^Error(:[^\n]*)?\n/, '');
+        }
+      });
+      errorClass.prototype = Object.create(baseErrorType.prototype);
+      errorClass.prototype.constructor = errorClass;
+      errorClass.prototype.toString = function() {
+        if (this.message === undefined) {
+          return this.name;
+        } else {
+          return `${this.name}: ${this.message}`;
+        }
+      };
+  
+      return errorClass;
+    };
+  var UnboundTypeError;
+  
+  
+  
+  var getTypeName = (type) => {
+      var ptr = ___getTypeName(type);
+      var rv = readLatin1String(ptr);
+      _free(ptr);
+      return rv;
+    };
+  var throwUnboundTypeError = (message, types) => {
+      var unboundTypes = [];
+      var seen = {};
+      function visit(type) {
+        if (seen[type]) {
+          return;
+        }
+        if (registeredTypes[type]) {
+          return;
+        }
+        if (typeDependencies[type]) {
+          typeDependencies[type].forEach(visit);
+          return;
+        }
+        unboundTypes.push(type);
+        seen[type] = true;
+      }
+      types.forEach(visit);
+  
+      throw new UnboundTypeError(`${message}: ` + unboundTypes.map(getTypeName).join([', ']));
+    };
+  
+  var __embind_register_class = (rawType,
+                             rawPointerType,
+                             rawConstPointerType,
+                             baseClassRawType,
+                             getActualTypeSignature,
+                             getActualType,
+                             upcastSignature,
+                             upcast,
+                             downcastSignature,
+                             downcast,
+                             name,
+                             destructorSignature,
+                             rawDestructor) => {
+      name = readLatin1String(name);
+      getActualType = embind__requireFunction(getActualTypeSignature, getActualType);
+      upcast &&= embind__requireFunction(upcastSignature, upcast);
+      downcast &&= embind__requireFunction(downcastSignature, downcast);
+      rawDestructor = embind__requireFunction(destructorSignature, rawDestructor);
+      var legalFunctionName = makeLegalFunctionName(name);
+  
+      exposePublicSymbol(legalFunctionName, function() {
+        // this code cannot run if baseClassRawType is zero
+        throwUnboundTypeError(`Cannot construct ${name} due to unbound types`, [baseClassRawType]);
+      });
+  
+      whenDependentTypesAreResolved(
+        [rawType, rawPointerType, rawConstPointerType],
+        baseClassRawType ? [baseClassRawType] : [],
+        (base) => {
+          base = base[0];
+  
+          var baseClass;
+          var basePrototype;
+          if (baseClassRawType) {
+            baseClass = base.registeredClass;
+            basePrototype = baseClass.instancePrototype;
+          } else {
+            basePrototype = ClassHandle.prototype;
+          }
+  
+          var constructor = createNamedFunction(name, function(...args) {
+            if (Object.getPrototypeOf(this) !== instancePrototype) {
+              throw new BindingError("Use 'new' to construct " + name);
+            }
+            if (undefined === registeredClass.constructor_body) {
+              throw new BindingError(name + " has no accessible constructor");
+            }
+            var body = registeredClass.constructor_body[args.length];
+            if (undefined === body) {
+              throw new BindingError(`Tried to invoke ctor of ${name} with invalid number of parameters (${args.length}) - expected (${Object.keys(registeredClass.constructor_body).toString()}) parameters instead!`);
+            }
+            return body.apply(this, args);
+          });
+  
+          var instancePrototype = Object.create(basePrototype, {
+            constructor: { value: constructor },
+          });
+  
+          constructor.prototype = instancePrototype;
+  
+          var registeredClass = new RegisteredClass(name,
+                                                    constructor,
+                                                    instancePrototype,
+                                                    rawDestructor,
+                                                    baseClass,
+                                                    getActualType,
+                                                    upcast,
+                                                    downcast);
+  
+          if (registeredClass.baseClass) {
+            // Keep track of class hierarchy. Used to allow sub-classes to inherit class functions.
+            registeredClass.baseClass.__derivedClasses ??= [];
+  
+            registeredClass.baseClass.__derivedClasses.push(registeredClass);
+          }
+  
+          var referenceConverter = new RegisteredPointer(name,
+                                                         registeredClass,
+                                                         true,
+                                                         false,
+                                                         false);
+  
+          var pointerConverter = new RegisteredPointer(name + '*',
+                                                       registeredClass,
+                                                       false,
+                                                       false,
+                                                       false);
+  
+          var constPointerConverter = new RegisteredPointer(name + ' const*',
+                                                            registeredClass,
+                                                            false,
+                                                            true,
+                                                            false);
+  
+          registeredPointers[rawType] = {
+            pointerType: pointerConverter,
+            constPointerType: constPointerConverter
+          };
+  
+          replacePublicSymbol(legalFunctionName, constructor);
+  
+          return [referenceConverter, pointerConverter, constPointerConverter];
+        }
+      );
+    };
+
+  
+  var runDestructors = (destructors) => {
+      while (destructors.length) {
+        var ptr = destructors.pop();
+        var del = destructors.pop();
+        del(ptr);
+      }
+    };
+  
+  
+  function usesDestructorStack(argTypes) {
+      // Skip return value at index 0 - it's not deleted here.
+      for (var i = 1; i < argTypes.length; ++i) {
+        // The type does not define a destructor function - must use dynamic stack
+        if (argTypes[i] !== null && argTypes[i].destructorFunction === undefined) {
+          return true;
+        }
+      }
+      return false;
+    }
+  
+  function newFunc(constructor, argumentList) {
+      if (!(constructor instanceof Function)) {
+        throw new TypeError(`new_ called with constructor type ${typeof(constructor)} which is not a function`);
+      }
+      /*
+       * Previously, the following line was just:
+       *   function dummy() {};
+       * Unfortunately, Chrome was preserving 'dummy' as the object's name, even
+       * though at creation, the 'dummy' has the correct constructor name.  Thus,
+       * objects created with IMVU.new would show up in the debugger as 'dummy',
+       * which isn't very helpful.  Using IMVU.createNamedFunction addresses the
+       * issue.  Doublely-unfortunately, there's no way to write a test for this
+       * behavior.  -NRD 2013.02.22
+       */
+      var dummy = createNamedFunction(constructor.name || 'unknownFunctionName', function(){});
+      dummy.prototype = constructor.prototype;
+      var obj = new dummy;
+  
+      var r = constructor.apply(obj, argumentList);
+      return (r instanceof Object) ? r : obj;
+    }
+  
+  function createJsInvoker(argTypes, isClassMethodFunc, returns, isAsync) {
+      var needsDestructorStack = usesDestructorStack(argTypes);
+      var argCount = argTypes.length;
+      var argsList = "";
+      var argsListWired = "";
+      for (var i = 0; i < argCount - 2; ++i) {
+        argsList += (i!==0?", ":"")+"arg"+i;
+        argsListWired += (i!==0?", ":"")+"arg"+i+"Wired";
+      }
+  
+      var invokerFnBody = `
+        return function (${argsList}) {
+        if (arguments.length !== ${argCount - 2}) {
+          throwBindingError('function ' + humanName + ' called with ' + arguments.length + ' arguments, expected ${argCount - 2}');
+        }`;
+  
+      if (needsDestructorStack) {
+        invokerFnBody += "var destructors = [];\n";
+      }
+  
+      var dtorStack = needsDestructorStack ? "destructors" : "null";
+      var args1 = ["humanName", "throwBindingError", "invoker", "fn", "runDestructors", "retType", "classParam"];
+  
+      if (isClassMethodFunc) {
+        invokerFnBody += "var thisWired = classParam['toWireType']("+dtorStack+", this);\n";
+      }
+  
+      for (var i = 0; i < argCount - 2; ++i) {
+        invokerFnBody += "var arg"+i+"Wired = argType"+i+"['toWireType']("+dtorStack+", arg"+i+");\n";
+        args1.push("argType"+i);
+      }
+  
+      if (isClassMethodFunc) {
+        argsListWired = "thisWired" + (argsListWired.length > 0 ? ", " : "") + argsListWired;
+      }
+  
+      invokerFnBody +=
+          (returns || isAsync ? "var rv = ":"") + "invoker(fn"+(argsListWired.length>0?", ":"")+argsListWired+");\n";
+  
+      var returnVal = returns ? "rv" : "";
+      args1.push("Asyncify");
+      invokerFnBody += `function onDone(${returnVal}) {\n`;
+  
+      if (needsDestructorStack) {
+        invokerFnBody += "runDestructors(destructors);\n";
+      } else {
+        for (var i = isClassMethodFunc?1:2; i < argTypes.length; ++i) { // Skip return value at index 0 - it's not deleted here. Also skip class type if not a method.
+          var paramName = (i === 1 ? "thisWired" : ("arg"+(i - 2)+"Wired"));
+          if (argTypes[i].destructorFunction !== null) {
+            invokerFnBody += `${paramName}_dtor(${paramName});\n`;
+            args1.push(`${paramName}_dtor`);
+          }
+        }
+      }
+  
+      if (returns) {
+        invokerFnBody += "var ret = retType['fromWireType'](rv);\n" +
+                         "return ret;\n";
+      } else {
+      }
+  
+      invokerFnBody += "}\n";
+      invokerFnBody += `return Asyncify.currData ? Asyncify.whenDone().then(onDone) : onDone(${returnVal});\n`
+  
+      invokerFnBody += "}\n";
+  
+      invokerFnBody = `if (arguments.length !== ${args1.length}){ throw new Error(humanName + "Expected ${args1.length} closure arguments " + arguments.length + " given."); }\n${invokerFnBody}`;
+      return [args1, invokerFnBody];
+    }
+  
+  var runAndAbortIfError = (func) => {
+      try {
+        return func();
+      } catch (e) {
+        abort(e);
+      }
+    };
+  
+  var handleException = (e) => {
+      // Certain exception types we do not treat as errors since they are used for
+      // internal control flow.
+      // 1. ExitStatus, which is thrown by exit()
+      // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
+      //    that wish to return to JS event loop.
+      if (e instanceof ExitStatus || e == 'unwind') {
+        return EXITSTATUS;
+      }
+      checkStackCookie();
+      if (e instanceof WebAssembly.RuntimeError) {
+        if (_emscripten_stack_get_current() <= 0) {
+          err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 65536)');
+        }
+      }
+      quit_(1, e);
+    };
+  
+  
+  var runtimeKeepaliveCounter = 0;
+  var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
+  var _proc_exit = (code) => {
+      EXITSTATUS = code;
+      if (!keepRuntimeAlive()) {
+        Module['onExit']?.(code);
+        ABORT = true;
+      }
+      quit_(code, new ExitStatus(code));
+    };
+  
+  /** @suppress {duplicate } */
+  /** @param {boolean|number=} implicit */
+  var exitJS = (status, implicit) => {
+      EXITSTATUS = status;
+  
+      checkUnflushedContent();
+  
+      // if exit() was called explicitly, warn the user if the runtime isn't actually being shut down
+      if (keepRuntimeAlive() && !implicit) {
+        var msg = `program exited (with status: ${status}), but keepRuntimeAlive() is set (counter=${runtimeKeepaliveCounter}) due to an async operation, so halting execution but not exiting the runtime or preventing further async execution (you can use emscripten_force_exit, if you want to force a true shutdown)`;
+        err(msg);
+      }
+  
+      _proc_exit(status);
+    };
+  var _exit = exitJS;
+  
+  
+  var maybeExit = () => {
+      if (!keepRuntimeAlive()) {
+        try {
+          _exit(EXITSTATUS);
+        } catch (e) {
+          handleException(e);
+        }
+      }
+    };
+  var callUserCallback = (func) => {
+      if (ABORT) {
+        err('user callback triggered after runtime exited or application aborted.  Ignoring.');
+        return;
+      }
+      try {
+        func();
+        maybeExit();
+      } catch (e) {
+        handleException(e);
+      }
+    };
+  
+  var sigToWasmTypes = (sig) => {
+      assert(!sig.includes('j'), 'i64 not permitted in function signatures when WASM_BIGINT is disabled');
+      var typeNames = {
+        'i': 'i32',
+        'j': 'i64',
+        'f': 'f32',
+        'd': 'f64',
+        'e': 'externref',
+        'p': 'i32',
+      };
+      var type = {
+        parameters: [],
+        results: sig[0] == 'v' ? [] : [typeNames[sig[0]]]
+      };
+      for (var i = 1; i < sig.length; ++i) {
+        assert(sig[i] in typeNames, 'invalid signature char: ' + sig[i]);
+        type.parameters.push(typeNames[sig[i]]);
+      }
+      return type;
+    };
+  
+  var runtimeKeepalivePush = () => {
+      runtimeKeepaliveCounter += 1;
+    };
+  
+  var runtimeKeepalivePop = () => {
+      assert(runtimeKeepaliveCounter > 0);
+      runtimeKeepaliveCounter -= 1;
+    };
+  
+  
+  var Asyncify = {
+  instrumentWasmImports(imports) {
+        var importPattern = /^(invoke_.*|__asyncjs__.*)$/;
+  
+        for (let [x, original] of Object.entries(imports)) {
+          let sig = original.sig;
+          if (typeof original == 'function') {
+            let isAsyncifyImport = original.isAsync || importPattern.test(x);
+            imports[x] = (...args) => {
+              var originalAsyncifyState = Asyncify.state;
+              try {
+                return original(...args);
+              } finally {
+                // Only asyncify-declared imports are allowed to change the
+                // state.
+                // Changing the state from normal to disabled is allowed (in any
+                // function) as that is what shutdown does (and we don't have an
+                // explicit list of shutdown imports).
+                var changedToDisabled =
+                      originalAsyncifyState === Asyncify.State.Normal &&
+                      Asyncify.state        === Asyncify.State.Disabled;
+                // invoke_* functions are allowed to change the state if we do
+                // not ignore indirect calls.
+                var ignoredInvoke = x.startsWith('invoke_') &&
+                                    true;
+                if (Asyncify.state !== originalAsyncifyState &&
+                    !isAsyncifyImport &&
+                    !changedToDisabled &&
+                    !ignoredInvoke) {
+                  throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
+                }
+              }
+            };
+          }
+        }
+      },
+  instrumentWasmExports(exports) {
+        var ret = {};
+        for (let [x, original] of Object.entries(exports)) {
+          if (typeof original == 'function') {
+            ret[x] = (...args) => {
+              Asyncify.exportCallStack.push(x);
+              try {
+                return original(...args);
+              } finally {
+                if (!ABORT) {
+                  var y = Asyncify.exportCallStack.pop();
+                  assert(y === x);
+                  Asyncify.maybeStopUnwind();
+                }
+              }
+            };
+          } else {
+            ret[x] = original;
+          }
+        }
+        return ret;
+      },
+  State:{
+  Normal:0,
+  Unwinding:1,
+  Rewinding:2,
+  Disabled:3,
+  },
+  state:0,
+  StackSize:8192,
+  currData:null,
+  handleSleepReturnValue:0,
+  exportCallStack:[],
+  callStackNameToId:{
+  },
+  callStackIdToName:{
+  },
+  callStackId:0,
+  asyncPromiseHandlers:null,
+  sleepCallbacks:[],
+  getCallStackId(funcName) {
+        var id = Asyncify.callStackNameToId[funcName];
+        if (id === undefined) {
+          id = Asyncify.callStackId++;
+          Asyncify.callStackNameToId[funcName] = id;
+          Asyncify.callStackIdToName[id] = funcName;
+        }
+        return id;
+      },
+  maybeStopUnwind() {
+        if (Asyncify.currData &&
+            Asyncify.state === Asyncify.State.Unwinding &&
+            Asyncify.exportCallStack.length === 0) {
+          // We just finished unwinding.
+          // Be sure to set the state before calling any other functions to avoid
+          // possible infinite recursion here (For example in debug pthread builds
+          // the dbg() function itself can call back into WebAssembly to get the
+          // current pthread_self() pointer).
+          Asyncify.state = Asyncify.State.Normal;
+          
+          // Keep the runtime alive so that a re-wind can be done later.
+          runAndAbortIfError(_asyncify_stop_unwind);
+          if (typeof Fibers != 'undefined') {
+            Fibers.trampoline();
+          }
+        }
+      },
+  whenDone() {
+        assert(Asyncify.currData, 'Tried to wait for an async operation when none is in progress.');
+        assert(!Asyncify.asyncPromiseHandlers, 'Cannot have multiple async operations in flight at once');
+        return new Promise((resolve, reject) => {
+          Asyncify.asyncPromiseHandlers = { resolve, reject };
+        });
+      },
+  allocateData() {
+        // An asyncify data structure has three fields:
+        //  0  current stack pos
+        //  4  max stack pos
+        //  8  id of function at bottom of the call stack (callStackIdToName[id] == name of js function)
+        //
+        // The Asyncify ABI only interprets the first two fields, the rest is for the runtime.
+        // We also embed a stack in the same memory region here, right next to the structure.
+        // This struct is also defined as asyncify_data_t in emscripten/fiber.h
+        var ptr = _malloc(12 + Asyncify.StackSize);
+        Asyncify.setDataHeader(ptr, ptr + 12, Asyncify.StackSize);
+        Asyncify.setDataRewindFunc(ptr);
+        return ptr;
+      },
+  setDataHeader(ptr, stack, stackSize) {
+        HEAPU32[((ptr)>>2)] = stack;
+        HEAPU32[(((ptr)+(4))>>2)] = stack + stackSize;
+      },
+  setDataRewindFunc(ptr) {
+        var bottomOfCallStack = Asyncify.exportCallStack[0];
+        var rewindId = Asyncify.getCallStackId(bottomOfCallStack);
+        HEAP32[(((ptr)+(8))>>2)] = rewindId;
+      },
+  getDataRewindFunc(ptr) {
+        var id = HEAP32[(((ptr)+(8))>>2)];
+        var name = Asyncify.callStackIdToName[id];
+        var func = wasmExports[name];
+        return func;
+      },
+  doRewind(ptr) {
+        var start = Asyncify.getDataRewindFunc(ptr);
+        // Once we have rewound and the stack we no longer need to artificially
+        // keep the runtime alive.
+        
+        return start();
+      },
+  handleSleep(startAsync) {
+        assert(Asyncify.state !== Asyncify.State.Disabled, 'Asyncify cannot be done during or after the runtime exits');
+        if (ABORT) return;
+        if (Asyncify.state === Asyncify.State.Normal) {
+          // Prepare to sleep. Call startAsync, and see what happens:
+          // if the code decided to call our callback synchronously,
+          // then no async operation was in fact begun, and we don't
+          // need to do anything.
+          var reachedCallback = false;
+          var reachedAfterCallback = false;
+          startAsync((handleSleepReturnValue = 0) => {
+            assert(!handleSleepReturnValue || typeof handleSleepReturnValue == 'number' || typeof handleSleepReturnValue == 'boolean'); // old emterpretify API supported other stuff
+            if (ABORT) return;
+            Asyncify.handleSleepReturnValue = handleSleepReturnValue;
+            reachedCallback = true;
+            if (!reachedAfterCallback) {
+              // We are happening synchronously, so no need for async.
+              return;
+            }
+            // This async operation did not happen synchronously, so we did
+            // unwind. In that case there can be no compiled code on the stack,
+            // as it might break later operations (we can rewind ok now, but if
+            // we unwind again, we would unwind through the extra compiled code
+            // too).
+            assert(!Asyncify.exportCallStack.length, 'Waking up (starting to rewind) must be done from JS, without compiled code on the stack.');
+            Asyncify.state = Asyncify.State.Rewinding;
+            runAndAbortIfError(() => _asyncify_start_rewind(Asyncify.currData));
+            if (typeof Browser != 'undefined' && Browser.mainLoop.func) {
+              Browser.mainLoop.resume();
+            }
+            var asyncWasmReturnValue, isError = false;
+            try {
+              asyncWasmReturnValue = Asyncify.doRewind(Asyncify.currData);
+            } catch (err) {
+              asyncWasmReturnValue = err;
+              isError = true;
+            }
+            // Track whether the return value was handled by any promise handlers.
+            var handled = false;
+            if (!Asyncify.currData) {
+              // All asynchronous execution has finished.
+              // `asyncWasmReturnValue` now contains the final
+              // return value of the exported async WASM function.
+              //
+              // Note: `asyncWasmReturnValue` is distinct from
+              // `Asyncify.handleSleepReturnValue`.
+              // `Asyncify.handleSleepReturnValue` contains the return
+              // value of the last C function to have executed
+              // `Asyncify.handleSleep()`, where as `asyncWasmReturnValue`
+              // contains the return value of the exported WASM function
+              // that may have called C functions that
+              // call `Asyncify.handleSleep()`.
+              var asyncPromiseHandlers = Asyncify.asyncPromiseHandlers;
+              if (asyncPromiseHandlers) {
+                Asyncify.asyncPromiseHandlers = null;
+                (isError ? asyncPromiseHandlers.reject : asyncPromiseHandlers.resolve)(asyncWasmReturnValue);
+                handled = true;
+              }
+            }
+            if (isError && !handled) {
+              // If there was an error and it was not handled by now, we have no choice but to
+              // rethrow that error into the global scope where it can be caught only by
+              // `onerror` or `onunhandledpromiserejection`.
+              throw asyncWasmReturnValue;
+            }
+          });
+          reachedAfterCallback = true;
+          if (!reachedCallback) {
+            // A true async operation was begun; start a sleep.
+            Asyncify.state = Asyncify.State.Unwinding;
+            // TODO: reuse, don't alloc/free every sleep
+            Asyncify.currData = Asyncify.allocateData();
+            if (typeof Browser != 'undefined' && Browser.mainLoop.func) {
+              Browser.mainLoop.pause();
+            }
+            runAndAbortIfError(() => _asyncify_start_unwind(Asyncify.currData));
+          }
+        } else if (Asyncify.state === Asyncify.State.Rewinding) {
+          // Stop a resume.
+          Asyncify.state = Asyncify.State.Normal;
+          runAndAbortIfError(_asyncify_stop_rewind);
+          _free(Asyncify.currData);
+          Asyncify.currData = null;
+          // Call all sleep callbacks now that the sleep-resume is all done.
+          Asyncify.sleepCallbacks.forEach(callUserCallback);
+        } else {
+          abort(`invalid state: ${Asyncify.state}`);
+        }
+        return Asyncify.handleSleepReturnValue;
+      },
+  handleAsync(startAsync) {
+        return Asyncify.handleSleep((wakeUp) => {
+          // TODO: add error handling as a second param when handleSleep implements it.
+          startAsync().then(wakeUp);
+        });
+      },
+  };
+  function craftInvokerFunction(humanName, argTypes, classType, cppInvokerFunc, cppTargetFunc, /** boolean= */ isAsync) {
+      // humanName: a human-readable string name for the function to be generated.
+      // argTypes: An array that contains the embind type objects for all types in the function signature.
+      //    argTypes[0] is the type object for the function return value.
+      //    argTypes[1] is the type object for function this object/class type, or null if not crafting an invoker for a class method.
+      //    argTypes[2...] are the actual function parameters.
+      // classType: The embind type object for the class to be bound, or null if this is not a method of a class.
+      // cppInvokerFunc: JS Function object to the C++-side function that interops into C++ code.
+      // cppTargetFunc: Function pointer (an integer to FUNCTION_TABLE) to the target C++ function the cppInvokerFunc will end up calling.
+      // isAsync: Optional. If true, returns an async function. Async bindings are only supported with JSPI.
+      var argCount = argTypes.length;
+  
+      if (argCount < 2) {
+        throwBindingError("argTypes array size mismatch! Must at least get return value and 'this' types!");
+      }
+  
+      assert(!isAsync, 'Async bindings are only supported with JSPI.');
+  
+      var isClassMethodFunc = (argTypes[1] !== null && classType !== null);
+  
+      // Free functions with signature "void function()" do not need an invoker that marshalls between wire types.
+  // TODO: This omits argument count check - enable only at -O3 or similar.
+  //    if (ENABLE_UNSAFE_OPTS && argCount == 2 && argTypes[0].name == "void" && !isClassMethodFunc) {
+  //       return FUNCTION_TABLE[fn];
+  //    }
+  
+      // Determine if we need to use a dynamic stack to store the destructors for the function parameters.
+      // TODO: Remove this completely once all function invokers are being dynamically generated.
+      var needsDestructorStack = usesDestructorStack(argTypes);
+  
+      var returns = (argTypes[0].name !== "void");
+  
+    // Builld the arguments that will be passed into the closure around the invoker
+    // function.
+    var closureArgs = [humanName, throwBindingError, cppInvokerFunc, cppTargetFunc, runDestructors, argTypes[0], argTypes[1]];
+    for (var i = 0; i < argCount - 2; ++i) {
+      closureArgs.push(argTypes[i+2]);
+    }
+    closureArgs.push(Asyncify);
+    if (!needsDestructorStack) {
+      for (var i = isClassMethodFunc?1:2; i < argTypes.length; ++i) { // Skip return value at index 0 - it's not deleted here. Also skip class type if not a method.
+        if (argTypes[i].destructorFunction !== null) {
+          closureArgs.push(argTypes[i].destructorFunction);
+        }
+      }
+    }
+  
+    let [args, invokerFnBody] = createJsInvoker(argTypes, isClassMethodFunc, returns, isAsync);
+    args.push(invokerFnBody);
+    var invokerFn = newFunc(Function, args)(...closureArgs);
+      return createNamedFunction(humanName, invokerFn);
+    }
+  
+  
+  var heap32VectorToArray = (count, firstElement) => {
+      var array = [];
+      for (var i = 0; i < count; i++) {
+        // TODO(https://github.com/emscripten-core/emscripten/issues/17310):
+        // Find a way to hoist the `>> 2` or `>> 3` out of this loop.
+        array.push(HEAPU32[(((firstElement)+(i * 4))>>2)]);
+      }
+      return array;
+    };
+  
+  
+  
+  
+  
+  var getFunctionName = (signature) => {
+      signature = signature.trim();
+      const argsIndex = signature.indexOf("(");
+      if (argsIndex !== -1) {
+        assert(signature[signature.length - 1] == ")", "Parentheses for argument names should match.");
+        return signature.substr(0, argsIndex);
+      } else {
+        return signature;
+      }
+    };
+  var __embind_register_class_class_function = (rawClassType,
+                                            methodName,
+                                            argCount,
+                                            rawArgTypesAddr,
+                                            invokerSignature,
+                                            rawInvoker,
+                                            fn,
+                                            isAsync) => {
+      var rawArgTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+      methodName = readLatin1String(methodName);
+      methodName = getFunctionName(methodName);
+      rawInvoker = embind__requireFunction(invokerSignature, rawInvoker);
+      whenDependentTypesAreResolved([], [rawClassType], (classType) => {
+        classType = classType[0];
+        var humanName = `${classType.name}.${methodName}`;
+  
+        function unboundTypesHandler() {
+          throwUnboundTypeError(`Cannot call ${humanName} due to unbound types`, rawArgTypes);
+        }
+  
+        if (methodName.startsWith("@@")) {
+          methodName = Symbol[methodName.substring(2)];
+        }
+  
+        var proto = classType.registeredClass.constructor;
+        if (undefined === proto[methodName]) {
+          // This is the first function to be registered with this name.
+          unboundTypesHandler.argCount = argCount-1;
+          proto[methodName] = unboundTypesHandler;
+        } else {
+          // There was an existing function with the same name registered. Set up
+          // a function overload routing table.
+          ensureOverloadTable(proto, methodName, humanName);
+          proto[methodName].overloadTable[argCount-1] = unboundTypesHandler;
+        }
+  
+        whenDependentTypesAreResolved([], rawArgTypes, (argTypes) => {
+          // Replace the initial unbound-types-handler stub with the proper
+          // function. If multiple overloads are registered, the function handlers
+          // go into an overload table.
+          var invokerArgsArray = [argTypes[0] /* return value */, null /* no class 'this'*/].concat(argTypes.slice(1) /* actual params */);
+          var func = craftInvokerFunction(humanName, invokerArgsArray, null /* no class 'this'*/, rawInvoker, fn, isAsync);
+          if (undefined === proto[methodName].overloadTable) {
+            func.argCount = argCount-1;
+            proto[methodName] = func;
+          } else {
+            proto[methodName].overloadTable[argCount-1] = func;
+          }
+  
+          if (classType.registeredClass.__derivedClasses) {
+            for (const derivedClass of classType.registeredClass.__derivedClasses) {
+              if (!derivedClass.constructor.hasOwnProperty(methodName)) {
+                // TODO: Add support for overloads
+                derivedClass.constructor[methodName] = func;
+              }
+            }
+          }
+  
+          return [];
+        });
+        return [];
+      });
+    };
+
+  
+  
+  
+  
+  
+  
+  var __embind_register_class_function = (rawClassType,
+                                      methodName,
+                                      argCount,
+                                      rawArgTypesAddr, // [ReturnType, ThisType, Args...]
+                                      invokerSignature,
+                                      rawInvoker,
+                                      context,
+                                      isPureVirtual,
+                                      isAsync) => {
+      var rawArgTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+      methodName = readLatin1String(methodName);
+      methodName = getFunctionName(methodName);
+      rawInvoker = embind__requireFunction(invokerSignature, rawInvoker);
+  
+      whenDependentTypesAreResolved([], [rawClassType], (classType) => {
+        classType = classType[0];
+        var humanName = `${classType.name}.${methodName}`;
+  
+        if (methodName.startsWith("@@")) {
+          methodName = Symbol[methodName.substring(2)];
+        }
+  
+        if (isPureVirtual) {
+          classType.registeredClass.pureVirtualFunctions.push(methodName);
+        }
+  
+        function unboundTypesHandler() {
+          throwUnboundTypeError(`Cannot call ${humanName} due to unbound types`, rawArgTypes);
+        }
+  
+        var proto = classType.registeredClass.instancePrototype;
+        var method = proto[methodName];
+        if (undefined === method || (undefined === method.overloadTable && method.className !== classType.name && method.argCount === argCount - 2)) {
+          // This is the first overload to be registered, OR we are replacing a
+          // function in the base class with a function in the derived class.
+          unboundTypesHandler.argCount = argCount - 2;
+          unboundTypesHandler.className = classType.name;
+          proto[methodName] = unboundTypesHandler;
+        } else {
+          // There was an existing function with the same name registered. Set up
+          // a function overload routing table.
+          ensureOverloadTable(proto, methodName, humanName);
+          proto[methodName].overloadTable[argCount - 2] = unboundTypesHandler;
+        }
+  
+        whenDependentTypesAreResolved([], rawArgTypes, (argTypes) => {
+          var memberFunction = craftInvokerFunction(humanName, argTypes, classType, rawInvoker, context, isAsync);
+  
+          // Replace the initial unbound-handler-stub function with the
+          // appropriate member function, now that all types are resolved. If
+          // multiple overloads are registered for this function, the function
+          // goes into an overload table.
+          if (undefined === proto[methodName].overloadTable) {
+            // Set argCount in case an overload is registered later
+            memberFunction.argCount = argCount - 2;
+            proto[methodName] = memberFunction;
+          } else {
+            proto[methodName].overloadTable[argCount - 2] = memberFunction;
+          }
+  
+          return [];
+        });
+        return [];
+      });
+    };
+
+  
+  
+  
+  
+  
+  
+  
+  var validateThis = (this_, classType, humanName) => {
+      if (!(this_ instanceof Object)) {
+        throwBindingError(`${humanName} with invalid "this": ${this_}`);
+      }
+      if (!(this_ instanceof classType.registeredClass.constructor)) {
+        throwBindingError(`${humanName} incompatible with "this" of type ${this_.constructor.name}`);
+      }
+      if (!this_.$$.ptr) {
+        throwBindingError(`cannot call emscripten binding method ${humanName} on deleted object`);
+      }
+  
+      // todo: kill this
+      return upcastPointer(this_.$$.ptr,
+                           this_.$$.ptrType.registeredClass,
+                           classType.registeredClass);
+    };
+  var __embind_register_class_property = (classType,
+                                      fieldName,
+                                      getterReturnType,
+                                      getterSignature,
+                                      getter,
+                                      getterContext,
+                                      setterArgumentType,
+                                      setterSignature,
+                                      setter,
+                                      setterContext) => {
+      fieldName = readLatin1String(fieldName);
+      getter = embind__requireFunction(getterSignature, getter);
+  
+      whenDependentTypesAreResolved([], [classType], (classType) => {
+        classType = classType[0];
+        var humanName = `${classType.name}.${fieldName}`;
+        var desc = {
+          get() {
+            throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [getterReturnType, setterArgumentType]);
+          },
+          enumerable: true,
+          configurable: true
+        };
+        if (setter) {
+          desc.set = () => throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [getterReturnType, setterArgumentType]);
+        } else {
+          desc.set = (v) => throwBindingError(humanName + ' is a read-only property');
+        }
+  
+        Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
+  
+        whenDependentTypesAreResolved(
+          [],
+          (setter ? [getterReturnType, setterArgumentType] : [getterReturnType]),
+        (types) => {
+          var getterReturnType = types[0];
+          var desc = {
+            get() {
+              var ptr = validateThis(this, classType, humanName + ' getter');
+              return getterReturnType['fromWireType'](getter(getterContext, ptr));
+            },
+            enumerable: true
+          };
+  
+          if (setter) {
+            setter = embind__requireFunction(setterSignature, setter);
+            var setterArgumentType = types[1];
+            desc.set = function(v) {
+              var ptr = validateThis(this, classType, humanName + ' setter');
+              var destructors = [];
+              setter(setterContext, ptr, setterArgumentType['toWireType'](destructors, v));
+              runDestructors(destructors);
+            };
+          }
+  
+          Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
+          return [];
+        });
+  
+        return [];
+      });
+    };
+
+  
   var emval_freelist = [];
   
   var emval_handles = [];
@@ -4970,10 +6595,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       },
   };
   
-  /** @suppress {globalThis} */
-  function readPointer(pointer) {
-      return this['fromWireType'](HEAPU32[((pointer)>>2)]);
-    }
   
   var EmValType = {
       name: 'emscripten::val',
@@ -5464,14 +7085,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
   
   
   
-  
-  var getTypeName = (type) => {
-      var ptr = ___getTypeName(type);
-      var rv = readLatin1String(ptr);
-      _free(ptr);
-      return rv;
-    };
-  
   var requireRegisteredType = (rawType, humanName) => {
       var impl = registeredTypes[rawType];
       if (undefined === impl) {
@@ -5496,358 +7109,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
     };
 
   
-  var runAndAbortIfError = (func) => {
-      try {
-        return func();
-      } catch (e) {
-        abort(e);
-      }
-    };
-  
-  var handleException = (e) => {
-      // Certain exception types we do not treat as errors since they are used for
-      // internal control flow.
-      // 1. ExitStatus, which is thrown by exit()
-      // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
-      //    that wish to return to JS event loop.
-      if (e instanceof ExitStatus || e == 'unwind') {
-        return EXITSTATUS;
-      }
-      checkStackCookie();
-      if (e instanceof WebAssembly.RuntimeError) {
-        if (_emscripten_stack_get_current() <= 0) {
-          err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 65536)');
-        }
-      }
-      quit_(1, e);
-    };
-  
-  
-  var runtimeKeepaliveCounter = 0;
-  var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
-  var _proc_exit = (code) => {
-      EXITSTATUS = code;
-      if (!keepRuntimeAlive()) {
-        Module['onExit']?.(code);
-        ABORT = true;
-      }
-      quit_(code, new ExitStatus(code));
-    };
-  
-  /** @suppress {duplicate } */
-  /** @param {boolean|number=} implicit */
-  var exitJS = (status, implicit) => {
-      EXITSTATUS = status;
-  
-      checkUnflushedContent();
-  
-      // if exit() was called explicitly, warn the user if the runtime isn't actually being shut down
-      if (keepRuntimeAlive() && !implicit) {
-        var msg = `program exited (with status: ${status}), but keepRuntimeAlive() is set (counter=${runtimeKeepaliveCounter}) due to an async operation, so halting execution but not exiting the runtime or preventing further async execution (you can use emscripten_force_exit, if you want to force a true shutdown)`;
-        err(msg);
-      }
-  
-      _proc_exit(status);
-    };
-  var _exit = exitJS;
-  
-  
-  var maybeExit = () => {
-      if (!keepRuntimeAlive()) {
-        try {
-          _exit(EXITSTATUS);
-        } catch (e) {
-          handleException(e);
-        }
-      }
-    };
-  var callUserCallback = (func) => {
-      if (ABORT) {
-        err('user callback triggered after runtime exited or application aborted.  Ignoring.');
-        return;
-      }
-      try {
-        func();
-        maybeExit();
-      } catch (e) {
-        handleException(e);
-      }
-    };
-  
-  var sigToWasmTypes = (sig) => {
-      assert(!sig.includes('j'), 'i64 not permitted in function signatures when WASM_BIGINT is disabled');
-      var typeNames = {
-        'i': 'i32',
-        'j': 'i64',
-        'f': 'f32',
-        'd': 'f64',
-        'e': 'externref',
-        'p': 'i32',
-      };
-      var type = {
-        parameters: [],
-        results: sig[0] == 'v' ? [] : [typeNames[sig[0]]]
-      };
-      for (var i = 1; i < sig.length; ++i) {
-        assert(sig[i] in typeNames, 'invalid signature char: ' + sig[i]);
-        type.parameters.push(typeNames[sig[i]]);
-      }
-      return type;
-    };
-  
-  var runtimeKeepalivePush = () => {
-      runtimeKeepaliveCounter += 1;
-    };
-  
-  var runtimeKeepalivePop = () => {
-      assert(runtimeKeepaliveCounter > 0);
-      runtimeKeepaliveCounter -= 1;
-    };
-  
-  
-  var Asyncify = {
-  instrumentWasmImports(imports) {
-        var importPattern = /^(invoke_.*|__asyncjs__.*)$/;
-  
-        for (let [x, original] of Object.entries(imports)) {
-          let sig = original.sig;
-          if (typeof original == 'function') {
-            let isAsyncifyImport = original.isAsync || importPattern.test(x);
-            imports[x] = (...args) => {
-              var originalAsyncifyState = Asyncify.state;
-              try {
-                return original(...args);
-              } finally {
-                // Only asyncify-declared imports are allowed to change the
-                // state.
-                // Changing the state from normal to disabled is allowed (in any
-                // function) as that is what shutdown does (and we don't have an
-                // explicit list of shutdown imports).
-                var changedToDisabled =
-                      originalAsyncifyState === Asyncify.State.Normal &&
-                      Asyncify.state        === Asyncify.State.Disabled;
-                // invoke_* functions are allowed to change the state if we do
-                // not ignore indirect calls.
-                var ignoredInvoke = x.startsWith('invoke_') &&
-                                    true;
-                if (Asyncify.state !== originalAsyncifyState &&
-                    !isAsyncifyImport &&
-                    !changedToDisabled &&
-                    !ignoredInvoke) {
-                  throw new Error(`import ${x} was not in ASYNCIFY_IMPORTS, but changed the state`);
-                }
-              }
-            };
-          }
-        }
-      },
-  instrumentWasmExports(exports) {
-        var ret = {};
-        for (let [x, original] of Object.entries(exports)) {
-          if (typeof original == 'function') {
-            ret[x] = (...args) => {
-              Asyncify.exportCallStack.push(x);
-              try {
-                return original(...args);
-              } finally {
-                if (!ABORT) {
-                  var y = Asyncify.exportCallStack.pop();
-                  assert(y === x);
-                  Asyncify.maybeStopUnwind();
-                }
-              }
-            };
-          } else {
-            ret[x] = original;
-          }
-        }
-        return ret;
-      },
-  State:{
-  Normal:0,
-  Unwinding:1,
-  Rewinding:2,
-  Disabled:3,
-  },
-  state:0,
-  StackSize:8192,
-  currData:null,
-  handleSleepReturnValue:0,
-  exportCallStack:[],
-  callStackNameToId:{
-  },
-  callStackIdToName:{
-  },
-  callStackId:0,
-  asyncPromiseHandlers:null,
-  sleepCallbacks:[],
-  getCallStackId(funcName) {
-        var id = Asyncify.callStackNameToId[funcName];
-        if (id === undefined) {
-          id = Asyncify.callStackId++;
-          Asyncify.callStackNameToId[funcName] = id;
-          Asyncify.callStackIdToName[id] = funcName;
-        }
-        return id;
-      },
-  maybeStopUnwind() {
-        if (Asyncify.currData &&
-            Asyncify.state === Asyncify.State.Unwinding &&
-            Asyncify.exportCallStack.length === 0) {
-          // We just finished unwinding.
-          // Be sure to set the state before calling any other functions to avoid
-          // possible infinite recursion here (For example in debug pthread builds
-          // the dbg() function itself can call back into WebAssembly to get the
-          // current pthread_self() pointer).
-          Asyncify.state = Asyncify.State.Normal;
-          
-          // Keep the runtime alive so that a re-wind can be done later.
-          runAndAbortIfError(_asyncify_stop_unwind);
-          if (typeof Fibers != 'undefined') {
-            Fibers.trampoline();
-          }
-        }
-      },
-  whenDone() {
-        assert(Asyncify.currData, 'Tried to wait for an async operation when none is in progress.');
-        assert(!Asyncify.asyncPromiseHandlers, 'Cannot have multiple async operations in flight at once');
-        return new Promise((resolve, reject) => {
-          Asyncify.asyncPromiseHandlers = { resolve, reject };
-        });
-      },
-  allocateData() {
-        // An asyncify data structure has three fields:
-        //  0  current stack pos
-        //  4  max stack pos
-        //  8  id of function at bottom of the call stack (callStackIdToName[id] == name of js function)
-        //
-        // The Asyncify ABI only interprets the first two fields, the rest is for the runtime.
-        // We also embed a stack in the same memory region here, right next to the structure.
-        // This struct is also defined as asyncify_data_t in emscripten/fiber.h
-        var ptr = _malloc(12 + Asyncify.StackSize);
-        Asyncify.setDataHeader(ptr, ptr + 12, Asyncify.StackSize);
-        Asyncify.setDataRewindFunc(ptr);
-        return ptr;
-      },
-  setDataHeader(ptr, stack, stackSize) {
-        HEAPU32[((ptr)>>2)] = stack;
-        HEAPU32[(((ptr)+(4))>>2)] = stack + stackSize;
-      },
-  setDataRewindFunc(ptr) {
-        var bottomOfCallStack = Asyncify.exportCallStack[0];
-        var rewindId = Asyncify.getCallStackId(bottomOfCallStack);
-        HEAP32[(((ptr)+(8))>>2)] = rewindId;
-      },
-  getDataRewindFunc(ptr) {
-        var id = HEAP32[(((ptr)+(8))>>2)];
-        var name = Asyncify.callStackIdToName[id];
-        var func = wasmExports[name];
-        return func;
-      },
-  doRewind(ptr) {
-        var start = Asyncify.getDataRewindFunc(ptr);
-        // Once we have rewound and the stack we no longer need to artificially
-        // keep the runtime alive.
-        
-        return start();
-      },
-  handleSleep(startAsync) {
-        assert(Asyncify.state !== Asyncify.State.Disabled, 'Asyncify cannot be done during or after the runtime exits');
-        if (ABORT) return;
-        if (Asyncify.state === Asyncify.State.Normal) {
-          // Prepare to sleep. Call startAsync, and see what happens:
-          // if the code decided to call our callback synchronously,
-          // then no async operation was in fact begun, and we don't
-          // need to do anything.
-          var reachedCallback = false;
-          var reachedAfterCallback = false;
-          startAsync((handleSleepReturnValue = 0) => {
-            assert(!handleSleepReturnValue || typeof handleSleepReturnValue == 'number' || typeof handleSleepReturnValue == 'boolean'); // old emterpretify API supported other stuff
-            if (ABORT) return;
-            Asyncify.handleSleepReturnValue = handleSleepReturnValue;
-            reachedCallback = true;
-            if (!reachedAfterCallback) {
-              // We are happening synchronously, so no need for async.
-              return;
-            }
-            // This async operation did not happen synchronously, so we did
-            // unwind. In that case there can be no compiled code on the stack,
-            // as it might break later operations (we can rewind ok now, but if
-            // we unwind again, we would unwind through the extra compiled code
-            // too).
-            assert(!Asyncify.exportCallStack.length, 'Waking up (starting to rewind) must be done from JS, without compiled code on the stack.');
-            Asyncify.state = Asyncify.State.Rewinding;
-            runAndAbortIfError(() => _asyncify_start_rewind(Asyncify.currData));
-            if (typeof Browser != 'undefined' && Browser.mainLoop.func) {
-              Browser.mainLoop.resume();
-            }
-            var asyncWasmReturnValue, isError = false;
-            try {
-              asyncWasmReturnValue = Asyncify.doRewind(Asyncify.currData);
-            } catch (err) {
-              asyncWasmReturnValue = err;
-              isError = true;
-            }
-            // Track whether the return value was handled by any promise handlers.
-            var handled = false;
-            if (!Asyncify.currData) {
-              // All asynchronous execution has finished.
-              // `asyncWasmReturnValue` now contains the final
-              // return value of the exported async WASM function.
-              //
-              // Note: `asyncWasmReturnValue` is distinct from
-              // `Asyncify.handleSleepReturnValue`.
-              // `Asyncify.handleSleepReturnValue` contains the return
-              // value of the last C function to have executed
-              // `Asyncify.handleSleep()`, where as `asyncWasmReturnValue`
-              // contains the return value of the exported WASM function
-              // that may have called C functions that
-              // call `Asyncify.handleSleep()`.
-              var asyncPromiseHandlers = Asyncify.asyncPromiseHandlers;
-              if (asyncPromiseHandlers) {
-                Asyncify.asyncPromiseHandlers = null;
-                (isError ? asyncPromiseHandlers.reject : asyncPromiseHandlers.resolve)(asyncWasmReturnValue);
-                handled = true;
-              }
-            }
-            if (isError && !handled) {
-              // If there was an error and it was not handled by now, we have no choice but to
-              // rethrow that error into the global scope where it can be caught only by
-              // `onerror` or `onunhandledpromiserejection`.
-              throw asyncWasmReturnValue;
-            }
-          });
-          reachedAfterCallback = true;
-          if (!reachedCallback) {
-            // A true async operation was begun; start a sleep.
-            Asyncify.state = Asyncify.State.Unwinding;
-            // TODO: reuse, don't alloc/free every sleep
-            Asyncify.currData = Asyncify.allocateData();
-            if (typeof Browser != 'undefined' && Browser.mainLoop.func) {
-              Browser.mainLoop.pause();
-            }
-            runAndAbortIfError(() => _asyncify_start_unwind(Asyncify.currData));
-          }
-        } else if (Asyncify.state === Asyncify.State.Rewinding) {
-          // Stop a resume.
-          Asyncify.state = Asyncify.State.Normal;
-          runAndAbortIfError(_asyncify_stop_rewind);
-          _free(Asyncify.currData);
-          Asyncify.currData = null;
-          // Call all sleep callbacks now that the sleep-resume is all done.
-          Asyncify.sleepCallbacks.forEach(callUserCallback);
-        } else {
-          abort(`invalid state: ${Asyncify.state}`);
-        }
-        return Asyncify.handleSleepReturnValue;
-      },
-  handleAsync(startAsync) {
-        return Asyncify.handleSleep((wakeUp) => {
-          // TODO: add error handling as a second param when handleSleep implements it.
-          startAsync().then(wakeUp);
-        });
-      },
-  };
   var __emval_await = (promise) => {
       return Asyncify.handleAsync(() => {
         promise = Emval.toValue(promise);
@@ -5855,6 +7116,14 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       });
     };
   __emval_await.isAsync = true;
+
+  var emval_methodCallers = [];
+  
+  var __emval_call = (caller, handle, destructorsRef, args) => {
+      caller = emval_methodCallers[caller];
+      handle = Emval.toValue(handle);
+      return caller(null, handle, destructorsRef, args);
+    };
 
   var emval_symbols = {
   };
@@ -5867,7 +7136,6 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return symbol;
     };
   
-  var emval_methodCallers = [];
   
   var __emval_call_method = (caller, objHandle, methodName, destructorsRef, args) => {
       caller = emval_methodCallers[caller];
@@ -5876,6 +7144,25 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return caller(objHandle, objHandle[methodName], destructorsRef, args);
     };
 
+
+  
+  
+  var emval_get_global = () => {
+      if (typeof globalThis == 'object') {
+        return globalThis;
+      }
+      return (function(){
+        return Function;
+      })()('return this')();
+    };
+  var __emval_get_global = (name) => {
+      if (name===0) {
+        return Emval.toHandle(emval_get_global());
+      } else {
+        name = getStringOrSymbol(name);
+        return Emval.toHandle(emval_get_global()[name]);
+      }
+    };
 
   var emval_addMethodCaller = (caller) => {
       var id = emval_methodCallers.length;
@@ -5892,34 +7179,10 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return a;
     };
   
-  var createNamedFunction = (name, body) => Object.defineProperty(body, 'name', {
-      value: name
-    });
   
   var reflectConstruct = Reflect.construct;
   
   
-  function newFunc(constructor, argumentList) {
-      if (!(constructor instanceof Function)) {
-        throw new TypeError(`new_ called with constructor type ${typeof(constructor)} which is not a function`);
-      }
-      /*
-       * Previously, the following line was just:
-       *   function dummy() {};
-       * Unfortunately, Chrome was preserving 'dummy' as the object's name, even
-       * though at creation, the 'dummy' has the correct constructor name.  Thus,
-       * objects created with IMVU.new would show up in the debugger as 'dummy',
-       * which isn't very helpful.  Using IMVU.createNamedFunction addresses the
-       * issue.  Doublely-unfortunately, there's no way to write a test for this
-       * behavior.  -NRD 2013.02.22
-       */
-      var dummy = createNamedFunction(constructor.name || 'unknownFunctionName', function(){});
-      dummy.prototype = constructor.prototype;
-      var obj = new dummy;
-  
-      var r = constructor.apply(obj, argumentList);
-      return (r instanceof Object) ? r : obj;
-    }
   var __emval_get_method_caller = (argCount, argTypes, kind) => {
       var types = emval_lookupTypes(argCount, argTypes);
       var retType = types.shift();
@@ -5961,6 +7224,12 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return emval_addMethodCaller(createNamedFunction(functionName, invokerFunction));
     };
 
+  
+  var __emval_get_module_property = (name) => {
+      name = getStringOrSymbol(name);
+      return Emval.toHandle(Module[name]);
+    };
+
   var __emval_get_property = (handle, key) => {
       handle = Emval.toValue(handle);
       key = Emval.toValue(key);
@@ -5980,17 +7249,17 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 
   
   
-  var runDestructors = (destructors) => {
-      while (destructors.length) {
-        var ptr = destructors.pop();
-        var del = destructors.pop();
-        del(ptr);
-      }
-    };
   var __emval_run_destructors = (handle) => {
       var destructors = Emval.toValue(handle);
       runDestructors(destructors);
       __emval_decref(handle);
+    };
+
+  var __emval_set_property = (handle, key, value) => {
+      handle = Emval.toValue(handle);
+      key = Emval.toValue(key);
+      value = Emval.toValue(value);
+      handle[key] = value;
     };
 
   
@@ -10315,7 +11584,106 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       WebGPU.mgrBuffer.get(bufferId)["destroy"]();
     };
 
+  
+  
+  
+  var _wgpuBufferGetConstMappedRange = (bufferId, offset, size) => {
+      var bufferWrapper = WebGPU.mgrBuffer.objects[bufferId];
+      assert(typeof bufferWrapper != "undefined");
+  
+      if (size === 0) warnOnce('getMappedRange size=0 no longer means WGPU_WHOLE_MAP_SIZE');
+  
+      if (size == -1) size = undefined;
+  
+      var mapped;
+      try {
+        mapped = bufferWrapper.object["getMappedRange"](offset, size);
+      } catch (ex) {
+        err(`wgpuBufferGetConstMappedRange(${offset}, ${size}) failed: ${ex}`);
+        // TODO(kainino0x): Somehow inject a validation error?
+        return 0;
+      }
+      var data = _memalign(16, mapped.byteLength);
+      HEAPU8.set(new Uint8Array(mapped), data);
+      bufferWrapper.onUnmap.push(() => _free(data));
+      return data;
+    };
+
+  
+  var _wgpuBufferMapAsync = (bufferId, mode, offset, size, callback, userdata) => {
+      var bufferWrapper = WebGPU.mgrBuffer.objects[bufferId];
+      assert(typeof bufferWrapper != "undefined");
+      bufferWrapper.mapMode = mode;
+      bufferWrapper.onUnmap = [];
+      var buffer = bufferWrapper.object;
+  
+      if (size == -1) size = undefined;
+  
+      // `callback` takes (WGPUBufferMapAsyncStatus status, void * userdata)
+  
+      
+      buffer["mapAsync"](mode, offset, size).then(() => {
+        
+        callUserCallback(() => {
+          ((a1, a2) => dynCall_vii(callback, a1, a2))(0, userdata);
+        });
+      }, () => {
+        
+        callUserCallback(() => {
+          // TODO(kainino0x): Figure out how to pick other error status values.
+          ((a1, a2) => dynCall_vii(callback, a1, a2))(1, userdata);
+        });
+      });
+    };
+
   var _wgpuBufferRelease = (id) => WebGPU.mgrBuffer.release(id);
+
+  var _wgpuBufferUnmap = (bufferId) => {
+      var bufferWrapper = WebGPU.mgrBuffer.objects[bufferId];
+      assert(typeof bufferWrapper != "undefined");
+  
+      if (!bufferWrapper.onUnmap) {
+        // Already unmapped
+        return;
+      }
+  
+      for (var i = 0; i < bufferWrapper.onUnmap.length; ++i) {
+        bufferWrapper.onUnmap[i]();
+      }
+      bufferWrapper.onUnmap = undefined;
+  
+      bufferWrapper.object["unmap"]();
+    };
+
+  
+  var _wgpuCommandEncoderBeginComputePass = (encoderId, descriptor) => {
+      var desc;
+  
+      function makeComputePassTimestampWrites(twPtr) {
+        if (twPtr === 0) return undefined;
+  
+        return {
+          "querySet": WebGPU.mgrQuerySet.get(
+            HEAPU32[((twPtr)>>2)]),
+          "beginningOfPassWriteIndex": HEAPU32[(((twPtr)+(4))>>2)],
+          "endOfPassWriteIndex": HEAPU32[(((twPtr)+(8))>>2)],
+        };
+      }
+  
+      if (descriptor) {
+        assert(descriptor);assert(HEAPU32[((descriptor)>>2)] === 0);
+        desc = {
+          "label": undefined,
+          "timestampWrites": makeComputePassTimestampWrites(
+            HEAPU32[(((descriptor)+(8))>>2)]),
+        };
+        var labelPtr = HEAPU32[(((descriptor)+(4))>>2)];
+        if (labelPtr) desc["label"] = UTF8ToString(labelPtr);
+  
+      }
+      var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
+      return WebGPU.mgrComputePassEncoder.create(commandEncoder["beginComputePass"](desc));
+    };
 
   
   var _wgpuCommandEncoderBeginRenderPass = (encoderId, descriptor) => {
@@ -10429,10 +11797,54 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       return WebGPU.mgrRenderPassEncoder.create(commandEncoder["beginRenderPass"](desc));
     };
 
+  
+  function _wgpuCommandEncoderCopyBufferToBuffer(encoderId,srcId,srcOffset_low, srcOffset_high,dstId,dstOffset_low, dstOffset_high,size_low, size_high) {
+    var srcOffset = convertI32PairToI53Checked(srcOffset_low, srcOffset_high);;
+    var dstOffset = convertI32PairToI53Checked(dstOffset_low, dstOffset_high);;
+    var size = convertI32PairToI53Checked(size_low, size_high);;
+  
+    
+      var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
+      var src = WebGPU.mgrBuffer.get(srcId);
+      var dst = WebGPU.mgrBuffer.get(dstId);
+      commandEncoder["copyBufferToBuffer"](src, srcOffset, dst, dstOffset, size);
+    ;
+  }
+
   var _wgpuCommandEncoderFinish = (encoderId, descriptor) => {
       // TODO: Use the descriptor.
       var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
       return WebGPU.mgrCommandBuffer.create(commandEncoder["finish"]());
+    };
+
+  var _wgpuComputePassEncoderDispatchWorkgroups = (passId, x, y, z) => {
+      var pass = WebGPU.mgrComputePassEncoder.get(passId);
+      pass["dispatchWorkgroups"](x, y, z);
+    };
+
+  var _wgpuComputePassEncoderEnd = (passId) => {
+      var pass = WebGPU.mgrComputePassEncoder.get(passId);
+      pass["end"]();
+    };
+
+  var _wgpuComputePassEncoderSetBindGroup = (passId, groupIndex, groupId, dynamicOffsetCount, dynamicOffsetsPtr) => {
+      var pass = WebGPU.mgrComputePassEncoder.get(passId);
+      var group = WebGPU.mgrBindGroup.get(groupId);
+      if (dynamicOffsetCount == 0) {
+        pass["setBindGroup"](groupIndex, group);
+      } else {
+        var offsets = [];
+        for (var i = 0; i < dynamicOffsetCount; i++, dynamicOffsetsPtr += 4) {
+          offsets.push(HEAPU32[((dynamicOffsetsPtr)>>2)]);
+        }
+        pass["setBindGroup"](groupIndex, group, offsets);
+      }
+    };
+
+  var _wgpuComputePassEncoderSetPipeline = (passId, pipelineId) => {
+      var pass = WebGPU.mgrComputePassEncoder.get(passId);
+      var pipeline = WebGPU.mgrComputePipeline.get(pipelineId);
+      pass["setPipeline"](pipeline);
     };
 
   
@@ -10639,6 +12051,24 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
       }
       var device = WebGPU.mgrDevice.get(deviceId);
       return WebGPU.mgrCommandEncoder.create(device["createCommandEncoder"](desc));
+    };
+
+  
+  var _wgpuDeviceCreateComputePipeline = (deviceId, descriptor) => {
+      assert(descriptor);assert(HEAPU32[((descriptor)>>2)] === 0);
+  
+      var desc = {
+        "label": undefined,
+        "layout": WebGPU.makePipelineLayout(
+          HEAPU32[(((descriptor)+(8))>>2)]),
+        "compute": WebGPU.makeProgrammableStageDescriptor(
+          descriptor + 12),
+      };
+      var labelPtr = HEAPU32[(((descriptor)+(4))>>2)];
+      if (labelPtr) desc["label"] = UTF8ToString(labelPtr);
+  
+      var device = WebGPU.mgrDevice.get(deviceId);
+      return WebGPU.mgrComputePipeline.create(device["createComputePipeline"](desc));
     };
 
   
@@ -11175,6 +12605,53 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 
   var _wgpuSamplerRelease = (id) => WebGPU.mgrSampler.release(id);
 
+  
+  
+  
+  
+  
+  var _wgpuShaderModuleGetCompilationInfo = (shaderModuleId, callback, userdata) => {
+      var shaderModule = WebGPU.mgrShaderModule.get(shaderModuleId);
+      
+      shaderModule["getCompilationInfo"]().then((compilationInfo) => {
+        
+        callUserCallback(() => {
+          var compilationMessagesPtr = _malloc(72 * compilationInfo.messages.length);
+          var messageStringPtrs = []; // save these to free later
+          for (var i = 0; i < compilationInfo.messages.length; ++i) {
+            var compilationMessage = compilationInfo.messages[i];
+            var compilationMessagePtr = compilationMessagesPtr + 72 * i;
+            var messageSize = lengthBytesUTF8(compilationMessage.message) + 1;
+            var messagePtr = _malloc(messageSize);
+            messageStringPtrs.push(messagePtr);
+            stringToUTF8(compilationMessage.message, messagePtr, messageSize);
+            HEAPU32[(((compilationMessagePtr)+(4))>>2)] = messagePtr;
+            HEAP32[(((compilationMessagePtr)+(8))>>2)] = WebGPU.Int_CompilationMessageType[compilationMessage.type];
+            (tempI64 = [compilationMessage.lineNum>>>0,(tempDouble = compilationMessage.lineNum,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(16))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(20))>>2)] = tempI64[1]);
+            (tempI64 = [compilationMessage.linePos>>>0,(tempDouble = compilationMessage.linePos,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(24))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(28))>>2)] = tempI64[1]);
+            (tempI64 = [compilationMessage.offset>>>0,(tempDouble = compilationMessage.offset,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(32))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(36))>>2)] = tempI64[1]);
+            (tempI64 = [compilationMessage.length>>>0,(tempDouble = compilationMessage.length,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(40))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(44))>>2)] = tempI64[1]);
+            // TODO: Convert JavaScript's UTF-16-code-unit offsets to UTF-8-code-unit offsets.
+            // https://github.com/webgpu-native/webgpu-headers/issues/246
+            (tempI64 = [compilationMessage.linePos>>>0,(tempDouble = compilationMessage.linePos,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(48))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(52))>>2)] = tempI64[1]);
+            (tempI64 = [compilationMessage.offset>>>0,(tempDouble = compilationMessage.offset,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(56))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(60))>>2)] = tempI64[1]);
+            (tempI64 = [compilationMessage.length>>>0,(tempDouble = compilationMessage.length,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? (+(Math.floor((tempDouble)/4294967296.0)))>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)], HEAP32[(((compilationMessagePtr)+(64))>>2)] = tempI64[0],HEAP32[(((compilationMessagePtr)+(68))>>2)] = tempI64[1]);
+          }
+          var compilationInfoPtr = _malloc(12);
+          HEAPU32[(((compilationInfoPtr)+(4))>>2)] = compilationInfo.messages.length
+          HEAPU32[(((compilationInfoPtr)+(8))>>2)] = compilationMessagesPtr;
+  
+          ((a1, a2, a3) => dynCall_viii(callback, a1, a2, a3))(0, compilationInfoPtr, userdata);
+  
+          messageStringPtrs.forEach((ptr) => {
+            _free(ptr);
+          });
+          _free(compilationMessagesPtr);
+          _free(compilationInfoPtr);
+        });
+      });
+    };
+
   var _wgpuShaderModuleRelease = (id) => WebGPU.mgrShaderModule.release(id);
 
   var _wgpuSurfaceGetPreferredFormat = (surfaceId, adapterId) => {
@@ -11282,6 +12759,10 @@ function get_audio_context_time() { return Emval.toHandle( global_audio_context.
 embind_init_charCodes();
 BindingError = Module['BindingError'] = class BindingError extends Error { constructor(message) { super(message); this.name = 'BindingError'; }};
 InternalError = Module['InternalError'] = class InternalError extends Error { constructor(message) { super(message); this.name = 'InternalError'; }};
+init_ClassHandle();
+init_embind();;
+init_RegisteredPointer();
+UnboundTypeError = Module['UnboundTypeError'] = extendError(Error, 'UnboundTypeError');;
 init_emval();;
 
       // exports
@@ -11370,6 +12851,14 @@ var wasmImports = {
   /** @export */
   _embind_register_bool: __embind_register_bool,
   /** @export */
+  _embind_register_class: __embind_register_class,
+  /** @export */
+  _embind_register_class_class_function: __embind_register_class_class_function,
+  /** @export */
+  _embind_register_class_function: __embind_register_class_function,
+  /** @export */
+  _embind_register_class_property: __embind_register_class_property,
+  /** @export */
   _embind_register_emval: __embind_register_emval,
   /** @export */
   _embind_register_float: __embind_register_float,
@@ -11390,11 +12879,17 @@ var wasmImports = {
   /** @export */
   _emval_await: __emval_await,
   /** @export */
+  _emval_call: __emval_call,
+  /** @export */
   _emval_call_method: __emval_call_method,
   /** @export */
   _emval_decref: __emval_decref,
   /** @export */
+  _emval_get_global: __emval_get_global,
+  /** @export */
   _emval_get_method_caller: __emval_get_method_caller,
+  /** @export */
+  _emval_get_module_property: __emval_get_module_property,
   /** @export */
   _emval_get_property: __emval_get_property,
   /** @export */
@@ -11405,6 +12900,8 @@ var wasmImports = {
   _emval_new_cstring: __emval_new_cstring,
   /** @export */
   _emval_run_destructors: __emval_run_destructors,
+  /** @export */
+  _emval_set_property: __emval_set_property,
   /** @export */
   _emval_take_value: __emval_take_value,
   /** @export */
@@ -11485,6 +12982,8 @@ var wasmImports = {
   get_audio_duration: get_audio_duration,
   /** @export */
   get_audio_playback_progress: get_audio_playback_progress,
+  /** @export */
+  get_audio_samples_GPU: get_audio_samples_GPU,
   /** @export */
   get_audio_samples_hybrid: get_audio_samples_hybrid,
   /** @export */
@@ -11762,11 +13261,29 @@ var wasmImports = {
   /** @export */
   wgpuBufferDestroy: _wgpuBufferDestroy,
   /** @export */
+  wgpuBufferGetConstMappedRange: _wgpuBufferGetConstMappedRange,
+  /** @export */
+  wgpuBufferMapAsync: _wgpuBufferMapAsync,
+  /** @export */
   wgpuBufferRelease: _wgpuBufferRelease,
+  /** @export */
+  wgpuBufferUnmap: _wgpuBufferUnmap,
+  /** @export */
+  wgpuCommandEncoderBeginComputePass: _wgpuCommandEncoderBeginComputePass,
   /** @export */
   wgpuCommandEncoderBeginRenderPass: _wgpuCommandEncoderBeginRenderPass,
   /** @export */
+  wgpuCommandEncoderCopyBufferToBuffer: _wgpuCommandEncoderCopyBufferToBuffer,
+  /** @export */
   wgpuCommandEncoderFinish: _wgpuCommandEncoderFinish,
+  /** @export */
+  wgpuComputePassEncoderDispatchWorkgroups: _wgpuComputePassEncoderDispatchWorkgroups,
+  /** @export */
+  wgpuComputePassEncoderEnd: _wgpuComputePassEncoderEnd,
+  /** @export */
+  wgpuComputePassEncoderSetBindGroup: _wgpuComputePassEncoderSetBindGroup,
+  /** @export */
+  wgpuComputePassEncoderSetPipeline: _wgpuComputePassEncoderSetPipeline,
   /** @export */
   wgpuDeviceCreateBindGroup: _wgpuDeviceCreateBindGroup,
   /** @export */
@@ -11775,6 +13292,8 @@ var wasmImports = {
   wgpuDeviceCreateBuffer: _wgpuDeviceCreateBuffer,
   /** @export */
   wgpuDeviceCreateCommandEncoder: _wgpuDeviceCreateCommandEncoder,
+  /** @export */
+  wgpuDeviceCreateComputePipeline: _wgpuDeviceCreateComputePipeline,
   /** @export */
   wgpuDeviceCreatePipelineLayout: _wgpuDeviceCreatePipelineLayout,
   /** @export */
@@ -11825,6 +13344,8 @@ var wasmImports = {
   wgpuRenderPipelineRelease: _wgpuRenderPipelineRelease,
   /** @export */
   wgpuSamplerRelease: _wgpuSamplerRelease,
+  /** @export */
+  wgpuShaderModuleGetCompilationInfo: _wgpuShaderModuleGetCompilationInfo,
   /** @export */
   wgpuShaderModuleRelease: _wgpuShaderModuleRelease,
   /** @export */
@@ -11911,6 +13432,10 @@ var dynCall_viiiii = Module['dynCall_viiiii'] = createExportWrapper('dynCall_vii
 var dynCall_vi = Module['dynCall_vi'] = createExportWrapper('dynCall_vi');
 var dynCall_vif = Module['dynCall_vif'] = createExportWrapper('dynCall_vif');
 var dynCall_v = Module['dynCall_v'] = createExportWrapper('dynCall_v');
+var dynCall_viif = Module['dynCall_viif'] = createExportWrapper('dynCall_viif');
+var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii');
+var dynCall_viiif = Module['dynCall_viiif'] = createExportWrapper('dynCall_viiif');
+var dynCall_diiii = Module['dynCall_diiii'] = createExportWrapper('dynCall_diiii');
 var dynCall_iiiii = Module['dynCall_iiiii'] = createExportWrapper('dynCall_iiiii');
 var dynCall_jiji = Module['dynCall_jiji'] = createExportWrapper('dynCall_jiji');
 var dynCall_iidiiii = Module['dynCall_iidiiii'] = createExportWrapper('dynCall_iidiiii');
@@ -11923,14 +13448,13 @@ var dynCall_iiiiid = Module['dynCall_iiiiid'] = createExportWrapper('dynCall_iii
 var dynCall_iiiiijj = Module['dynCall_iiiiijj'] = createExportWrapper('dynCall_iiiiijj');
 var dynCall_iiiiiiii = Module['dynCall_iiiiiiii'] = createExportWrapper('dynCall_iiiiiiii');
 var dynCall_iiiiiijj = Module['dynCall_iiiiiijj'] = createExportWrapper('dynCall_iiiiiijj');
-var dynCall_viiiiii = Module['dynCall_viiiiii'] = createExportWrapper('dynCall_viiiiii');
 var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4002108;
-var ___start_em_js = Module['___start_em_js'] = 4037632;
-var ___stop_em_js = Module['___stop_em_js'] = 4070573;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4004740;
+var ___start_em_js = Module['___start_em_js'] = 4040416;
+var ___stop_em_js = Module['___stop_em_js'] = 4075144;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
@@ -11964,9 +13488,6 @@ var missingLibrarySymbols = [
   'runMainThreadEmAsm',
   'listenOnce',
   'autoResumeAudioContext',
-  'dynCallLegacy',
-  'getDynCaller',
-  'dynCall',
   'asmjsMangle',
   'HandleAllocator',
   'getNativeTypeSize',
@@ -12063,52 +13584,11 @@ var missingLibrarySymbols = [
   'writeAsciiToMemory',
   'setErrNo',
   'demangle',
-  'getFunctionName',
   'getFunctionArgsName',
-  'heap32VectorToArray',
-  'usesDestructorStack',
   'createJsInvokerSignature',
-  'createJsInvoker',
-  'init_embind',
-  'throwUnboundTypeError',
-  'ensureOverloadTable',
-  'exposePublicSymbol',
-  'replacePublicSymbol',
-  'extendError',
-  'getBasestPointer',
   'registerInheritedInstance',
   'unregisterInheritedInstance',
-  'getInheritedInstance',
-  'getInheritedInstanceCount',
-  'getLiveInheritedInstances',
   'enumReadValueFromPointer',
-  'craftInvokerFunction',
-  'embind__requireFunction',
-  'genericPointerToWireType',
-  'constNoSmartPtrRawPointerToWireType',
-  'nonConstNoSmartPtrRawPointerToWireType',
-  'init_RegisteredPointer',
-  'RegisteredPointer',
-  'RegisteredPointer_fromWireType',
-  'runDestructor',
-  'releaseClassHandle',
-  'detachFinalizer',
-  'attachFinalizer',
-  'makeClassHandle',
-  'init_ClassHandle',
-  'ClassHandle',
-  'throwInstanceAlreadyDeleted',
-  'flushPendingDeletes',
-  'setDelayFunction',
-  'RegisteredClass',
-  'shallowCopyInternalPointer',
-  'downcastPointer',
-  'upcastPointer',
-  'validateThis',
-  'char_0',
-  'char_9',
-  'makeLegalFunctionName',
-  'emval_get_global',
 ];
 missingLibrarySymbols.forEach(missingLibrarySymbol)
 
@@ -12168,6 +13648,9 @@ var unexportedSymbols = [
   'jstoi_q',
   'jstoi_s',
   'getExecutableName',
+  'dynCallLegacy',
+  'getDynCaller',
+  'dynCall',
   'handleException',
   'keepRuntimeAlive',
   'runtimeKeepalivePush',
@@ -12288,14 +13771,28 @@ var unexportedSymbols = [
   'embind_init_charCodes',
   'readLatin1String',
   'getTypeName',
+  'getFunctionName',
+  'heap32VectorToArray',
   'requireRegisteredType',
+  'usesDestructorStack',
+  'createJsInvoker',
   'UnboundTypeError',
   'PureVirtualError',
   'GenericWireTypeSize',
   'EmValType',
+  'init_embind',
+  'throwUnboundTypeError',
+  'ensureOverloadTable',
+  'exposePublicSymbol',
+  'replacePublicSymbol',
+  'extendError',
   'createNamedFunction',
   'embindRepr',
   'registeredInstances',
+  'getBasestPointer',
+  'getInheritedInstance',
+  'getInheritedInstanceCount',
+  'getLiveInheritedInstances',
   'registeredPointers',
   'registerType',
   'integerReadValueFromPointer',
@@ -12303,10 +13800,36 @@ var unexportedSymbols = [
   'readPointer',
   'runDestructors',
   'newFunc',
+  'craftInvokerFunction',
+  'embind__requireFunction',
+  'genericPointerToWireType',
+  'constNoSmartPtrRawPointerToWireType',
+  'nonConstNoSmartPtrRawPointerToWireType',
+  'init_RegisteredPointer',
+  'RegisteredPointer',
+  'RegisteredPointer_fromWireType',
+  'runDestructor',
+  'releaseClassHandle',
   'finalizationRegistry',
   'detachFinalizer_deps',
+  'detachFinalizer',
+  'attachFinalizer',
+  'makeClassHandle',
+  'init_ClassHandle',
+  'ClassHandle',
+  'throwInstanceAlreadyDeleted',
   'deletionQueue',
+  'flushPendingDeletes',
   'delayFunction',
+  'setDelayFunction',
+  'RegisteredClass',
+  'shallowCopyInternalPointer',
+  'downcastPointer',
+  'upcastPointer',
+  'validateThis',
+  'char_0',
+  'char_9',
+  'makeLegalFunctionName',
   'emval_freelist',
   'emval_handles',
   'emval_symbols',
@@ -12314,6 +13837,7 @@ var unexportedSymbols = [
   'count_emval_handles',
   'getStringOrSymbol',
   'Emval',
+  'emval_get_global',
   'emval_returnValue',
   'emval_lookupTypes',
   'emval_methodCallers',

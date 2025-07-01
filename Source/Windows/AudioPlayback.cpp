@@ -13,6 +13,7 @@
 #include <Extensions/TouchInput.h>
 #include <Extensions/imguiExt.h>
 #include <Extensions/FileHandler.h>
+#include <Extensions/ComputeShader.h>
 #include "MainWindow.h"
 
 EM_JS(void, create_audio_element, (), {
@@ -389,6 +390,55 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
         };
     };
 });
+EM_JS(void, get_audio_samples_GPU, (emscripten::EM_VAL stretch_index, emscripten::EM_VAL kernel_name), {
+    const kernelName = Emval.toValue(kernel_name);
+    const stretchIndex = Emval.toValue(stretch_index);
+    var audioBuff = Module['ShaderBuffer'].Create();
+    var stretchedBuff = Module['ShaderBuffer'].Create();
+    const audioLength = global_audio_worker_setup_data[1][0].length;
+    const stretchedLength = Math.ceil(audioLength / (stretchIndex * .1));
+    var compute = Module['ComputeShader'].Load('Shaders/ResonateStretchCS.wgsl');
+    compute.SetBuffer('audioBuffer', audioBuff);
+    compute.SetBuffer('stretchedBuffer', stretchedBuff);
+    compute.SetInt("audioLength", audioLength);
+    compute.SetInt("stretchedLength", stretchedLength);
+    const stftBins = (
+                    5 < stretchIndex ? 8192 :(
+                    4 < stretchIndex ? 6140 :(
+                    3 < stretchIndex ? 4096 :
+                    1576)));
+    compute.SetInt("stftBins", stftBins);
+    const stftHop = 1 / (
+                    5 < stretchIndex ? 3 :(
+                    4 < stretchIndex ? 4.8 :(
+                    3 < stretchIndex ? 5 :
+                    6)));
+    compute.SetFloat("stftHop", stftHop);
+    compute.SetFloat("stretchFactor", 1 / (stretchIndex * 0.1));
+    var output = [];
+    new Promise(async(resolveAll)=>{
+        for(var ch = 0; ch < global_audio_worker_setup_data[1].length; ch++)
+        {
+            await new Promise((resolve)=>{
+                audioBuff.SetData(global_audio_worker_setup_data[1][ch]);
+                stretchedBuff.SetData(new Float32Array(stretchedLength));
+                compute.Dispatch(kernelName, (audioLength - stftBins) / (stftBins * stftHop), 1, 1);
+                stretchedBuff.GetDataAsync((buffer)=>{
+                    output[ch] = new Float32Array(buffer);
+                    resolve();
+                });
+            });
+        }
+        resolveAll();
+    }).then(()=>{
+        global_audio_blobs[stretchIndex - 1] = Module.audioDataArrayToBlob(output , global_audio_worker_setup_data[3]);
+        global_audio_completion[stretchIndex - 1] = true;
+        _jsUpdateAudioBuffer(Emval.toHandle(stretchIndex));
+        audioBuff.delete();
+        stretchedBuff.delete();
+        compute.delete();
+    });
+});
 EM_ASYNC_JS(void, get_audio_samples_setup, (emscripten::EM_VAL fs_path), {
 	const audioData = FS.readFile(Emval.toValue(fs_path));
     const audioBlob = new Blob([audioData.buffer], {type: 'audio/mp3' });
@@ -517,6 +567,14 @@ void AudioPlayback::DrawPlaybackSpeed()
         else if(myEngine == ProcessEngine::Browser)
         {
             //get_audio_samples_hybrid(VAR_TO_JS(mySpeed), VAR_TO_JS("VexWarp"), VAR_TO_JS("RubberBand"));
+        }
+        else if(myEngine == ProcessEngine::GPU)
+        {
+            //ComputeShader cs = ComputeShader::Load("plugins/ResonateStretchCS.wgsl");
+            //ShaderBuffer audioBuff = ShaderBuffer::Create();
+            //cs.SetBuffer("audioBuffer", audioBuff);
+            //cs.Dispatch("stretchAudio", /* numSamples / (stftHop * stftBins) */ 512);
+            get_audio_samples_GPU(VAR_TO_JS(mySpeed), VAR_TO_JS("stretchAudio"));
         }
     }
     myWantToSetSpeed = false;

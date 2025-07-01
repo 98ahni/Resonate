@@ -6,12 +6,14 @@
 #include <emscripten.h>
 #include <emscripten/val.h>
 #include <Serialization/Preferences.h>
+#include <Serialization/KaraokeData.h>
 #include "TimingEditor.h"
 #include "AudioPlayback.h"
 #include <Extensions/FileHandler.h>
 #include <Extensions/imguiExt.h>
 #include <Defines.h>
 #include "Preview.h"
+#include "MainWindow.h"
 
 EM_JS(emscripten::EM_VAL, setup_latency_metronome, (), {
     return Emval.toHandle(new Promise(async (resolve) => {
@@ -130,6 +132,18 @@ void Settings::OnImGuiDraw()
         TimingEditor::Get().SetInputUnsafe(true);
     }
     ImGui::SeparatorText("Audio Processor");
+    ImGui::BeginDisabled(!MainWindow::HasWebGPU);
+    if(ImGui::RadioButton("VexWarp (GPU)", AudioPlayback::GetEngine() == AudioPlayback::GPU))
+    {
+        AudioPlayback::SetEngine(AudioPlayback::GPU);
+    }
+    ImGui::Indent();
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("Run the stretching on the GPU on supported devices. (Recomended)");
+    if(!MainWindow::HasWebGPU) { ImGui::TextWrapped("Your browser does not support WebGPU yet. "); }
+    ImGui::EndDisabled();
+    ImGui::EndDisabled();
+    ImGui::Unindent();
     if(ImGui::RadioButton("VexWarp (Default)", AudioPlayback::GetEngine() == AudioPlayback::Default))
     {
         AudioPlayback::SetEngine(AudioPlayback::Default);

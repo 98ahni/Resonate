@@ -12,7 +12,8 @@ public:
     {
         Default,
         RubberBand,
-        Browser
+        Browser,
+        GPU
     };
     AudioPlayback();
     void OnImGuiDraw();
