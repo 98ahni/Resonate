@@ -9,17 +9,17 @@ const { execSync } = require('node:child_process');
 var os = require('os');
 const WIN32 = os.platform() === "win32";
 
-const RELEASE_Build = false;
+const RELEASE_Build = true;
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
 const REBUILD_Rubberband = false;
-const REBUILD_Source = false;
+const REBUILD_Source = true;
 const SKIP_ImguiCompile = false;
 const SKIP_RubberbandCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
-const FORCE_Linking = false;
+const FORCE_Linking = true;
 
 // APIs gotten from Github Secrets
 const API_SECRETS = [

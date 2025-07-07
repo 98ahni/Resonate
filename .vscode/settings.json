@@ -103,5 +103,6 @@
         "iostream": "cpp",
         "cinttypes": "cpp",
         "condition_variable": "cpp"
-    }
+    },
+    "editor.fontSize": 12
 }
