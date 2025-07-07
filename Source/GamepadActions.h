@@ -13,6 +13,7 @@
 #define Gamepad_Tap(button) (Gamepad::GetButtonUp(button) && Gamepad::GetTimeSinceToggled(button) < 0.5f)
 #define Gamepad_Hold(button) (Gamepad::GetButton(button) && Gamepad::GetTimeSinceToggled(button) > 0.5f)
 #define Gamepad_RepeatDelayed(button, rate, delay) (Gamepad::GetButtonDown(button) || (Gamepad::GetButtonRepeating(button, rate) && Gamepad::GetTimeSinceToggled(button) > delay))
+#define Gamepad_TimeSinceRepeatStart(button) (Gamepad::GetButtonDown(button) ? 0 : Gamepad::GetTimeSinceToggled(button))
 typedef unsigned int ImU32;
 struct ImVec2;
 struct ImDrawList;

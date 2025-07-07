@@ -208,15 +208,15 @@ bool PropertiesWindow::DrawFontSizeGamepadPopup()
             History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
             Serialization::KaraokeDocument::Get().myFontSize = fontSize;
         }
-        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.f))
         {
             History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
-            Serialization::KaraokeDocument::Get().myFontSize = fontSize - (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            Serialization::KaraokeDocument::Get().myFontSize = fontSize - (Gamepad_TimeSinceRepeatStart(Gamepad::D_Right) < 3 ? 1 : 5);
         }
-        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.f))
         {
             History::AddRecord(new Serialization::KaraokeDocument::EchoRecord());
-            Serialization::KaraokeDocument::Get().myFontSize = fontSize + (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            Serialization::KaraokeDocument::Get().myFontSize = fontSize + (Gamepad_TimeSinceRepeatStart(Gamepad::D_Right) < 3 ? 1 : 5);
         }
         ImGui::SameLine();
         DrawHudSprite(HUDSprite::ArrowRightBtn, {ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
@@ -254,14 +254,14 @@ bool PropertiesWindow::DrawShiftTimingsGamepadPopup()
         ImGui::Text("If the syllables light up after the audio, enter a negative offset.");
         ImGui::Dummy({0, DPI_SCALED(10)});
         bool valChanged = ImGui::InputInt("##ShiftTime", &myShiftTimingsValue);
-        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.f))
         {
-            myShiftTimingsValue -= (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            myShiftTimingsValue -= (Gamepad_TimeSinceRepeatStart(Gamepad::D_Right) < 3 ? 1 : 5);
             valChanged = true;
         }
-        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.f))
         {
-            myShiftTimingsValue += (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
+            myShiftTimingsValue += (Gamepad_TimeSinceRepeatStart(Gamepad::D_Right) < 3 ? 1 : 5);
             valChanged = true;
         }
         if(valChanged)
@@ -542,7 +542,7 @@ bool PropertiesWindow::DrawGamepadColorComponent(const char* aLabel, bool aIsSel
     {
         if(Gamepad::GetButtonRepeating(Gamepad::D_Up) || Gamepad::GetButtonRepeating(Gamepad::D_Down))
         {
-            int val = aColorComponent + (Gamepad::GetButton(Gamepad::D_Up) ? (Gamepad::GetTimeSinceToggled(Gamepad::D_Up) < 1 ? 1 : 5) : (Gamepad::GetTimeSinceToggled(Gamepad::D_Down) < 1 ? -1 : -5));
+            int val = aColorComponent + (Gamepad::GetButton(Gamepad::D_Up) ? (Gamepad_TimeSinceRepeatStart(Gamepad::D_Up) < 1 ? 1 : 5) : (Gamepad_TimeSinceRepeatStart(Gamepad::D_Down) < 1 ? -1 : -5));
             aColorComponent = clamp(val, 0, 255);
             changed = true;
         }

@@ -736,7 +736,6 @@ bool DrawImagePopup()
     {
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
         ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        ImVec2 topLeft = ImGui::GetCursorPos();
         if(g_selectedColorSlider == 0)
         {
             if(Gamepad::GetButtonRepeating(Gamepad::D_Left) || Gamepad::GetButtonRepeating(Gamepad::D_Right))
@@ -744,10 +743,18 @@ bool DrawImagePopup()
                 g_imageShiftTime += Gamepad::GetButton(Gamepad::D_Right) ? 1 : -1;
             }
         }
+        float arrowSize = ImGui::GetTextLineHeightWithSpacing();
         ImGui::Text("Shift Start Time (cs)");
+        ImGui::Dummy({arrowSize, arrowSize});
         ImGui::SameLine();
+        ImVec2 topLeft = ImGui::GetCursorPos();
         ImGui::DragInt("##Shift Start Time (cs)", &g_imageShiftTime);
         ImVec2 size = ImGui::GetItemRectSize();
+        ImGui::SameLine();
+        ImGui::Dummy({arrowSize, arrowSize});
+        ImGui::Text("Fade Duration (cs)");
+        ImGui::Dummy({arrowSize, arrowSize});
+        ImGui::SameLine();
         if(g_selectedColorSlider == 1)
         {
             topLeft = ImGui::GetCursorPos();
@@ -756,9 +763,26 @@ bool DrawImagePopup()
                 g_imageFadeTime += Gamepad::GetButton(Gamepad::D_Right) ? 1 : -1;
             }
         }
-        ImGui::Text("Fade Duration (cs)");
-        ImGui::SameLine();
         ImGui::DragInt("##Fade Duration (cs)", &g_imageFadeTime);
+        ImGui::SameLine();
+        ImGui::Dummy({arrowSize, arrowSize});
+        ImGui::Dummy({arrowSize, arrowSize});
+        uint imgTempTime = 0;
+        if(doc.GetLine(TimingEditor::Get().GetMarkedLine() + 1).size() == 1 && doc.IsPauseToken(TimingEditor::Get().GetMarkedLine() + 1, 0))
+        {
+            imgTempTime = doc.GetToken(TimingEditor::Get().GetMarkedLine() + 1, 0).myStartTime;
+        }
+        else
+        {
+            imgTempTime = doc.GetThisOrNextTimedToken(TimingEditor::Get().GetMarkedLine() + 1, 0).myStartTime;
+            imgTempTime = imgTempTime < 200 ? 0 : (imgTempTime - 200);
+        }
+        if((int)imgTempTime < -g_imageShiftTime)
+        {
+            g_imageShiftTime = -imgTempTime;
+        }
+        imgTempTime += g_imageShiftTime;
+        ImGui::Text("    image %.2f %s\n    %s", (float)g_imageFadeTime * .01f, g_editingEffectName.data(), doc.TimeToString(imgTempTime).data());
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         topLeft.x += ImGui::GetWindowPos().x;
         topLeft.y += ImGui::GetWindowPos().y;
@@ -869,38 +893,40 @@ bool DrawLatencyPopup()
             g_hasInitMetronome = true;
             Settings::InitLatencyVisualization();
         }
-        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(300)}, ImGuiCond_Once);
-        int latency = TimingEditor::Get().GetRawInputLatencyOffset();
-        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        ImGui::SetWindowSize({DPI_SCALED(400), DPI_SCALED(330)}, ImGuiCond_Once);
+        int latencyIn = TimingEditor::Get().GetRawInputLatencyOffset();
+        float arrowSize = ImGui::GetTextLineHeightWithSpacing();
+        ImGui::Text("Input Latency");
+        ImGui::Dummy({arrowSize, arrowSize});
         ImGui::SameLine();
         ImVec2 outlinePos = ImGui::GetCursorScreenPos();
-        if(ImGui::DragInt("##AudioLatency", &latency))
+        if(ImGui::DragInt("##AudioLatency", &latencyIn))
         {
-            TimingEditor::Get().SetInputLatencyOffset(latency);
+            TimingEditor::Get().SetInputLatencyOffset(latencyIn);
         }
-        ImVec2 outlineSize = ImGui::GetCursorScreenPos();
+        ImVec2 outlineSize = { 0, (ImGui::GetCursorScreenPos().y - outlinePos.y) - DPI_SCALED(5) };
         ImGui::SameLine();
-        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
-        latency = TimingEditor::Get().GetRawVisualLatencyOffset();
-        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        outlineSize.x = (ImGui::GetCursorScreenPos().x - outlinePos.x) - DPI_SCALED(10);
+        ImGui::Dummy({arrowSize, arrowSize});
+        ImGui::Text("Visual Latency");
+        int latencyScr = TimingEditor::Get().GetRawVisualLatencyOffset();
+        ImGui::Dummy({arrowSize, arrowSize});
         ImGui::SameLine();
         if(g_selectedColorSlider == 1) {outlinePos = ImGui::GetCursorScreenPos();}
-        if(ImGui::DragInt("##VisualLatency", &latency))
+        if(ImGui::DragInt("##VisualLatency", &latencyScr))
         {
-            TimingEditor::Get().SetVisualLatencyOffset(latency);
+            TimingEditor::Get().SetVisualLatencyOffset(latencyScr);
         }
         ImGui::SameLine();
-        ImGui::Dummy({ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing()});
+        ImGui::Dummy({arrowSize, arrowSize});
         int step = 0;
-        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.5f))
+        if(Gamepad_RepeatDelayed(Gamepad::D_Left, .1f, 1.f))
         {
-            step -= (Gamepad::GetTimeSinceToggled(Gamepad::D_Left) < 3 ? 1 : 5);
-            TimingEditor::Get().SetInputLatencyOffset(latency - step);
+            step -= (Gamepad_TimeSinceRepeatStart(Gamepad::D_Left) < 3 ? 1 : 5);
         }
-        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.5f))
+        if(Gamepad_RepeatDelayed(Gamepad::D_Right, .1f, 1.f))
         {
-            step += (Gamepad::GetTimeSinceToggled(Gamepad::D_Right) < 3 ? 1 : 5);
-            TimingEditor::Get().SetInputLatencyOffset(latency + step);
+            step += (Gamepad_TimeSinceRepeatStart(Gamepad::D_Right) < 3 ? 1 : 5);
         }
         if(g_selectedColorSlider == 0 && step != 0)
         {
@@ -909,10 +935,6 @@ bool DrawLatencyPopup()
         if(g_selectedColorSlider == 1 && step != 0)
         {
             TimingEditor::Get().SetVisualLatencyOffset(TimingEditor::Get().GetRawVisualLatencyOffset() + step);
-        }
-        if(Gamepad::GetButtonDown(Gamepad::D_Up) || Gamepad::GetButtonDown(Gamepad::D_Down))
-        {
-            g_selectedColorSlider = g_selectedColorSlider == 0 ? 1 : 0;
         }
         if(Gamepad::GetButtonDown(Gamepad::X) || Gamepad::GetButtonDown(Gamepad::Circle))
         {
@@ -924,10 +946,14 @@ bool DrawLatencyPopup()
             {outlinePos.x - DPI_SCALED(5), outlinePos.y - DPI_SCALED(5)},
             {outlinePos.x + outlineSize.x + DPI_SCALED(5), outlinePos.y + outlineSize.y + DPI_SCALED(5)},
             ImGui::GetColorU32(ImGuiCol_NavHighlight), ImGui::GetStyle().FrameRounding + DPI_SCALED(2), 0, ImGui::GetStyle().WindowBorderSize);
-        AddHudSpriteTo(drawList, HUDSprite::ArrowUpBtn, {(outlinePos.x - DPI_SCALED(10)) + (outlineSize.x * .5f), outlinePos.y - DPI_SCALED(20)}, {DPI_SCALED(20), DPI_SCALED(20)});
-        AddHudSpriteTo(drawList, HUDSprite::ArrowDownBtn, {(outlinePos.x - DPI_SCALED(10)) + (outlineSize.x * .5f), outlinePos.y + outlineSize.y + DPI_SCALED(0)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        if(g_selectedColorSlider == 1) AddHudSpriteTo(drawList, HUDSprite::ArrowUpBtn, {(outlinePos.x - DPI_SCALED(10)) + (outlineSize.x * .5f), outlinePos.y - DPI_SCALED(20)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        if(g_selectedColorSlider == 0) AddHudSpriteTo(drawList, HUDSprite::ArrowDownBtn, {(outlinePos.x - DPI_SCALED(10)) + (outlineSize.x * .5f), outlinePos.y + outlineSize.y + DPI_SCALED(0)}, {DPI_SCALED(20), DPI_SCALED(20)});
         AddHudSpriteTo(drawList, HUDSprite::ArrowLeftBtn, {outlinePos.x - DPI_SCALED(20), outlinePos.y + (outlineSize.y * .5f) - DPI_SCALED(10)}, {DPI_SCALED(20), DPI_SCALED(20)});
         AddHudSpriteTo(drawList, HUDSprite::ArrowRightBtn, {outlinePos.x + DPI_SCALED(0) + outlineSize.x, outlinePos.y + (outlineSize.y * .5f) - DPI_SCALED(10)}, {DPI_SCALED(20), DPI_SCALED(20)});
+        if(Gamepad::GetButtonDown(Gamepad::D_Up) || Gamepad::GetButtonDown(Gamepad::D_Down))
+        {
+            g_selectedColorSlider = g_selectedColorSlider == 0 ? 1 : 0;
+        }
 
         Gamepad::Mapping conMap = Gamepad::GetMapping(Gamepad::GetControllerWithLastEvent());
         if(conMap <= Gamepad::PSClassic && conMap != Gamepad::Xinput)
@@ -940,7 +966,7 @@ bool DrawLatencyPopup()
         }
 
         // Visualization
-        float sizeY = ImGui::GetWindowHeight() - ImGui::GetCursorPosY();
+        float sizeY = (ImGui::GetWindowHeight() - ImGui::GetCursorPosY()) - arrowSize;
         float sizeX = ImGui::GetWindowWidth();
         float size = (sizeX < sizeY ? sizeX : sizeY) * .4f;
         int timeRaw = Settings::DrawLatencyVisualization({sizeX, sizeY});
