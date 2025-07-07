@@ -6,7 +6,7 @@
 #include <Serialization/Preferences.h>
 #include <Defines.h>
 
-#define Title(size, label) drawList->AddText(MainWindow::Font, size, ImGui::GetCursorPos(), ImGui::GetColorU32(ImGuiCol_Text), label);ImGui::Dummy(MainWindow::Font->CalcTextSizeA(size, 100, 200, label))
+#define Title(size, label) drawList->AddText(MainWindow::Font, size, ImGui::GetCursorScreenPos(), ImGui::GetColorU32(ImGuiCol_Text), label);ImGui::Dummy(MainWindow::Font->CalcTextSizeA(size, 100, 200, label))
 #define BulletWrap(text) ImGui::SetCursorPosX(ImGui::GetCursorPosX() - DPI_SCALED(10)); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + DPI_SCALED(7)); ImGui::TextWrapped(text)
 
 NewsWindow::NewsWindow()
@@ -28,16 +28,17 @@ void NewsWindow::OnImGuiDraw()
     ImGui::TextWrapped("Oh, this line on the left seems to confirm my suspicions. And clicking on it gives shows even more info. "
         "You can even tell it to find things that might be wrong. Like an audio file that is too quiet or that too many lines could be shown simultaneously in ECHO. "
         "Whenever the Console wants to tell you something it'll even put a dot next to the View menu where it lives.");
-    Title(30, "\nWell that's nice and all\n   But something still seems off with the timing");
+    Title(30, "\nWell that's nice and all");
+    Title(30, "     But something still seems off with the timing");
     ImGui::TextWrapped("Luckily, I just found out that Resonate has a new setting called /Enhanced Timing Readability/. Let's turn it on and see if it makes a difference. ");
-    Title(20, "Woah! "); ImGui::SameLine(); ImGui::Text("Yeah, I timed that poorly...");
+    Title(22, "Woah! "); ImGui::SameLine(); ImGui::Text("Yeah, I timed that poorly...");
     ImGui::TextWrapped("Maybe my latency is wrong. oOo, I have a new preview in the Latency settings and TWO offsets, one for the visual and one for input. So I wasn't imagining things...");
     Title(30, "\nWhat is this speed?");
-    ImGui::TextWrapped("The speed slider for the audio, it's done in a split second! Is that the new audio engine that uses the GPU? It's like 100 times faster! \n"
+    ImGui::TextWrapped("The speed slider for the audio, it's done in a split second! Is that the new audio engine that uses the GPU? It's like 10 times faster! \n"
         "And the Raw view? It's so much faster!");
     Title(30, "\nI wish I could read this text over and over");
     ImGui::TextWrapped("As luck would have it, I can. It's in the View menu, next to the Help window. Handy for checking the new features at your own pace!");
-    Title(30, "\n\nMore improvements?\n    There's MORE?!");
+    Title(30, "\n\nMore improvements?\n      There's MORE?!");
     BulletWrap("Locally saved effects are now saved correctly.");
     BulletWrap("Images should no longer disappear when setting certain values.");
     BulletWrap("Images can now be timed like regular syllables.");
