@@ -453,7 +453,7 @@ void TimingEditor::SetInputLatencyOffset(int someCentiSeconds)
 
 int TimingEditor::GetInputLatencyOffset()
 {
-    return (int)(((float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f) + .5f);
+    return AudioPlayback::GetIsPlaying() ? (int)(((float)myAudioLatencyOffset * (float)AudioPlayback::GetPlaybackSpeed() * .1f) + .5f) : 0;
 }
 
 int TimingEditor::GetRawInputLatencyOffset()
