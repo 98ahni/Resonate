@@ -36,7 +36,7 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Loading a Project");
-    ImGui::TextWrapped("When opening a project you can choose to open it from the local machine, Google Drive or (later) Dropbox. "
+    ImGui::TextWrapped("When opening a project you can choose to open it from the local machine, Google Drive or Dropbox. "
     "If you open the project from a local storage on iOS or Android, you will have to open each file individually. "
     "When loading from Google Drive or Dropbox you will first have to log in to the chosen service, then select the folder containing the project. "
     "Resonate can not access any files outside of the folder you chose.");
