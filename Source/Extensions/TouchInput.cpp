@@ -267,7 +267,7 @@ void TouchInput_ReadyKeyboard(bool isNum)
 {
 	if(g_usingKeyboard) return;
 	if(!(ImGui::IsItemClicked(0) && TouchInput_HasTouch())) return;
-	printf("Keyboard Show!\n");
+	//printf("Keyboard Show!\n");
 	g_usingKeyboard = true;
 	show_touch_keyboard(isNum, ImGui::GetCursorScreenPos().y);
 }
@@ -290,7 +290,7 @@ void TouchInput_CheckKeyboard()
 		{
 			if(g_usingKeyboard)
 			{
-				printf("Keyboard Hide!\n");
+				//printf("Keyboard Hide!\n");
 				g_usingKeyboard = false;
 				hide_touch_keyboard();
 			}

@@ -8,12 +8,13 @@
 #include "AudioPlayback.h"
 #include "TimingEditor.h"
 #include <Extensions/imguiExt.h>
+#include <Defines.h>
 
 void TouchControl::OnImGuiDraw()
 {
     if(myEditor == nullptr)
     {
-        printf("Assigned editor to TouchControl.\n");
+        DBGprintf("Assigned editor to TouchControl.\n");
         myEditor = (TimingEditor*)WindowManager::GetWindow("Timing");
     }
     Gui_Begin();

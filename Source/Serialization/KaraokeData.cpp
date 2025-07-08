@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include "LineRecord.h"
+#include <Defines.h>
 
 namespace Serialization
 {
@@ -414,7 +415,7 @@ namespace Serialization
         //    printf("%s is already loaded!\n", aPath.c_str());
         //    return;
         //}
-        printf("Loading %s.\n", aPath.c_str());
+        DBGprintf("Loading %s.\n", aPath.c_str());
         if(!std::filesystem::exists(aPath))
         {
             printf("%s does not exist!\n", aPath.c_str());
@@ -666,7 +667,7 @@ namespace Serialization
         std::ofstream docFile("/local/" + pathName.filename().string());
         docFile.clear();
         docFile << Serialize();
-        printf("Auto saved to '/local/%s'.\n", pathName.filename().string().data());
+        DBGprintf("Auto saved to '/local/%s'.\n", pathName.filename().string().data());
         docFile.close();
         //FileHandler::SyncLocalFS();
         myIsAutoDirty = false;
@@ -710,7 +711,7 @@ namespace Serialization
     KaraokeEffect *KaraokeDocument::ParseEffectProperty(std::string aRawProperty)
     {
         std::vector<std::string> data = StringTools::Split(aRawProperty, ",");
-        printf("KaraokeDocument::ParseEffectProperty(%s)[data0=%s][data1=%s]\n", aRawProperty.data(), data[0].data(), data[1].data());
+        DBGprintf("KaraokeDocument::ParseEffectProperty(%s)[data0=%s][data1=%s]\n", aRawProperty.data(), data[0].data(), data[1].data());
         switch (std::stoi(data[0]))
         {
         case KaraokeEffect::Color:

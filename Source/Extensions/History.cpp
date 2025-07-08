@@ -5,6 +5,7 @@
 #include <vector>
 #include <Serialization/KaraokeData.h>
 #include <imgui.h>
+#include <Defines.h>
 
 struct HistoryQueue
 {
@@ -61,7 +62,7 @@ void History::Clear()
 
 void History::Undo()
 {
-    printf("Trying to undo %i\n", HistoryQueue::ourNextUndo);
+    DBGprintf("Trying to undo %i\n", HistoryQueue::ourNextUndo);
     if(HistoryQueue::ourNextUndo == 0) { return; }
     // Reverse for loop since what happened first needs to be undone last. 
     for(int cmd = HistoryQueue::ourQueue[HistoryQueue::ourNextUndo].size() - 1; 0 <= cmd; cmd--)
@@ -74,7 +75,7 @@ void History::Undo()
 void History::Redo()
 {
     HistoryQueue::ourNextUndo++;
-    printf("Trying to redo %i\n", HistoryQueue::ourNextUndo);
+    DBGprintf("Trying to redo %i\n", HistoryQueue::ourNextUndo);
     if(HistoryQueue::ourNextUndo >= HistoryQueue::ourQueue.size())
     {
         HistoryQueue::ourNextUndo--;

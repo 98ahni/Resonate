@@ -384,10 +384,10 @@ void DoSettingsActions()
                 switch(index)
                 {
                     case 0:
-                        printf("Cancel\n");
+                        DBGprintf("Cancel\n");
                         break;
                     case 1:
-                        printf("Add New\n");
+                        DBGprintf("Add New\n");
                         g_editingEffectName = "";
                         ImGui::OpenPopup("Edit Singer##Gamepad");
                         break;
@@ -596,7 +596,7 @@ void DoEffectsActions()
                 switch(index)
                 {
                     case 0:
-                        printf("Cancel\n");
+                        DBGprintf("Cancel\n");
                         break;
                     //case 1:
                     //    if(hasRemoveOption)

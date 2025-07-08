@@ -63,6 +63,13 @@ const MAINWINDOW_PLATFORM_IOS = 4;
 const MAINWINDOW_PLATFORM_ANDROID = 8;
 const MAINWINDOW_PLATFORM_LINUX = 16;
 const MAINWINDOW_PLATFORM_APPLE = 6;
+
+const DEBUG = 
+#ifdef _DEBUG
+	true;
+#else
+	false;
+#endif
 );
 
 EM_JS(bool, get_has_web_gpu, (), { 
@@ -71,11 +78,11 @@ EM_JS(bool, get_has_web_gpu, (), {
 
 EM_ASYNC_JS(void, webgpu_create_device, (), {
 	WebGPU.initManagers();
-	console.log("Create Start!");
+	if(DEBUG){console.log("Create Start!");}
 	const adapter = await navigator.gpu.requestAdapter();
 	const device = await adapter.requestDevice();
 	Module.preinitializedWebGPUDevice = device;
-	console.log("Create End!");
+	if(DEBUG){console.log("Create End!");}
 });
 
 EM_JS(void, auto_resize_canvas, (), {
@@ -180,7 +187,7 @@ static bool InitWGPU()
 {
 	if(!get_has_web_gpu()) return false;
 	webgpu_create_device();
-	printf("After!\n");
+	DBGprintf("After!\n");
 	MainWindow::Device = emscripten_webgpu_get_device();
 	if(!MainWindow::Device)
 		return false;
@@ -319,7 +326,7 @@ void MainWindow_NewFrame(void* window)
 	int canvasHeight = canvas_get_height();
 	if(width != canvasWidth || height != canvasHeight)
 	{
-		printf("Resizing canvas\n");
+		DBGprintf("Resizing canvas\n");
 		glfwSetWindowSize((GLFWwindow*)window, canvasWidth, canvasHeight);
 		width = canvasWidth;
 		height = canvasHeight;

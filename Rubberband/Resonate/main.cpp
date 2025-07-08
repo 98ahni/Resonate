@@ -17,6 +17,7 @@ The resulting 'RubberBand.js' file can be added to any .html document and all fu
 #define VAR_FROM_JS(var) (emscripten::val::take_ownership(var))
 struct RubberbandLogger : public RubberBand::RubberBandStretcher::Logger
 {
+#ifndef _RELEASE
     /// Receive a log message with no numeric values.
     void log(const char* aMsg)
     {
@@ -35,6 +36,11 @@ struct RubberbandLogger : public RubberBand::RubberBandStretcher::Logger
         EM_ASM(console.log('RubberBand | ' + Emval.toValue($0) + ' | ' + Emval.toValue($1) + ' | ' + Emval.toValue($2)), VAR_TO_JS(std::string(aMsg)), VAR_TO_JS(aValue), VAR_TO_JS(anotherValue));
         //printf("RubberBand | %s | %f | %f\n", aMsg, aValue, anotherValue);
     }
+#else
+    void log(const char* aMsg) { }
+    void log(const char* aMsg, double aValue) { }
+    void log(const char* aMsg, double aValue, double anotherValue) { }
+#endif
 };
 
 EM_JS(emscripten::EM_VAL, get_channel_from_buffer, (emscripten::EM_VAL index), {
@@ -91,8 +97,10 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
         channelStarts.push_back(channelArrays[channelArrays.size() - 1].data());
         numSamples = std::min(numSamples, channelArrays[channelArrays.size() - 1].size());
     }
+#ifdef _DEBUG
     printf("Stretching audio %i...\n", stretchTo);
     EM_ASM(console.log('RubberBand | START'));
+#endif
     stretcher = new RubberBand::RubberBandStretcher(sampleRate, channelNum, std::make_shared<RubberbandLogger>(),
         RubberBand::RubberBandStretcher::Option::OptionThreadingNever |
         RubberBand::RubberBandStretcher::Option::OptionProcessRealTime |
@@ -105,7 +113,9 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
         answer.push_back(newVec);
         answerPointers.push_back(answer[answer.size() - 1].data());
     }
+#ifdef _DEBUG
     EM_ASM(console.log('RubberBand | INIT COMPLETE'));
+#endif
     while(RubberBandLoop());
 }
 
@@ -115,7 +125,9 @@ bool RubberBandLoop()
     queueStart += stretcher->getSamplesRequired();
     if(!hasStarted)
     {
+#ifdef _DEBUG
         EM_ASM(console.log('RubberBand | LOOP BEGIN'));
+#endif
         hasStarted = true;
     }
     if(queueStart < numSamples)
@@ -137,7 +149,9 @@ bool RubberBandLoop()
     }
     else
     {
+#ifdef _DEBUG
         EM_ASM(console.log('RubberBand | DONE STRETCHING'));
+#endif
         //delete stretcher;
         //stretcher = nullptr;
         std::vector<emscripten::val> output;

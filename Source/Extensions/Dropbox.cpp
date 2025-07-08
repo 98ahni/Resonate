@@ -70,11 +70,11 @@ EM_JS(void, db_open_chooser, (emscripten::EM_VAL file_callback_name, emscripten:
             files.forEach(function(file) {
                 loadPromises.push(new Promise(async (resolve)=>{
                     if(ex_extensions.includes(file.name.split(".").pop())){
-                        console.log('File has excluded file type:', file.name, ', Skipping');
+                        if(DEBUG){console.log('File has excluded file type:', file.name, ', Skipping');}
                         resolve();
                         return;
                     }
-                    console.log('Loading file "' + file.name + '" from Dropbox.');
+                    if(DEBUG){console.log('Loading file "' + file.name + '" from Dropbox.');}
                     fetch(file.link).then(res => res.blob()).then(blob => blob.arrayBuffer()).then(buffer => {
                         FS.writeFile("/Dropbox/" + file.name, new Uint8Array(buffer));
                         callback_func(Emval.toHandle("/Dropbox/" + file.name), Emval.toHandle(file.id)); // User callback
@@ -82,7 +82,7 @@ EM_JS(void, db_open_chooser, (emscripten::EM_VAL file_callback_name, emscripten:
                     });
                 }));
             });
-            Promise.all(loadPromises).then(()=>{console.log('Done loading from Dropbox!');done_callback_func();});
+            Promise.all(loadPromises).then(()=>{if(DEBUG){console.log('Done loading from Dropbox!');}done_callback_func();});
         },
         cancel: cancel_callback_func,
         extensions: ['<no extension>'],
@@ -111,7 +111,7 @@ EM_JS(void, db_open_chooser, (emscripten::EM_VAL file_callback_name, emscripten:
 EM_ASYNC_JS(void, db_update_file, (emscripten::EM_VAL file_id, emscripten::EM_VAL fs_path), {
     const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'});
     const response = await global_db_api.filesUpload({path: Emval.toValue(file_id), "mode": "overwrite", contents: fileData});
-    console.log(JSON.stringify(response));
+    if(DEBUG){console.log(JSON.stringify(response));}
 });
 
 bool Dropbox::HasToken()

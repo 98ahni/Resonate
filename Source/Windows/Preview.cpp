@@ -273,7 +273,7 @@ bool PreviewWindow::GetHasVideo()
 
 void PreviewWindow::AddBackgroundElement(std::string aBGPath)
 {
-    printf("Loading %s.\n", aBGPath.c_str());
+    DBGprintf("Loading %s.\n", aBGPath.c_str());
     if(!std::filesystem::exists(aBGPath))
     {
         printf("%s does not exist!\n", aBGPath.c_str());

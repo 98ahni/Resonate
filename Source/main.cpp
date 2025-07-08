@@ -227,7 +227,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromCloudDrive(emscripten::EM_VAL a
     }
     std::filesystem::path path = VAR_FROM_JS(aFSPath).as<std::string>();
     std::string id = VAR_FROM_JS(aFileID).as<std::string>();
-    printf("Loaded project '%s' with file id: %s\n", path.string().data(), id.data());
+    DBGprintf("Loaded project '%s' with file id: %s\n", path.string().data(), id.data());
     if(path.extension() == ".txt")
     {
         Serialization::KaraokeDocument::Get().Load(path.string(), id, false);
@@ -648,11 +648,11 @@ void loop(void* window){
                         }
                         Serialization::BuildPatterns(code);
                         std::string text = doc.SerializeAsText();
-                        printf("Done serializing.\n");
+                        DBGprintf("Done serializing.\n");
                         std::vector<std::string> tokenList = Serialization::Syllabify(text, code);
                         text = StringTools::Join(tokenList, "[00:00:00]");
-                        printf("Done syllabifying.\n");
-                        printf("%s\n", text.data());
+                        DBGprintf("Done syllabifying.\n");
+                        DBGprintf("%s\n", text.data());
                         doc.Parse("[00:00:00]" + text);
                         if(doc.GetData().front().size() == 1 && doc.IsPauseToken(doc.GetData().front().front()))
                         {

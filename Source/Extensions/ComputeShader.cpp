@@ -6,6 +6,7 @@
 #include <StringTools.h>
 #include <fstream>
 #include <cmath>
+#include <Defines.h>
 
 EMSCRIPTEN_BINDINGS(ComputeShaderModule)
 {
@@ -138,7 +139,7 @@ ComputeShader ComputeShader::Load(std::string aFilePath)
 
 void CompilationCallback(WGPUCompilationInfoRequestStatus status, const WGPUCompilationInfo* compilationInfo, void* data)
 {
-    if(status == WGPUCompilationInfoRequestStatus_Success) printf("WGPUCompilationInfoRequestStatus_Success\n");
+    if(status == WGPUCompilationInfoRequestStatus_Success) DBGprintf("WGPUCompilationInfoRequestStatus_Success\n");
     if(status == WGPUCompilationInfoRequestStatus_Error) printf("WGPUCompilationInfoRequestStatus_Error\n");
     if(status == WGPUCompilationInfoRequestStatus_DeviceLost) printf("WGPUCompilationInfoRequestStatus_DeviceLost\n");
     if(status == WGPUCompilationInfoRequestStatus_Unknown) printf("WGPUCompilationInfoRequestStatus_Unknown\n");

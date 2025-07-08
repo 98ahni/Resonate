@@ -47,7 +47,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_directory, (emscripten::EM_VAL mode), {
                 for(const file of files)
                 {
                     promisedFiles.push(new Promise((resolve) => {
-                        console.log('Loading file ' + file.webkitRelativePath);
+                        if(DEBUG){console.log('Loading file ' + file.webkitRelativePath);}
                         let reader = new FileReader();
                         reader.onload = (event) => {
                             const uint8_view = new Uint8Array(event.target.result);
@@ -94,7 +94,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, open_document, (emscripten::EM_VAL save_folder, 
                     FS.mkdir(exDir);
                 }
                 new Promise((resolveLoad) => {
-                    console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name);
+                    if(DEBUG){console.log('Loading file ' + files[0].webkitRelativePath + '/' + files[0].name);}
                     let reader = new FileReader();
                     reader.onload = (event) => {
                         const uint8_view = new Uint8Array(event.target.result);
@@ -138,14 +138,14 @@ EM_JS(emscripten::EM_VAL, download_project_zip, (emscripten::EM_VAL zip_name, em
 	const zipName = Emval.toValue(zip_name);
 	const pathList = Emval.toValue(path_list);
     var fileBlobs = [];
-    for(let i = 0; i < pathList.length; i++){
+    for(let i = 0; i < pathList.length && DEBUG; i++){
         console.log(pathList[i]);
     }
     for(let i = 0; i < pathList.length; i++){
         const docData = FS.readFile(pathList[i]);
         const docBlob = new File([new Blob([docData.buffer], {type: 'application/octet-binary'})], pathList[i].split('/').pop(), {type: 'application/octet-binary'});
         //const docBlob = new File([docData.buffer], pathList[i].split('/').pop(), {type: 'application/octet-binary'});
-        console.log(docBlob.name);
+        if(DEBUG){console.log(docBlob.name);}
 	    fileBlobs.push(docBlob);
     }
     return Emval.toHandle(new Promise((resolve)=>{

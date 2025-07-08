@@ -537,7 +537,7 @@ void ImGui::Ext::SetShortcutEvents()
             SetClipboardAction(none);
         };
     ImGui::GetIO().GetClipboardTextFn = [](void* data)->const char*{
-	        printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
+	        DBGprintf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
             ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
             SetClipboardAction(none);
             return ImGui::GetCurrentContext()->ClipboardHandlerData.Data;
@@ -573,7 +573,7 @@ void ImGui::Ext::SetShortcutEvents()
                 int end = (state->GetSelectionStart() > state->GetSelectionEnd() ? state->GetSelectionStart() : state->GetSelectionEnd());
                 std::memcpy(content.data(), state->TextA.Data + start, end - start);
 	            set_clipboard_content(VAR_TO_JS(content.c_str()));
-                printf("copying: '%s' | valid: %s\n", content.data(), state->TextAIsValid ? "true" : "false");
+                DBGprintf("copying: '%s' | valid: %s\n", content.data(), state->TextAIsValid ? "true" : "false");
                 //if(GetClipboardAction() == ClipboardAction::cut)
                 //{
                 //    state->ClearSelection();

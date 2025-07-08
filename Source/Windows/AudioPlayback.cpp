@@ -224,10 +224,10 @@ void AudioPlayback::SetPlaybackFile(std::string aPath)
 {
     if(aPath == ourInstance->myPath)
     {
-        printf("%s is already loaded!\n", aPath.c_str());
+        DBGprintf("%s is already loaded!\n", aPath.c_str());
         return;
     }
-    printf("Loading %s.\n", aPath.c_str());
+    DBGprintf("Loading %s.\n", aPath.c_str());
     if(!std::filesystem::exists(aPath))
     {
         printf("%s does not exist!\n", aPath.c_str());
@@ -383,10 +383,10 @@ EM_JS(void, get_audio_samples_hybrid, (emscripten::EM_VAL stretch_index, emscrip
         audioWorker.onmessage = (result) => {
             audioWorker.terminate();
             if(useCrude){
-                console.log('Resetting corse engine ' + result.data[0]);
+                if(DEBUG){console.log('Resetting corse engine ' + result.data[0]);}
             }
             else {
-                console.log('Resetting fine engine ' + result.data[0]);
+                if(DEBUG){console.log('Resetting fine engine ' + result.data[0]);}
             }
         };
     };

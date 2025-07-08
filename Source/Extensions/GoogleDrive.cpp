@@ -144,29 +144,29 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
             let loadPromises = [];
             for(const document of documents){
                 const fileId = document[google.picker.Document.ID];
-                console.log(fileId);
+                if(DEBUG){console.log(fileId);}
                 const files = [];
                 const res = await gapi.client.drive.files.list({
                     q: "'" + fileId + "' in parents",
                     fields: 'nextPageToken, files(id, name, fileExtension, trashed)',
                     spaces: 'drive'
                 });
-                console.log(JSON.stringify(res.result.files));
+                if(DEBUG){console.log(JSON.stringify(res.result.files));}
                 Array.prototype.push.apply(files, res.result.files);
-                console.log(files);
+                if(DEBUG){console.log(files);}
                 files.forEach(function(file) {
                     loadPromises.push(new Promise(async (resolve)=>{
                         if(file.trashed){
-                            console.log('Found trashed file:', file.name, file.id, ', Skipping');
+                            if(DEBUG){console.log('Found trashed file:', file.name, file.id, ', Skipping');}
                             resolve();
                             return;
                         }
                         if(ex_extensions.includes(file.fileExtension)){
-                            console.log('Found excluded file type:', file.name, file.id, ', Skipping');
+                            if(DEBUG){console.log('Found excluded file type:', file.name, file.id, ', Skipping');}
                             resolve();
                             return;
                         }
-                        console.log('Found file:', file.name, file.id);
+                        if(DEBUG){console.log('Found file:', file.name, file.id);}
                         const fres = await gapi.client.drive.files.get({
                             'fileId': file.id,
                             'alt': 'media'
@@ -181,7 +181,7 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                     }));
                 });
             }
-            Promise.all(loadPromises).then(()=>{console.log('Done loading from Google Drive!');done_callback_func();});
+            Promise.all(loadPromises).then(()=>{if(DEBUG){console.log('Done loading from Google Drive!');}done_callback_func();});
         }})
         .build();
     picker.setVisible(true);
