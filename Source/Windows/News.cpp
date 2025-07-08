@@ -16,6 +16,7 @@ NewsWindow::NewsWindow()
 
 void NewsWindow::OnImGuiDraw()
 {
+    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, 500.f), std::min(MainWindow::SwapHeight * .8f, 400.f)}, ImGuiCond_Once);
     Gui_Begin();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     Title(15, "ver 0.9.0-beta");
