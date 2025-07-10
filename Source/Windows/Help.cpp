@@ -18,7 +18,7 @@ HelpWindow::HelpWindow()
 #define Keybind(key, text) ImGui::Text(key); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() - DPI_SCALED(17)); ImGui::Bullet(); ImGui::SameLine(); ImGui::SetCursorPosX(ImGui::GetCursorPosX() + DPI_SCALED(7)); ImGui::TextWrapped(text)
 void HelpWindow::OnImGuiDraw()
 {
-    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, 500.f), std::min(MainWindow::SwapHeight * .8f, 400.f)}, ImGuiCond_Once);
+    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, DPI_SCALED(600.f)), std::min(MainWindow::SwapHeight * .8f, DPI_SCALED(500.f))}, ImGuiCond_Once);
     Gui_Begin();
     ImGui::PushFont(MainWindow::Font);
     ImGui::Text("Using Resonate");
@@ -122,7 +122,7 @@ void HelpWindow::OnImGuiDraw()
 
     StartTreeNode("Dealing with Raw Text");
     ImGui::TextWrapped("The Raw Text view is meant to make changes to the lyrics before timing in case you don't have access to an extrnal text editor. "
-    "It can be opened from the View menu by selecting the option Raw Text. "
+    "It can be accessed by selecting the Raw Text tab next to the Timing tab right below the menu bar at the top of the screen. "
     "It shows and allows you to edit the file that is readable by both ECHO and Resonate. Please note that if an effect value is changed it might not be recognized as a Resonate effect. "
     "Changing the Resonate headers are not recommended as it may result in undefined behavior.");
     EndTreeNode

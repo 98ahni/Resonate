@@ -119,6 +119,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
 
 void PreviewWindow::OnImGuiDraw()
 {
+    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, DPI_SCALED(800.f)), std::min(MainWindow::SwapHeight * .8f, DPI_SCALED(450.f))}, ImGuiCond_Once);
     Gui_Begin();
     if(ourHasVideo && ImGui::Ext::IsVideoPaused("##PreviewBackground") && AudioPlayback::GetIsPlaying())
     {

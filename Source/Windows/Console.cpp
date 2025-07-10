@@ -7,6 +7,7 @@
 #include "Preview.h"
 #include "AudioPlayback.h"
 #include <cmath>
+#include "MainWindow.h"
 
 void Console::SearchForErrors()
 {
@@ -221,6 +222,7 @@ ConsoleWindow::ConsoleWindow()
 
 void ConsoleWindow::OnImGuiDraw()
 {
+    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, DPI_SCALED(600.f)), std::min(MainWindow::SwapHeight * .8f, DPI_SCALED(500.f))}, ImGuiCond_Once);
     Gui_Begin(ImGuiWindowFlags_MenuBar);
     if(ImGui::BeginMenuBar())
     {

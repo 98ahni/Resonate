@@ -16,9 +16,19 @@ NewsWindow::NewsWindow()
 
 void NewsWindow::OnImGuiDraw()
 {
-    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, 500.f), std::min(MainWindow::SwapHeight * .8f, 400.f)}, ImGuiCond_Once);
+    ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, DPI_SCALED(600.f)), std::min(MainWindow::SwapHeight * .8f, DPI_SCALED(500.f))}, ImGuiCond_Once);
     Gui_Begin();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
+    Title(15, "ver 0.9.1-beta");
+    Title(40, "Cosmetic Update!");
+    Title(30, "\nNew version of Dear ImGui");
+    ImGui::TextWrapped("For those that have never heard of this /\"Dear ImGui\"/ thing, it's a code library that Resonate uses to handle most of the graphical and layout work. "
+        "This upadte fixed some bugs and reworked how fonts are loaded. ");
+    Title(30, "\nWhat does this mean?");
+    ImGui::TextWrapped("Currently this is mostly noticable in that text is now sharper and some input errors being fixed. But this also allows for more features in the future. "
+        "Another change is that the base layout got a new look and feel to be more unified. This new look also let the Raw Text view back out of the View menu since it asked so nicely. "
+        "\n\nIf you notice any new bugs, please report them in the View menu. \n");
+    ImGui::Separator();
     Title(15, "ver 0.9.0-beta");
     Title(40, "Resonate is More Responsive and Responsible!");
     Title(30, "\nLet's start with reliving some stress");
