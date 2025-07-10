@@ -180,7 +180,7 @@ void PreviewWindow::OnImGuiDraw()
         float start = myBackgroundQueue.front().myStartTime;
         float end = myBackgroundQueue.front().myEndTime;
         float alpha = remap(clamp(playbackProgress, start, end), start, end, 0.f, 1.f);
-        ImGui::Image(GetBackgroundTexture(myBackgroundQueue.front().myImagePath).myID, contentSize, {0, 0}, {1, 1}, {1, 1, 1, alpha});
+        ImGui::ImageWithBg(GetBackgroundTexture(myBackgroundQueue.front().myImagePath).myID, contentSize, {0, 0}, {1, 1}, {1, 1, 1, alpha});
     }
 
 	//float lanePosY = ImGui::GetTextLineHeightWithSpacing();

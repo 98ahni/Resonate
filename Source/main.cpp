@@ -9,6 +9,7 @@
 #include "Windows/Base/WindowManager.h"
 #include "Windows/TimingEditor.h"
 #include "Windows/RawText.h"
+#include "Windows/ViewSwitcher.h"
 #include "Windows/AudioPlayback.h"
 #include "Windows/TouchControl.h"
 #include "Windows/Settings.h"
@@ -332,7 +333,7 @@ void loop(void* window){
         g_shouldRebuildFonts = false;
     }
     Gamepad::Update();
-    MainWindow_NewFrame(window);
+    MainWindow_NewFrame(window, false);
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     MainWindow_SetName(doc.GetName().empty() ? "Resonate" : (doc.GetIsDirty() ? "*" : "") + doc.GetName() + " - Resonate");
     MainWindow_SetIcon(doc.GetIsDirty() ? "ResonateIconUnsaved.png" : "ResonateIcon.png");
@@ -672,8 +673,8 @@ void loop(void* window){
                     {
                         History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                         Serialization::BuildPatterns(code);
-                        std::vector<std::string> tokenList = Serialization::Syllabify(doc.SerializeLineAsText(doc.GetLine(((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine())), code);
-                        doc.ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), ((TimingEditor*)WindowManager::GetWindow("Timing"))->GetMarkedLine());
+                        std::vector<std::string> tokenList = Serialization::Syllabify(doc.SerializeLineAsText(doc.GetLine(TimingEditor::Get().GetMarkedLine())), code);
+                        doc.ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), TimingEditor::Get().GetMarkedLine());
                         doc.MakeDirty();
                     }
                 }
@@ -694,17 +695,17 @@ void loop(void* window){
                     WindowManager::AddWindow<TouchControl>("Touch Control");
                 }
             }
-            if(ImGui::MenuItem("Raw Text", 0, WindowManager::GetWindow("Raw Text") != nullptr))
-            {
-                if(WindowManager::GetWindow("Raw Text") != nullptr)
-                {
-                    WindowManager::DestroyWindow(WindowManager::GetWindow("Raw Text"));
-                }
-                else
-                {
-                    WindowManager::AddWindow<TextEditor>("Raw Text");
-                }
-            }
+            //if(ImGui::MenuItem("Raw Text", 0, WindowManager::GetWindow("Raw Text") != nullptr))
+            //{
+            //    if(WindowManager::GetWindow("Raw Text") != nullptr)
+            //    {
+            //        WindowManager::DestroyWindow(WindowManager::GetWindow("Raw Text"));
+            //    }
+            //    else
+            //    {
+            //        WindowManager::AddWindow<TextEditor>("Raw Text");
+            //    }
+            //}
             if(ImGui::MenuItem("Settings", 0, WindowManager::GetWindow("Settings") != nullptr))
             {
                 if(WindowManager::GetWindow("Settings") != nullptr)
@@ -805,8 +806,6 @@ void loop(void* window){
                 ImGui::SameLine();
             }
         }
-        ImGui::DebugTextEncoding(doc.SerializeLine(doc.GetLine(0)).c_str());
-        ImGui::NewLine();
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         ImVec2 startPos = ImGui::GetCursorPos();
         startPos.x += ImGui::GetWindowPos().x;
@@ -838,6 +837,7 @@ void loop(void* window){
         ImGui::Image(MainWindow::Font->ContainerAtlas->TexID, {ImGui::GetWindowHeight() - ImGui::GetCursorPosY(), ImGui::GetWindowHeight() - ImGui::GetCursorPosY()});
         ImGui::End();
     }
+
 
     WindowManager::ImGuiDraw();
     DoGamepadActions();
@@ -974,8 +974,9 @@ int main(){
     }
 
     WindowManager::Init();
-    //WindowManager::AddWindow<TextEditor>("Raw Text");
-    TimingEditor* timingEditor = WindowManager::AddWindow<TimingEditor>("Timing");
+    ViewSwitcher* viewSwitcher = WindowManager::AddWindow<ViewSwitcher>("View Switcher");
+    TimingEditor* timingEditor = viewSwitcher->AddWindow<TimingEditor>("Timing");
+    viewSwitcher->AddWindow<TextEditor>("Raw Text");
     WindowManager::AddWindow<AudioPlayback>("Audio");
     ImGui::SetWindowFocus("Timing");
     if(g_selfTestFailed)

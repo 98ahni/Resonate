@@ -70,7 +70,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void SaveLayout()
 Settings::Settings()
 {
     setup_latency_metronome();
-    myTimingEditorExists = WindowManager::GetWindow("Timing") != nullptr;
+    //myTimingEditorExists = WindowManager::GetWindow("Timing") != nullptr;
     if(!Serialization::Preferences::HasKey("Preview/UseOutline"))
     {
         Serialization::Preferences::SetBool("Preview/UseOutline", true);
@@ -120,7 +120,7 @@ void Settings::OnImGuiDraw()
         TimingEditor::Get().SetInputUnsafe(false);
     }
     // Latency compensation
-    if(!myTimingEditorExists) {ImGui::BeginDisabled();}
+    //if(!myTimingEditorExists) {ImGui::BeginDisabled();}
     DrawLatencyWidget();
     if(ImGui::Button("Open Auto Latency"))
     {
@@ -229,7 +229,7 @@ void Settings::OnImGuiDraw()
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
-    if(!myTimingEditorExists) {ImGui::EndDisabled();}
+    //if(!myTimingEditorExists) {ImGui::EndDisabled();}
     // Toggle fullscreen (might not be nessesary)
     // Download/Upload preferences
     ImGui::Button("Export Preferences");

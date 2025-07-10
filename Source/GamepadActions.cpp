@@ -106,7 +106,7 @@ void DrawOverlay();
 
 void DrawHudSprite(HUDSprite::HUDSpriteID aSprite, ImVec2 aSize, ImU32 aColor)
 {
-    ImGui::Image(g_hudTexture.myID, aSize, g_hudStartUVs[aSprite], g_hudEndUVs[aSprite], ImGui::ColorConvertU32ToFloat4(aColor));
+    ImGui::ImageWithBg(g_hudTexture.myID, aSize, g_hudStartUVs[aSprite], g_hudEndUVs[aSprite], ImGui::ColorConvertU32ToFloat4(aColor));
 }
 
 void AddHudSpriteTo(ImDrawList *aDrawList, HUDSprite::HUDSpriteID aSprite, ImVec2 aScreenPosition, ImVec2 aSize, ImU32 aColor)
@@ -718,7 +718,7 @@ int StickMenu(float aScroll, std::vector<std::string> someLabels)
         ImVec2 pos = {origin.x + (halfSquare * .6f * sin(((float)i * animStep) + animPos)), origin.y + (halfSquare * .23f * -cos(((float)i * animStep) + animPos))};
         ImVec2 textSize = ImGui::CalcTextSize(someLabels[drawInd].data());
         ImVec2 size = {textSize.x * .75f * scale, textSize.y * .75f * scale};
-        drawList->AddEllipseFilled(pos, size.x * .55f, size.y * .55f, IM_COL32(105, 50, 105, (200 * scale)));
+        drawList->AddEllipseFilled(pos, {size.x * .55f, size.y * .55f}, IM_COL32(105, 50, 105, (200 * scale)));
         drawList->AddText(MainWindow::Font, DPI_SCALED(30), {pos.x - size.x, pos.y - size.y}, IM_COL32(255, 255, 255, (255 * scale)), someLabels[drawInd].data());
     }
     ImGui::PopFont();

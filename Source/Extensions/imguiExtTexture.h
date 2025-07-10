@@ -3,7 +3,7 @@
 
 #pragma once
 typedef unsigned int uint;
-typedef void* ImTextureID;
+typedef unsigned long long ImTextureID;
 struct ImExtTexture
 {
     ImTextureID myID;

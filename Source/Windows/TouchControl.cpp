@@ -12,11 +12,6 @@
 
 void TouchControl::OnImGuiDraw()
 {
-    if(myEditor == nullptr)
-    {
-        DBGprintf("Assigned editor to TouchControl.\n");
-        myEditor = (TimingEditor*)WindowManager::GetWindow("Timing");
-    }
     Gui_Begin();
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, ImGui::GetFrameHeight() * .5f);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, {3, 1});
@@ -114,7 +109,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * upPosMult + offset);
     if(ImGui::Button("##Up", buttonSize))
     {
-        myEditor->MoveMarkerUp();
+        TimingEditor::Get().MoveMarkerUp();
     }
     // Up Arrow
     triangleTip = ImVec2(contentSize * upPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
@@ -124,7 +119,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * downPosMult + offset);
     if(ImGui::Button("##Down", buttonSize))
     {
-        myEditor->MoveMarkerDown();
+        TimingEditor::Get().MoveMarkerDown();
     }
     // Down Arrow
     triangleTip = ImVec2(contentSize * downPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
@@ -134,7 +129,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * leftPosMult + offset);
     if(ImGui::Button("##Left", buttonSize))
     {
-        myEditor->MoveMarkerLeft(myIsCharMode);
+        TimingEditor::Get().MoveMarkerLeft(myIsCharMode);
     }
     // Left Arrow
     triangleTip = ImVec2(contentSize * leftPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
@@ -144,7 +139,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * rightPosMult + offset);
     if(ImGui::Button("##Right", buttonSize))
     {
-        myEditor->MoveMarkerRight(myIsCharMode);
+        TimingEditor::Get().MoveMarkerRight(myIsCharMode);
     }
     // Right Arrow
     triangleTip = ImVec2(contentSize * rightPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
@@ -154,7 +149,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * togglePosMult + offset);
     if(ImGui::Button("##Add/Remove", buttonSize))
     {
-        myEditor->ToggleTokenHasTime();
+        TimingEditor::Get().ToggleTokenHasTime();
     }
     // Toggle Token Icon
     ImVec2 linePos = ImVec2(contentSize * togglePosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
@@ -174,7 +169,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * timePosMult + offset);
     if(ImGui::Button("##Time", buttonSize))
     {
-        myEditor->RecordStartTime();
+        TimingEditor::Get().RecordStartTime();
     }
     // Time Arrow
     triangleTip = ImVec2(contentSize * timePosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());
@@ -185,7 +180,7 @@ void TouchControl::OnImGuiDraw()
     ImGui::SetCursorPos(contentSize * endPosMult + offset);
     if(ImGui::Button("##End", buttonSize))
     {
-        myEditor->RecordEndTime();
+        TimingEditor::Get().RecordEndTime();
     }
     // End Arrow
     triangleTip = ImVec2(contentSize * endPosMult + offset + (buttonSize * .5f) + ImGui::GetWindowPos());

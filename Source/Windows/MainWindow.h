@@ -30,7 +30,7 @@ struct MainWindow
 };
 
 void MainWindow_Init(const char* name, void** outWindow);
-void MainWindow_NewFrame(void* window);
+void MainWindow_NewFrame(void* window, bool canDock = true);
 void MainWindow_RenderFrame();
 void MainWindow_RenderCustomDrawData(ImDrawData* drawData, unsigned int aWidth, unsigned int aHeight);
 void MainWindow_Invalidate();

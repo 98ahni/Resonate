@@ -11,6 +11,7 @@
 #include "Console.h"
 #include <Defines.h>
 #include <StringTools.h>
+#include "MainWindow.h"
 
 TimingEditor& TimingEditor::Get()
 {
@@ -46,7 +47,8 @@ TimingEditor::TimingEditor()
 void TimingEditor::OnImGuiDraw()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-    if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoNavInputs | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    if(ImGui::BeginChild("Timing", {0 - MainWindow::DockSizeOffset.x, 0 - MainWindow::DockSizeOffset.y}, ImGuiChildFlags_Border, ImGuiWindowFlags_NoNavInputs | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         DrawImagePopup();
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
@@ -100,6 +102,7 @@ void TimingEditor::OnImGuiDraw()
             ImGui::NewLine();
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() - DPI_SCALED(3));
         }
+        ImGui::Dummy({5, 5});
         if(myFont) ImGui::PopFont();
         ImGui::PopStyleVar();
         if(!myInputIsUnsafe && ImGui::IsWindowFocused())
@@ -147,7 +150,8 @@ void TimingEditor::OnImGuiDraw()
             }
         }
     }
-    Gui_End();
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
     if(!myDisableInput && ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
     {
         if(ImGui::IsKeyPressed(ImGuiKey_Space, false))

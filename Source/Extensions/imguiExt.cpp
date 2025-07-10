@@ -228,8 +228,8 @@ ImExtTexture CreateTextureWebGPU(ImExtTexture texture, void* textureBytes, unsig
     //{
     //    wgpuTextureViewRelease((WGPUTextureView)texture);
     //}
-    ImTextureID output = texture.myID;
-	ImTextureID Texture = texture.myHandle;
+    WGPUTextureView output = (WGPUTextureView)texture.myID;
+	WGPUTexture Texture = (WGPUTexture)texture.myHandle;
 
     if(!texture.myHandle)
     {
@@ -247,7 +247,7 @@ ImExtTexture CreateTextureWebGPU(ImExtTexture texture, void* textureBytes, unsig
     }
     
 	WGPUImageCopyTexture destination = {};
-	destination.texture = (WGPUTexture)Texture;
+	destination.texture = Texture;
 	destination.mipLevel = 0;
 	destination.origin = {0, 0, 0};
 	destination.aspect = WGPUTextureAspect_All;
@@ -269,13 +269,13 @@ ImExtTexture CreateTextureWebGPU(ImExtTexture texture, void* textureBytes, unsig
 	    textureViewDesc.baseArrayLayer = 0;
 	    textureViewDesc.arrayLayerCount = 1;
 	    textureViewDesc.aspect = WGPUTextureAspect_All;
-        output = wgpuTextureCreateView((WGPUTexture)Texture, &textureViewDesc);
+        output = wgpuTextureCreateView(Texture, &textureViewDesc);
     }
 
     //wgpuTextureRelease((WGPUTexture)Texture);
     wgpuQueueRelease(deviceQueue);
 
-    return {output, Texture};
+    return {(ImTextureID)output, (ImTextureID)Texture};
 }
 ImExtTexture CreateTextureWebGL(ImExtTexture texture, void* textureBytes, unsigned int sizeX, unsigned int sizeY)
 {
@@ -573,7 +573,7 @@ void ImGui::Ext::SetShortcutEvents()
                 int end = (state->GetSelectionStart() > state->GetSelectionEnd() ? state->GetSelectionStart() : state->GetSelectionEnd());
                 std::memcpy(content.data(), state->TextA.Data + start, end - start);
 	            set_clipboard_content(VAR_TO_JS(content.c_str()));
-                DBGprintf("copying: '%s' | valid: %s\n", content.data(), state->TextAIsValid ? "true" : "false");
+                DBGprintf("copying: '%s'\n", content.data());
                 //if(GetClipboardAction() == ClipboardAction::cut)
                 //{
                 //    state->ClearSelection();
@@ -777,7 +777,7 @@ bool ImGui::Ext::ToggleSwitch(const char *aLabel, bool *aValue)
     RenderNavHighlight(total_bb, id);
     RenderFrame(check_bb.Min + style.ItemInnerSpacing, check_bb.Max - style.ItemInnerSpacing, GetColorU32(*aValue ? ImGuiCol_CheckMark : ImGuiCol_FrameBg), true, style.FrameRounding);
     ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
-    bool mixed_value = (g.LastItemData.InFlags & ImGuiItemFlags_MixedValue) != 0;
+    bool mixed_value = (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) != 0;
     ImRect pad;
     if (mixed_value)
     {

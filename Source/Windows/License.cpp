@@ -744,7 +744,7 @@ char* g_thirdPartyLicenses =
 "\n"
 "Dear ImGui:\n"
 "\n"
-"Copyright (c) 2014-2024 Omar Cornut\n"
+"Copyright (c) 2014-2025 Omar Cornut\n"
 "\n"
 "Permission is hereby granted, free of charge, to any person obtaining a copy\n"
 "of this software and associated documentation files (the \"Software\"), to deal\n"

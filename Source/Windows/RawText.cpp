@@ -8,6 +8,7 @@
 #include <Extensions/TouchInput.h>
 #include "Base/WindowManager.h"
 #include "TimingEditor.h"
+#include "MainWindow.h"
 
 TextEditor::TextHistory::TextHistory(std::string aRawText)
 {
@@ -38,8 +39,10 @@ TextEditor::TextEditor()
 
 void TextEditor::OnImGuiDraw()
 {
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     //if(ImGui::Begin(GetName().c_str(), 0, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
-    if(Gui_Begin(ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
+    //if(Gui_Begin(ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
+    if(ImGui::BeginChild("Raw Text", {0 - MainWindow::DockSizeOffset.x, 0 - MainWindow::DockSizeOffset.y}, ImGuiChildFlags_Border, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_HorizontalScrollbar | (Serialization::KaraokeDocument::Get().GetIsDirty() ? ImGuiWindowFlags_UnsavedDocument : 0)))
     {
         std::string raw = myRawText;
         if(!ourShouldReload && ImGui::InputTextMultiline("##RawText", &myRawText, ImGui::GetContentRegionAvail(), ImGuiInputTextFlags_NoUndoRedo) && myHasTakenFocus)
@@ -60,8 +63,8 @@ void TextEditor::OnImGuiDraw()
         if(!myHasTakenFocus || ImGui::IsWindowAppearing() || ImGui::IsItemActivated() || ourShouldReload)
         {
             myRawText = Serialization::KaraokeDocument::Get().Serialize();
-            ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(true);
-            ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
+            TimingEditor::Get().SetInputUnsafe(true);
+            TimingEditor::Get().SetInputUnsafe(false);
             myHasTakenFocus = true;
             ourShouldReload = false;
         }
@@ -75,9 +78,10 @@ void TextEditor::OnImGuiDraw()
                 Serialization::KaraokeDocument::Get().Parse(myRawText);
                 Serialization::KaraokeDocument::Get().MakeDirty();
             }
-            ((TimingEditor*)WindowManager::GetWindow("Timing"))->SetInputUnsafe(false);
+            TimingEditor::Get().SetInputUnsafe(false);
         }
         myHasTakenFocus = false;
     }
-    Gui_End();
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
 }

@@ -90,8 +90,8 @@ EM_JS(void, auto_resize_canvas, (), {
 });
 
 EM_JS(void, resize_canvas, (), {
-	document.getElementById('canvas').width = window.innerWidth * window.devicePixelRatio;
-	document.getElementById('canvas').height = window.innerHeight * window.devicePixelRatio;
+	document.getElementById('canvas').width = window.innerWidth * canvas_get_device_pixel_ratio();
+	document.getElementById('canvas').height = window.innerHeight * canvas_get_device_pixel_ratio();
 });
 
 EM_JS(int, canvas_get_width, (), {
@@ -302,21 +302,18 @@ void MainWindow_Init(const char* name, void** outWindow)
 	if(TouchInput_HasTouch())
 	{
 		TouchInput_Init();
-		glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
-		glfwSetKeyCallback(window, ImGui_ImplGlfw_KeyCallback);
-		glfwSetCharCallback(window, ImGui_ImplGlfw_CharCallback);
-		glfwSetMouseButtonCallback(window, ImGui_ImplGlfw_MouseButtonCallback);
-		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double X, double Y){ImGui_ImplGlfw_CursorPosCallback(window, DPI_SCALED(X), DPI_SCALED(Y));});
-		glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
 	}
-	else
-	{
-		ImGui_ImplGlfw_InstallCallbacks(window);
-	}
-	
+	glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
+	glfwSetKeyCallback(window, ImGui_ImplGlfw_KeyCallback);
+	glfwSetCharCallback(window, ImGui_ImplGlfw_CharCallback);
+	glfwSetMouseButtonCallback(window, ImGui_ImplGlfw_MouseButtonCallback);
+	glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset){ImGui::GetIO().AddMouseWheelEvent((float)xoffset, (float)yoffset);});
+	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double X, double Y){ImGui_ImplGlfw_CursorPosCallback(window, DPI_SCALED(X), DPI_SCALED(Y));});
+	glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
+    glfwSetCursorEnterCallback(window, ImGui_ImplGlfw_CursorEnterCallback);
 }
 
-void MainWindow_NewFrame(void* window)
+void MainWindow_NewFrame(void* window, bool canDock)
 {
 	glfwPollEvents();
 	int width, height;
@@ -385,7 +382,7 @@ void MainWindow_NewFrame(void* window)
 	ImVec2 vPos0 = ImGui::GetMainViewport()->Pos;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyle().Colors[ImGuiCol_Separator]);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyle().Colors[ImGuiCol_WindowBg]);
 	ImGui::SetNextWindowPos(ImVec2((float)vPos0.x, (float)vPos0.y), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2((float)vWindowSize.x, (float)vWindowSize.y), 1);
 	if(ImGui::Begin(
@@ -399,7 +396,8 @@ void MainWindow_NewFrame(void* window)
 		ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoTitleBar
 		//| ImGuiWindowFlags_NoBackground
-	))
+		| (canDock ? 0 : ImGuiWindowFlags_NoDocking)
+	) && canDock)
 	{
 		static const ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
 		ImGuiID dockSpace = ImGui::GetID("EditorMain");
@@ -491,7 +489,7 @@ void MainWindow_Invalidate()
 	}
 	else
 	{
-		ImGui_ImplOpenGL3_DestroyFontsTexture();
+		//ImGui_ImplOpenGL3_DestroyFontsTexture();
 		//ImGui_ImplOpenGL3_CreateFontsTexture();
 	}
 }
