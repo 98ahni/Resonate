@@ -269,7 +269,7 @@ EM_JS(void, open_mooncat_guidelines, (), {
     window.open('https://docs.google.com/document/d/1pNXmutbveAyj_UmFDs7y2M3-1R6-rFECsc_SPUnWSDQ/edit?usp=sharing', '_blank');
 });
 EM_JS(void, open_resonate_issues, (), {
-    window.open('https://github.com/98ahni/Resonate/issues', '_blank');
+    window.open('https://github.com/98ahni/Resonate-App/issues/new/choose', '_blank');
 });
 
 void loop(void* window){
