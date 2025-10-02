@@ -102,7 +102,8 @@
         "set": "cpp",
         "iostream": "cpp",
         "cinttypes": "cpp",
-        "condition_variable": "cpp"
+        "condition_variable": "cpp",
+        "semaphore": "cpp"
     },
     "editor.fontSize": 12
 }

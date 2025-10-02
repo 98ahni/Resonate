@@ -9,7 +9,7 @@ const { execSync } = require('node:child_process');
 var os = require('os');
 const WIN32 = os.platform() === "win32";
 
-const RELEASE_Build = true;
+const RELEASE_Build = false;
 
 // Skip compile steps:
 const REBUILD_Imgui = false;
