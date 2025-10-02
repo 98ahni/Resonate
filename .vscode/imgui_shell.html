@@ -157,6 +157,7 @@
                     worker.addEventListener("message", (msg)=>{
                         if(msg.data.cmd == 'resetZ'){ document.getElementById("loadingCanvas").style.zIndex = -1;}
                     });
+                    Module.show_loading_screen(0, 0xffffffff, true);
                 }
                 
                 // Initialize the graphics adapter
