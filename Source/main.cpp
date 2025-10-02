@@ -231,7 +231,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE void LoadFileFromCloudDrive(emscripten::EM_VAL a
     DBGprintf("Loaded project '%s' with file id: %s\n", path.string().data(), id.data());
     if(path.extension() == ".txt")
     {
-        Serialization::KaraokeDocument::Get().Load(path.string(), id, false);
+        Serialization::KaraokeDocument::Get().Load(path.string(), id, false, 
+            GoogleDrive::HasToken() ? Serialization::FileSource::Google :
+            Dropbox::HasToken() ? Serialization::FileSource::Dropbox :
+            Serialization::FileSource::Local
+        );
     }
     else if(path.extension() == ".mp3")
     {
@@ -348,6 +352,7 @@ void loop(void* window){
     {
         g_firstFrameAfterFileLoad = false;
         Serialization::Preferences::SetString("Document/FileID", doc.GetFileID());
+        Serialization::Preferences::SetInt("Document/FileSource", (int)doc.GetFileSource());
         doc.ParseLoadedFile();
         FileHandler::SyncLocalFS();
         Console::ValidateProject();
@@ -373,8 +378,8 @@ void loop(void* window){
                 ImGui::Separator();
                 ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
                 if(!g_isSafeMode){ImGui::Ext::CreateHTMLButton("OpenProject", "click", "_LoadProject");}
-                ImGui::MenuItem("Save Document");
-                ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject");
+                ImGui::MenuItem("Save Document", 0, false, doc.GetName() != "");
+                if(doc.GetName() != "") { ImGui::Ext::CreateHTMLButton("SaveProject", "click", "_SaveProject"); }
                 ImGui::Separator();
             }
             else if(g_hasGoogleAcc)
@@ -399,7 +404,7 @@ void loop(void* window){
                     bool loadVideo = !Serialization::Preferences::HasKey("Preview/LoadVideo") || Serialization::Preferences::GetBool("Preview/LoadVideo");
                     GoogleDrive::LoadProject("application/vnd.google-apps.folder", "_LoadFileFromCloudDrive", "_LoadCompletedFromCloudDrive", "_LoadCanceledFromCloudDrive", loadVideo ? "" : ".mp4");
                 }
-                if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileID() != ""))
+                if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileSource() == Serialization::FileSource::Google && doc.GetName() != ""))
                 {
                     ImGui::Ext::StartLoadingScreen();
                     GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
@@ -426,7 +431,7 @@ void loop(void* window){
                 ImGui::Separator();
                 ImGui::MenuItem("Open Project", 0, false, !g_isSafeMode);
                 if(!g_isSafeMode) {ImGui::Ext::CreateHTMLButton("OpenDBProject", "click", "_OpenDropboxChooser");}
-                if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileID() != ""))
+                if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileSource() == Serialization::FileSource::Dropbox && doc.GetName() != ""))
                 {
                     ImGui::Ext::StartLoadingScreen();
                     Dropbox::SaveProject(doc.GetFileID(), doc.Save());
@@ -872,9 +877,10 @@ void DrawSelfTestWarningPopup()
         ImGui::Dummy({5, DPI_SCALED(30)});
         if(ImGui::Button("Continue"))
         {
-            Serialization::KaraokeDocument::Get().Load("/local", (
-                Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
-            ));
+            Serialization::KaraokeDocument::Get().Load("/local", 
+                (Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""), true, 
+                (Serialization::Preferences::HasKey("Document/FileSource") ? (Serialization::FileSource)Serialization::Preferences::GetInt("Document/FileSource") : Serialization::FileSource::Local)
+            );
             ImGui::GetIO().IniFilename = "/local/Layout.Resonate";
             AudioPlayback::SetPlaybackFile("/local");
             PreviewWindow::AddBackgroundElement("/local/");
@@ -885,9 +891,10 @@ void DrawSelfTestWarningPopup()
         if(ImGui::Button("Safe Mode"))
         {
             WindowManager::DestroyWindow(WindowManager::GetWindow("Timing"));
-            Serialization::KaraokeDocument::Get().Load("/local", (
-                Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
-            ));
+            Serialization::KaraokeDocument::Get().Load("/local", 
+                (Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""), true,
+                (Serialization::Preferences::HasKey("Document/FileSource") ? (Serialization::FileSource)Serialization::Preferences::GetInt("Document/FileSource") : Serialization::FileSource::Local)
+            );
             g_selfTestFailed = false;
             g_selfTestInProgress = false; // Open popup on next load as well
             g_isSafeMode = true;
@@ -954,9 +961,10 @@ int main(){
     //}
     if(!g_selfTestFailed)
     {
-        Serialization::KaraokeDocument::Get().Load("/local", (
-            Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""
-        ));
+        Serialization::KaraokeDocument::Get().Load("/local", 
+            (Serialization::Preferences::HasKey("Document/FileID") ? Serialization::Preferences::GetString("Document/FileID") : ""), true, 
+            (Serialization::Preferences::HasKey("Document/FileSource") ? (Serialization::FileSource)Serialization::Preferences::GetInt("Document/FileSource") : Serialization::FileSource::Local)
+        );
     }
 
     ImGui::Ext::SetShortcutEvents();

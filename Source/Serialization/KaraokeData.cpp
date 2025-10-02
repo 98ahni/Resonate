@@ -408,7 +408,7 @@ namespace Serialization
         }
         myTokens.clear();
     }
-    bool KaraokeDocument::Load(std::string aPath, std::string aFileID, bool aShouldParse)
+    bool KaraokeDocument::Load(std::string aPath, std::string aFileID, bool aShouldParse, FileSource aSource)
     {
         //if(aPath == myPath)
         //{
@@ -427,7 +427,7 @@ namespace Serialization
             {
                 if (path.path().extension() == ".txt")
                 {
-                    return Load(path.path().string(), aFileID);
+                    return Load(path.path().string(), aFileID, aShouldParse, aSource);
                 }
             }
             printf("No text document found!\n");
@@ -443,6 +443,7 @@ namespace Serialization
         }
         myPath = aPath;
         myFileID = aFileID;
+        myLocation = aSource;
         myName = std::filesystem::path(myPath).filename().string();
         if(aShouldParse)
         {
@@ -703,6 +704,10 @@ namespace Serialization
     std::string KaraokeDocument::GetFileID()
     {
         return myFileID;
+    }
+    FileSource KaraokeDocument::GetFileSource()
+    {
+        return myLocation;
     }
     std::string KaraokeDocument::GetName()
     {

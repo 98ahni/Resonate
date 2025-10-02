@@ -41,6 +41,7 @@ namespace Serialization
     typedef std::vector<std::vector<KaraokeToken>> KaraokeData;
     typedef std::vector<KaraokeToken> KaraokeLine;
     typedef std::unordered_map<std::string, KaraokeEffect*> KaraokeAliasMap;
+    enum class FileSource { Local, Google, Dropbox };
     class KaraokeDocument
     {
         struct EchoRecord : public History::Record
@@ -87,7 +88,7 @@ namespace Serialization
         const KaraokeAliasMap& GetEffectAliases();
 
         void Clear();
-        bool Load(std::string aPath, std::string aFileID = "", bool aShouldParse = true);
+        bool Load(std::string aPath, std::string aFileID = "", bool aShouldParse = true, FileSource aSource = FileSource::Local);
         void ParseLoadedFile();
         void Parse(std::string aDocument);
         void ParseLineAndReplace(std::string aLine, size_t anIndex);
@@ -104,6 +105,7 @@ namespace Serialization
         //void UnsetIsAutoDirty();  // Has an auto save occured (Set in AutoSave())
         std::string GetPath();
         std::string GetFileID();
+        FileSource GetFileSource();
         std::string GetName();
 
         static KaraokeEffect* ParseEffectProperty(std::string aRawProperty);
@@ -126,6 +128,7 @@ namespace Serialization
         
         std::string myPath;
         std::string myFileID;
+        FileSource myLocation;
         std::string myName;
         bool myIsDirty = false;
         bool myIsAutoDirty = false; // Set immediatly
