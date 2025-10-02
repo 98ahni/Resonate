@@ -572,6 +572,7 @@ void loop(void* window){
                                 History::AddRecord(new Serialization::LineRecord(History::Record::Insert, line), true);
                                 doc.GetData().insert(doc.GetData().begin() + line, {newToken});
                                 doc.MakeDirty();
+                                foundPlace = true;
                                 break;
                             }
                         }
