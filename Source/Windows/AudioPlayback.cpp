@@ -407,16 +407,17 @@ EM_JS(void, get_audio_samples_GPU, (emscripten::EM_VAL stretch_index, emscripten
     const stftBins = (
                     5 < stretchIndex ? 8192 :(
                     4 < stretchIndex ? 6140 :(
-                    3 < stretchIndex ? 4096 :
-                    1576)));
+                    2 < stretchIndex ? 4096 :
+                    4096)));
     global_audio_compute_kernel.SetInt("stftBins", stftBins);
     const stftHop = 1 / (
                     5 < stretchIndex ? 3 :(
                     4 < stretchIndex ? 4.8 :(
-                    3 < stretchIndex ? 5 :
-                    6)));
+                    2 < stretchIndex ? 5 :
+                    7)));
     global_audio_compute_kernel.SetFloat("stftHop", stftHop);
     global_audio_compute_kernel.SetFloat("stretchFactor", 1 / (stretchIndex * 0.1));
+    const overlap = stftHop * stftBins / (stretchIndex * 0.1);
     var output = [];
     new Promise(async(resolveAll)=>{
         const wgpuMaxBuffSize = 33500000; // WGPU supports minimum of 134_217_728 bytes. Chrome says minimum is 268_435_456 bytes (pot max 1GiB). I go with 120_000_000 / 4
@@ -426,11 +427,17 @@ EM_JS(void, get_audio_samples_GPU, (emscripten::EM_VAL stretch_index, emscripten
             var inputLength = stretchedLength < wgpuMaxBuffSize ? audioLength : (wgpuMaxBuffSize * stretchIndex * 0.1);
             var outputLength = stretchedLength < wgpuMaxBuffSize ? stretchedLength : wgpuMaxBuffSize;
             var outputStart = 0;
+            var loopInd = 0;
             for(var start = 0; start < audioLength; start += inputLength){
                 await new Promise((resolve)=>{
                     var inputSize = Math.min(inputLength, audioLength - start);
                     var outputSize = Math.min(outputLength, stretchedLength - outputStart);
-                    audioBuff.SetData(global_audio_worker_setup_data[1][ch].subarray(start, start + inputSize));
+                    //if(4 < stretchIndex){
+                        audioBuff.SetData(global_audio_worker_setup_data[1][ch].subarray(start, start + inputSize));
+                    //}
+                    //else {
+                    //    audioBuff.SetData(global_audio_worker_setup_data[1][ch].filter((e, i) => i % 2 === 0).subarray(start, start + inputSize));
+                    //}
                     stretchedBuff.SetData(new Float32Array(outputSize));
                     global_audio_compute_kernel.Dispatch(kernelName, (inputSize - stftBins) / (stftBins * stftHop), 1, 1);
                     stretchedBuff.GetDataAsync((buffer)=>{
@@ -439,12 +446,13 @@ EM_JS(void, get_audio_samples_GPU, (emscripten::EM_VAL stretch_index, emscripten
                     });
                 });
                 outputStart += outputLength;
+                loopInd++;
             }
             output[ch] = outputArr;
         }
         resolveAll();
     }).then(()=>{
-        global_audio_blobs[stretchIndex - 1] = Module.audioDataArrayToBlob(output , global_audio_worker_setup_data[3]);
+        global_audio_blobs[stretchIndex - 1] = Module.audioDataArrayToBlob(output , global_audio_worker_setup_data[3] /** (4 < stretchIndex ? 1 : .5)*/);
         global_audio_completion[stretchIndex - 1] = true;
         _jsUpdateAudioBuffer(Emval.toHandle(stretchIndex));
         audioBuff.delete();
