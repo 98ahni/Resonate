@@ -468,7 +468,7 @@ EM_ASYNC_JS(emscripten::EM_VAL, get_clipboard_content, (), {
 		if (item.types.includes("text/plain")) {
     		let blob = await item.getType("text/plain");
     		output = await blob.text();
-			//return Emval.toHandle(output);
+			return Emval.toHandle(output);
 		}
 	}
 	return Emval.toHandle(output);
@@ -486,6 +486,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void GetClipboardContent()
             ImGui::GetCurrentContext()->ClipboardHandlerData.push_back(output[i]);
         }
         SetClipboardAction(paste);
+        printf("%s\n", output.data());
     }
 }
 
@@ -536,7 +537,7 @@ void ImGui::Ext::SetShortcutEvents()
             //}
             SetClipboardAction(none);
         };
-    ImGui::GetIO().GetClipboardTextFn = [](void* data)->const char*{
+    ImGui::GetPlatformIO().Platform_GetClipboardTextFn = [](ImGuiContext* ctx)->const char*{
 	        DBGprintf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
             ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
             SetClipboardAction(none);
@@ -552,10 +553,10 @@ void ImGui::Ext::SetShortcutEvents()
         {
 	        //printf("Pasting '%s'\n", ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
             //ImGui::GetCurrentContext()->ClipboardHandlerData.push_back('\0');
-            //ImGui::GetIO().AddInputCharactersUTF8(ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
             //ImGuiInputTextState* state = ImGui::GetInputTextState(ImGui::GetActiveID());
-            //if(state)
+            //if(ImGui::GetIO().WantTextInput && state)
             //{
+            //    ImGui::GetIO().AddInputCharactersUTF8(ImGui::GetCurrentContext()->ClipboardHandlerData.Data);
             //    state->Edited = true;
             //    state->Flags &= ImGuiInputTextFlags_CallbackEdit;
             //}
@@ -579,7 +580,7 @@ void ImGui::Ext::SetShortcutEvents()
                 //    state->ClearSelection();
                 //}
             }
-            //SetClipboardAction(none);
+            SetClipboardAction(none);
         }
     };
     ImGui::AddContextHook(ImGui::GetCurrentContext(), &copyPaste);

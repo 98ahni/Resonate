@@ -993,27 +993,27 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4085817: () => { return Date.now(); },  
- 4085838: () => { return Date.now(); },  
- 4085859: () => { return Date.now(); },  
- 4085880: () => { location.reload() },  
- 4085898: () => { location.reload(); },  
- 4085917: ($0) => { init_gapi_with_key($0); },  
- 4085943: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4086066: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4086168: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4086208: () => { Module.hide_loading_screen(); },  
- 4086238: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4086301: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4086394: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4086490: () => { return global_audio_element.paused ? 1 : 0; },  
- 4086534: () => { return global_audio_element.paused ? 1 : 0; },  
- 4086578: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4086628: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4086884: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4087174: () => { audio_element_pause(); },  
- 4087197: () => { audio_element_play(); },  
- 4087219: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4085848: () => { return Date.now(); },  
+ 4085869: () => { return Date.now(); },  
+ 4085890: () => { return Date.now(); },  
+ 4085911: () => { location.reload() },  
+ 4085929: () => { location.reload(); },  
+ 4085948: ($0) => { init_gapi_with_key($0); },  
+ 4085974: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4086097: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4086199: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4086239: () => { Module.hide_loading_screen(); },  
+ 4086269: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4086332: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4086425: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4086521: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4086565: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4086609: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4086659: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4086915: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4087205: () => { audio_element_pause(); },  
+ 4087228: () => { audio_element_play(); },  
+ 4087250: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function ImGui_ImplGlfw_EmscriptenOpenURL(url) { url = url ? UTF8ToString(url) : null; if (url) window.open(url, '_blank'); }
 function show_input_debugger() {_ShowInputDebugger(); }
@@ -1066,7 +1066,7 @@ function destroy_element(id) { let input = document.getElementById(Emval.toValue
 function __asyncjs__destroy_element_async(id,delay_ms) { return Asyncify.handleAsync(async () => { let input = document.getElementById(Emval.toValue(id)); setTimeout(()=>{ if(input !== null){ input.remove(); } }, delay_ms); }); }
 function add_window_event(event,callback) { window.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }
 function remove_window_event(event,callback) { window.removeEventListener(Emval.toValue(event), window[Emval.toValue(callback)], true); }
-function __asyncjs__get_clipboard_content() { return Asyncify.handleAsync(async () => { var output = ''; const clipboardContents = await navigator.clipboard.read(); for (const item of clipboardContents) { if (item.types.includes("text/plain")) { let blob = await item.getType("text/plain"); output = await blob.text(); } } return Emval.toHandle(output); }); }
+function __asyncjs__get_clipboard_content() { return Asyncify.handleAsync(async () => { var output = ''; const clipboardContents = await navigator.clipboard.read(); for (const item of clipboardContents) { if (item.types.includes("text/plain")) { let blob = await item.getType("text/plain"); output = await blob.text(); return Emval.toHandle(output); } } return Emval.toHandle(output); }); }
 function __asyncjs__set_clipboard_content(content) { return Asyncify.handleAsync(async () => { const type = "text/plain"; const blob = new Blob([Emval.toValue(content)], { type }); const data = [new ClipboardItem({ [type]: blob })]; await navigator.clipboard.write(data); }); }
 function load_preferences_json() { if(!FS.analyzePath('/local/Prefs.Resonate').exists) { FS.writeFile('/local/Prefs.Resonate', '{}'); } global_preferences = JSON.parse(FS.readFile('/local/Prefs.Resonate', { encoding: 'utf8' })); } var global_preferences = {};
 function print_preferences_json() { console.log(JSON.stringify(global_preferences)); }
@@ -13289,7 +13289,7 @@ var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
 var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4014184;
 var ___start_em_js = Module['___start_em_js'] = 4049712;
-var ___stop_em_js = Module['___stop_em_js'] = 4085817;
+var ___stop_em_js = Module['___stop_em_js'] = 4085848;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
