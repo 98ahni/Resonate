@@ -571,7 +571,7 @@ bool PreviewWindow::TryDisplayLanes()
     int checkingLine = -1;
     int currentStartLane = -1;
     bool displayedNewLines = false;
-    for(int lane = 0; lane < 7; lane++)
+    for(int lane = 0; lane <= 7; lane++)
     {
         if(checkingLine != myBackLanes[lane].myLine)
         {
