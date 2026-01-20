@@ -17,21 +17,38 @@
 #define GLFW_INCLUDE_ES32
 #include <GLES3/gl3.h>
 
+EM_JS(void, cursor_pos_to_canvas, (emscripten::EM_VAL event), {
+    if (event.type === 'touchmove'){
+        for (let i of event.changedTouches) {
+            if (GLFW.primaryTouchId === i.identifier) {
+                Browser.setMouseCoords(i.pageX, i.pageY);
+                break;
+            }
+        }
+    }
+    else{
+        Browser.calculateMouseEvent(event);
+    }
+    dynCall_vidd(GLFW.active.cursorPosFunc, GLFW.active.id, Browser.mouseX, Browser.mouseY)
+});
+
 EM_JS(void, create_button, (emscripten::EM_VAL id, emscripten::EM_VAL event, emscripten::EM_VAL callback, int pos_x, int pos_y, int width, int height), {
     let imid = Emval.toValue(id);
     let btn = document.getElementById(imid);
+    let canvas = document.getElementById('canvas');
     if(btn === null){
         btn = document.createElement('button');
         btn.id = imid;
-        document.body.insertBefore(btn, document.getElementById('canvas').nextSibling);
+        document.body.insertBefore(btn, canvas.nextSibling);
     }
+    btn.addEventListener('mousemove', cursor_pos_to_canvas, false);
     btn.addEventListener(Emval.toValue(event), window[Emval.toValue(callback)], false);
     btn.style.position = 'fixed';
     btn.style.left = pos_x + 'px';
     btn.style.top = pos_y + 'px';
     btn.style.width = width + 'px';
     btn.style.height = height + 'px';
-    btn.style.opacity = 0.1;
+    btn.style.opacity = 0;
 });
 EM_JS(void, create_input, (emscripten::EM_VAL id, emscripten::EM_VAL type, emscripten::EM_VAL event, emscripten::EM_VAL callback, int pos_x, int pos_y, int width, int height), {
     let imid = Emval.toValue(id);
