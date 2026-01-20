@@ -680,7 +680,7 @@ void loop(void* window){
                         History::AddRecord(new Serialization::LineRecord(History::Record::Edit, TimingEditor::Get().GetMarkedLine()), true);
                         Serialization::BuildPatterns(code);
                         std::vector<std::string> tokenList = Serialization::Syllabify(doc.SerializeLineAsText(doc.GetLine(TimingEditor::Get().GetMarkedLine())), code);
-                        doc.ParseLineAndReplace(StringTools::Join(tokenList, "[00:00:00]"), TimingEditor::Get().GetMarkedLine());
+                        doc.ParseLineAndReplace("[00:00:00]" + StringTools::Join(tokenList, "[00:00:00]"), TimingEditor::Get().GetMarkedLine());
                         doc.MakeDirty();
                     }
                 }
