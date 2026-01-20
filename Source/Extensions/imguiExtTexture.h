@@ -9,6 +9,7 @@ struct ImExtTexture
     ImTextureID myID;
     ImTextureID myHandle;
 };
+struct ImVec2;
 namespace ImGui{
     namespace Ext{
         
@@ -21,6 +22,7 @@ namespace ImGui{
         void LoadImage(const char* anID, const char* anFSPath);
         void LoadImageFromURL(const char* anID, const char* aURL);
         bool RenderTexture(const char* anID, ImExtTexture& aTexture);
+        ImVec2 GetTextureSize(const char* anID);
         bool DeleteTexture(const char* anID, ImExtTexture& aTexture);
     }
 }

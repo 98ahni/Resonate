@@ -201,6 +201,13 @@ EM_JS(ImExtTexture&, render_image, (emscripten::EM_VAL id, ImExtTexture& texture
     pixels = null;
     return output;
 });
+EM_JS(emscripten::EM_VAL, get_image_size, (emscripten::EM_VAL id), {
+    var canvas = document.getElementById(imid + 'canvas');
+    if(canvas === null){
+        return Emval.toHandle([0, 0]);
+    }
+    return Emval.toHandle([canvas.width, canvas.height]);
+});
 EM_JS(void, destroy_element, (emscripten::EM_VAL id), {
     let input = document.getElementById(Emval.toValue(id));
     if(input !== null){
@@ -428,6 +435,11 @@ bool ImGui::Ext::RenderTexture(const char *anID, ImExtTexture& aTexture)
 {
     aTexture = render_image(VAR_TO_JS(anID), aTexture);
     return aTexture.myID != 0;
+}
+ImVec2 ImGui::Ext::GetTextureSize(const char* anID)
+{
+    emscripten::val size = VAR_FROM_JS(get_image_size(VAR_TO_JS(anID)));
+    return {size[0].as<float>(), size[1].as<float>()};
 }
 bool ImGui::Ext::DeleteTexture(const char *anID, ImExtTexture &aTexture)
 {
