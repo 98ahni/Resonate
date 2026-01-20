@@ -197,18 +197,18 @@ EM_JS(ImExtTexture&, render_image, (emscripten::EM_VAL id, ImExtTexture& texture
         canvas = document.createElement('canvas');
         canvas.id = imid + 'canvas';
         document.body.insertBefore(canvas, document.getElementById('canvas'));
-        if(img.nodeName == 'IMG'){
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-        }
-        else if(img.nodeName == 'VIDEO'){
-            canvas.width = img.videoWidth;
-            canvas.height = img.videoHeight;
-        }
         canvas.style.position = 'fixed';
         canvas.style.top = 100 + 'px';
         canvas.style.width = 160 + 'px';
         canvas.style.height = 90 + 'px';
+    }
+    if(img.nodeName == 'IMG'){
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+    }
+    else if(img.nodeName == 'VIDEO'){
+        canvas.width = img.videoWidth;
+        canvas.height = img.videoHeight;
     }
     var ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);

@@ -19,6 +19,15 @@ void NewsWindow::OnImGuiDraw()
     ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, DPI_SCALED(600.f)), std::min(MainWindow::SwapHeight * .8f, DPI_SCALED(500.f))}, ImGuiCond_Once);
     Gui_Begin();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
+    Title(15, "ver 0.9.2-beta");
+    Title(40, "Autumn Cleaning");
+    Title(30, "\nHere's what changed");
+    BulletWrap("You can once again use copy and paste in the Raw view. ");
+    BulletWrap("Images are no longer duplicated when added from the Edit menu. ");
+    BulletWrap("The Preview window now shows the correct background and animations work again. ");
+    BulletWrap("Resonate will no longer allow attempts to save files to the wrong cloud storage. ");
+    BulletWrap("Please use the improved 'Report a bug' option in the View menu to report any unexpected behavior. ");
+    ImGui::Separator();
     Title(15, "ver 0.9.1-beta");
     Title(40, "Cosmetic Update!");
     Title(30, "\nNew version of Dear ImGui");
