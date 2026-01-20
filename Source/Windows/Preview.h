@@ -41,8 +41,11 @@ public:
 private:
     void QueueImageFade();
     int AssembleLanes(float aWidth);
+    int FindOpenBackLanes(int aLaneCount, int aNextLineNeeds);
     bool FillBackLanes(int aLaneCount);
     int FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds);
+    void QueueBackLanesToRecalculate();
+    bool RecalculateBackLanes(int aLaneCount);
     bool TryDisplayLanes();
     bool CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay);
     bool RemoveOldLanes(uint someCurrentTime, uint aDelay);
@@ -55,6 +58,7 @@ private:
     Lane myLanes[7];
     Lane myBackLanes[7];
     Lane myAssemblyLanes[7];
+    std::deque<Lane> myRecalculateQueue;
     bool myShouldDebugDraw;
     
     static void SaveBackgroundElementsToLocal();

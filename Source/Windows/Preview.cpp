@@ -446,9 +446,48 @@ int PreviewWindow::AssembleLanes(float aWidth)
     return 7;
 }
 
+int PreviewWindow::FindOpenBackLanes(int aLaneCount, int aNextLineNeeds)
+{
+    for(int i = (aLaneCount / 2) + (aNextLineNeeds / 2); i >= aNextLineNeeds; i--)
+    {
+        int foundPlace = i - aNextLineNeeds;
+        for(int j = 0; j < aNextLineNeeds; j++)
+        {
+            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
+            {
+                foundPlace = -1;
+            }
+        }
+        if(foundPlace != -1)
+        {
+            return foundPlace;
+        }
+    }
+    for(int i = (aLaneCount / 2) - (aNextLineNeeds / 2); i <= aLaneCount - aNextLineNeeds; i++)
+    {
+        int foundPlace = i;
+        for(int j = 0; j < aNextLineNeeds; j++)
+        {
+            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
+            {
+                foundPlace = -1;
+            }
+        }
+        if(foundPlace != -1)
+        {
+            return foundPlace;
+        }
+    }
+    return -1;
+}
+
 bool PreviewWindow::FillBackLanes(int aLaneCount)
 {
     float scaledWidth = 640.f - 80.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
+    if(RecalculateBackLanes(aLaneCount))
+    {
+        return false; // There are still more to be recalculated but they don't fit right now 
+    }
     int nextLineNeeds = AssembleLanes(scaledWidth);
 	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
     {
@@ -479,6 +518,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     }
     if(foundPlace == -1)
     {
+        //foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds);
         for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
         {
             foundPlace = i - nextLineNeeds;
@@ -552,16 +592,81 @@ int PreviewWindow::FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds)
         {
             return -3;
         }
+        bool needsRecalc = false;
         for(int j = 0; j < aNextLineNeeds && foundPlace != -2; j++)
         {
             if(myBackLanes[foundPlace + j].myLine != -1)
             {
-                foundPlace = -2;
+                if(myBackLanes[foundPlace + j].myEndTime < myAssemblyLanes[0].myStartTime)
+                {
+                    foundPlace = -2;
+                    continue;
+                }
+                if(doc.GetToken(myBackLanes[foundPlace + j].myLine, 0).myValue.starts_with("<line"))
+                {
+                    foundPlace = -2;
+                    continue;
+                }
+                needsRecalc = true;
+                // If lanes are taken, check if that lane ends before this starts or if it also starts with <line
+                //   If so, foundPlace = -2
+                //   Otherwise, move all lines that don't start with <line to a queue to be re-added
             }
+        }
+        if(needsRecalc && foundPlace != -2)
+        {
+            DBGprintf("Recalc needed\n");
+            QueueBackLanesToRecalculate();
         }
         return foundPlace;
     }
     return -1;
+}
+
+void PreviewWindow::QueueBackLanesToRecalculate()
+{
+    Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+    for(int i = 0; i < 7; i++)
+    {
+        if(myBackLanes[i].myLine != -1 && !doc.GetToken(myBackLanes[i].myLine, 0).myValue.starts_with("<line"))
+        {
+            DBGprintf("Queuing lane %i (line %i) for recalc\n%s\n", i, myBackLanes[i].myLine, doc.SerializeLineAsText(doc.GetLine(myBackLanes[i].myLine)).data());
+            myRecalculateQueue.emplace_back(myBackLanes[i]);
+            myBackLanes[i].myLine = -1;
+        }
+    }
+}
+
+bool PreviewWindow::RecalculateBackLanes(int aLaneCount)
+{
+    int foundPlace = 0;
+    while(foundPlace != -1)
+    {
+        if(!myRecalculateQueue.size())
+        {
+            return false;
+        }
+        int nextLineNeeds = 0;
+        int checkingLine = -1;
+        do
+        {
+            if(checkingLine == -1)
+            {
+                checkingLine = myRecalculateQueue[nextLineNeeds].myLine;
+            }
+            nextLineNeeds++;
+        } while (myRecalculateQueue.size() > nextLineNeeds && checkingLine == myRecalculateQueue[nextLineNeeds].myLine);
+        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds);
+        if(foundPlace != -1)
+        {
+            for(int i = 0; i < nextLineNeeds; i++)
+            {
+                myBackLanes[i + foundPlace] = myRecalculateQueue.front();
+                myRecalculateQueue.pop_front();
+            }
+        }
+    }
+    return myRecalculateQueue.size();
 }
 
 // For future reference;
@@ -571,7 +676,7 @@ bool PreviewWindow::TryDisplayLanes()
     int checkingLine = -1;
     int currentStartLane = -1;
     bool displayedNewLines = false;
-    for(int lane = 0; lane <= 7; lane++)
+    for(int lane = 0; lane <= 7; lane++)        // This is kinda scarry, it's checking lane = 7. The arrays only go from 0 through 6. Moving the = four lines down where it should be (j < lane) breaks EVERYTHING!
     {
         if(checkingLine != myBackLanes[lane].myLine)
         {
