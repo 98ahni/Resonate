@@ -120,7 +120,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
 void PreviewWindow::OnImGuiDraw()
 {
     ImGui::SetNextWindowSize({std::min(MainWindow::SwapWidth * .85f, DPI_SCALED(800.f)), std::min(MainWindow::SwapHeight * .8f, DPI_SCALED(450.f))}, ImGuiCond_Once);
-    Gui_Begin();
+    Gui_Begin(ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     if(ourHasVideo && ImGui::Ext::IsVideoPaused("##PreviewBackground") && AudioPlayback::GetIsPlaying())
     {
         EM_ASM(audio_element_pause(););
@@ -129,20 +129,22 @@ void PreviewWindow::OnImGuiDraw()
     {
         EM_ASM(audio_element_play(););
     }
-    ImVec2 windowSize = ImGui::GetWindowContentRegionMax();
-    ImVec2 contentOffset = ImGui::GetWindowContentRegionMin();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+    ImVec2 contentOffset = ImGui::GetCursorPos();
     ImVec2 contentSize = {windowSize.x - contentOffset.x, windowSize.y - contentOffset.y};
     ImVec2 aspect = {0.5625f, 1.777777f};
     if(contentSize.x < contentSize.y * aspect.y)
     {
         contentSize.y = contentSize.x * aspect.x;
-        ImGui::SetCursorPosY((windowSize.y - contentSize.y) * .5f);
+        //ImGui::SetCursorPosY((windowSize.y - contentSize.y) * .5f);
+        ImGui::SetCursorPos({(windowSize.x - contentSize.x) * .5f, ((windowSize.y - contentSize.y) * .5f) + ImGui::GetStyle().WindowPadding.y});
         contentOffset = ImGui::GetCursorPos();
     }
     else
     {
         contentSize.x = contentSize.y * aspect.y;
-        ImGui::SetCursorPosX((windowSize.x - contentSize.x) * .5f);
+        //ImGui::SetCursorPosX((windowSize.x - contentSize.x) * .5f);
+        ImGui::SetCursorPos({(windowSize.x - contentSize.x) * .5f, ((windowSize.y - contentSize.y) * .5f) + ImGui::GetStyle().WindowPadding.y});
         contentOffset = ImGui::GetCursorPos();
     }
 
@@ -165,7 +167,7 @@ void PreviewWindow::OnImGuiDraw()
     // ^^ Setup
 
     ImGui::SetCursorPos(contentOffset);
-    if(myBackgroundQueue.size() != 0 && playbackProgress > myBackgroundQueue.front().myEndTime)
+    while(myBackgroundQueue.size() != 0 && playbackProgress > myBackgroundQueue.front().myEndTime)
     {
         myTexturePath = myBackgroundQueue.front().myImagePath;
         ImGui::Ext::LoadImage("##PreviewBackground", ("/local/" + myTexturePath).data());
@@ -220,7 +222,7 @@ void PreviewWindow::OnImGuiDraw()
         }
     }
     ImGui::PopStyleVar();
-    if(RemoveOldLanes(playbackProgress, 50))
+    while(RemoveOldLanes(playbackProgress, 50))
     {
         while(TryDisplayLanes())
         {
@@ -501,7 +503,8 @@ int PreviewWindow::FindOpenBackLanes(int aLaneCount, int aNextLineNeeds)
 
 bool PreviewWindow::FillBackLanes(int aLaneCount)
 {
-    float scaledWidth = 640.f - 80.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
+    //float scaledWidth = 640.f - 80.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
+    float scaledWidth = 640.f - 95.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
     if(RecalculateBackLanes(aLaneCount))
     {
         return false; // There are still more to be recalculated but they don't fit right now 
@@ -778,6 +781,15 @@ void PreviewWindow::Resetprogress()
     {
         while (FillBackLanes(lanesShown))
         {
+        }
+    }
+    while(RemoveOldLanes(AudioPlayback::GetPlaybackProgress(), 50))
+    {
+        while(TryDisplayLanes())
+        {
+            while (FillBackLanes(lanesShown))
+            {
+            }
         }
     }
 }

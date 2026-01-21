@@ -105,5 +105,5 @@
         "condition_variable": "cpp",
         "semaphore": "cpp"
     },
-    "editor.fontSize": 12
+    "editor.fontSize": 13
 }
