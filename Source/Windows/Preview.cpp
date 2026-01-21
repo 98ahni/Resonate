@@ -240,7 +240,11 @@ void PreviewWindow::OnImGuiDraw()
     if(myShouldDebugDraw)
     {
         ImGui::SetCursorPos({20, 50});
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        drawList->ChannelsSplit(2);
+        drawList->ChannelsSetCurrent(1);
         ImGui::Text("# | Display\t| Back \t| Next");
+        float maxWidth = ImGui::GetItemRectSize().x;
         for(int lane = 0; lane < 7; lane++)
         {
             ImGui::Text("%i | %i\t\t| %i\t\t| %i", lane + 1, myLanes[lane].myLine, myBackLanes[lane].myLine, myAssemblyLanes[lane].myLine);
@@ -251,7 +255,21 @@ void PreviewWindow::OnImGuiDraw()
             float start = myBackgroundQueue.front().myStartTime;
             float end = myBackgroundQueue.front().myEndTime;
             ImGui::Text("Next fade: s: %i | e: %i | a: %f", myBackgroundQueue.front().myStartTime, myBackgroundQueue.front().myEndTime, remap(clamp(playbackProgress, start, end), start, end, 0.f, 1.f));
+            maxWidth = std::max(maxWidth, ImGui::GetItemRectSize().x);
         }
+        if(myRecalculateQueue.size() != 0)
+        {
+            ImGui::Text("");
+            ImGui::Text("Left to recalculate:");
+            for(int i = 0; i < myRecalculateQueue.size(); i++)
+            {
+                ImGui::Text("\t%i", myRecalculateQueue[i].myLine);
+            }
+        }
+        drawList->ChannelsSetCurrent(0);
+        ImVec2 wPos = ImGui::GetWindowPos();
+        drawList->AddRectFilled({wPos.x + 10, wPos.y + 45}, {wPos.x + maxWidth + 25, wPos.y + ImGui::GetCursorPosY() + 5}, IM_COL32(0, 0, 0, 127));
+        drawList->ChannelsMerge();
     }
 
     Gui_End();
@@ -518,34 +536,34 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     }
     if(foundPlace == -1)
     {
-        //foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds);
-        for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
-        {
-            foundPlace = i - nextLineNeeds;
-            for(int j = 0; j < nextLineNeeds; j++)
-            {
-                if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
-                {
-                    foundPlace = -1;
-                }
-            }
-            if(foundPlace != -1) {break;}
-        }
-    }
-    if(foundPlace == -1)
-    {
-        for(int i = (aLaneCount / 2) - (nextLineNeeds / 2); i <= aLaneCount - nextLineNeeds; i++)
-        {
-            foundPlace = i;
-            for(int j = 0; j < nextLineNeeds; j++)
-            {
-                if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
-                {
-                    foundPlace = -1;
-                }
-            }
-            if(foundPlace != -1) {break;}
-        }
+        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds);
+    //    for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
+    //    {
+    //        foundPlace = i - nextLineNeeds;
+    //        for(int j = 0; j < nextLineNeeds; j++)
+    //        {
+    //            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
+    //            {
+    //                foundPlace = -1;
+    //            }
+    //        }
+    //        if(foundPlace != -1) {break;}
+    //    }
+    //}
+    //if(foundPlace == -1)
+    //{
+    //    for(int i = (aLaneCount / 2) - (nextLineNeeds / 2); i <= aLaneCount - nextLineNeeds; i++)
+    //    {
+    //        foundPlace = i;
+    //        for(int j = 0; j < nextLineNeeds; j++)
+    //        {
+    //            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
+    //            {
+    //                foundPlace = -1;
+    //            }
+    //        }
+    //        if(foundPlace != -1) {break;}
+    //    }
     }
     if(foundPlace != -1)
     {
