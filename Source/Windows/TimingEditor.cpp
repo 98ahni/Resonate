@@ -60,7 +60,7 @@ void TimingEditor::OnImGuiDraw()
             ImGui::SameLine();
             for(int token = 0; token < doc.GetLine(line).size(); token++)
             {
-                if(!myDisableInput && myMarkedLine == line && myMarkedToken == token) DrawTextMarker();
+                if(!myDisableInput && myMarkedLine == line && myMarkedToken == token && !ImGui::GetIO().WantTextInput) DrawTextMarker();
                 if(doc.GetToken(line, 0).myValue.starts_with("image "))
                 {
                     DrawImageTagWidget(line, token);
@@ -109,7 +109,7 @@ void TimingEditor::OnImGuiDraw()
         {
             myDisableInput = false;
         }
-        if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
+        if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModAlt) && !ImGui::GetIO().WantTextInput)
         {
             bool charMode = false;
             if(ImGui::IsKeyDown(ImGuiKey_ModCtrl))
@@ -152,7 +152,7 @@ void TimingEditor::OnImGuiDraw()
     }
     ImGui::EndChild();
     ImGui::PopStyleColor();
-    if(!myDisableInput && ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt))
+    if(!myDisableInput && ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt) && !ImGui::GetIO().WantTextInput)
     {
         if(ImGui::IsKeyPressed(ImGuiKey_Space, false))
         {
@@ -677,7 +677,7 @@ void TimingEditor::DrawImageTagWidget(int aLine, int aToken)
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + DPI_SCALED(5));
     ImVec2 drawPos = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(drawPos.y + DPI_SCALED(19));
-    if(!myDisableInput && myMarkedLine == aLine && myMarkedToken == aToken) DrawTextMarker();
+    if(!myDisableInput && myMarkedLine == aLine && myMarkedToken == aToken && !ImGui::GetIO().WantTextInput) DrawTextMarker();
     uint imgTime = doc.GetTimedTokenAfter(aLine, 0).myStartTime;
     ImGui::Ext::TimedSyllable("<               >", imgTime, imgTime + (uint)(std::stof(timeStr) * 100), AudioPlayback::GetPlaybackProgress() - GetVisualLatencyOffset(), true, false);
     ImGui::SetCursorPos(drawPos);
