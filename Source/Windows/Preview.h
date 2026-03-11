@@ -41,7 +41,7 @@ public:
 private:
     void QueueImageFade();
     int AssembleLanes(float aWidth);
-    int FindOpenBackLanes(int aLaneCount, int aNextLineNeeds);
+    int FindOpenBackLanes(int aLaneCount, int aNextLineNeeds, uint aLineStartTime);
     bool FillBackLanes(int aLaneCount);
     int FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds);
     void QueueBackLanesToRecalculate();
@@ -68,4 +68,7 @@ private:
     static inline std::vector<std::string> ourBackgroundPaths;
     inline static std::unordered_map<std::string, ImExtTexture> ourBackgrounds;
     static inline bool ourTokenFlash;
+    inline static bool ourUseOutline;
+    static inline int ourLineAnimInTime = 200;
+    inline static int ourLineAnimOutTime = 50;
 };

@@ -110,11 +110,8 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
     myNextAddLineIndex = 0;
     myShouldDebugDraw = false;
     Resetprogress();
-    if(!Serialization::Preferences::HasKey("Preview/UseOutline"))
-    {
-        Serialization::Preferences::SetBool("Preview/UseOutline", true);
-    }
     ourTokenFlash = Serialization::Preferences::HasKey("Preview/TokenFlash") && Serialization::Preferences::GetBool("Preview/TokenFlash");
+    ourUseOutline = !Serialization::Preferences::HasKey("Preview/UseOutline") || Serialization::Preferences::GetBool("Preview/UseOutline");
 }
 
 void PreviewWindow::OnImGuiDraw()
@@ -191,7 +188,6 @@ void PreviewWindow::OnImGuiDraw()
     float laneHeight = (lanePosY - ImGui::GetTextLineHeightWithSpacing()) * .5f;
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
     bool hasNoEffect = false;
-    bool useOutline = Serialization::Preferences::GetBool("Preview/UseOutline");
     for(int lane = 0; lane < 7; lane++)
     {
         if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
@@ -205,7 +201,7 @@ void PreviewWindow::OnImGuiDraw()
             uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
             if(!doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)))
             {
-                ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, ourTokenFlash, true, useOutline ? DPI_SCALED(2 * textScale) : 0, hasNoEffect ? 1 : 1.15f);
+                ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, ourTokenFlash, true, ourUseOutline ? DPI_SCALED(2 * textScale) : 0, hasNoEffect ? 1 : 1.15f);
                 ImGui::SameLine();
             }
             else if(doc.GetToken(myLanes[lane].myLine, token).myValue.starts_with("<no effect>"))
@@ -226,10 +222,10 @@ void PreviewWindow::OnImGuiDraw()
     {
         while(TryDisplayLanes())
         {
+        }
             while (FillBackLanes(lanesShown))
             {
             }
-        }
     }
 
     // vv Reset
@@ -245,11 +241,27 @@ void PreviewWindow::OnImGuiDraw()
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         drawList->ChannelsSplit(2);
         drawList->ChannelsSetCurrent(1);
-        ImGui::Text("# | Display\t| Back \t| Next");
+        if(ImGui::IsKeyDown(ImGuiKey_ModShift))
+        {
+            ImGui::Text("# | Display(e)\t| Back(s|e)\t\t| Next(s)");
+        }
+        else
+        {
+            ImGui::Text("# | Display\t\t| Back \t\t| Next");
+        }
         float maxWidth = ImGui::GetItemRectSize().x;
         for(int lane = 0; lane < 7; lane++)
         {
-            ImGui::Text("%i | %i\t\t| %i\t\t| %i", lane + 1, myLanes[lane].myLine, myBackLanes[lane].myLine, myAssemblyLanes[lane].myLine);
+            if(ImGui::IsKeyDown(ImGuiKey_ModShift))
+            {
+                        //  lane dis end   bl strt end  al strt     lane            dis                     end                     bl                          strt                            end                         al                              strt
+                ImGui::Text("%i | %i(%i)\t| %i(%i|%i)\t| %i(%i)", lane + 1, myLanes[lane].myLine, myLanes[lane].myEndTime, myBackLanes[lane].myLine, myBackLanes[lane].myStartTime, myBackLanes[lane].myEndTime, myAssemblyLanes[lane].myLine, myAssemblyLanes[lane].myStartTime);
+            }
+            else
+            {
+                ImGui::Text("%i | %i\t| %i\t| %i", lane + 1, myLanes[lane].myLine, myBackLanes[lane].myLine, myAssemblyLanes[lane].myLine);
+            }
+            maxWidth = std::max(maxWidth, ImGui::GetItemRectSize().x);
         }
         if(myBackgroundQueue.size() != 0)
         {
@@ -265,8 +277,23 @@ void PreviewWindow::OnImGuiDraw()
             ImGui::Text("Left to recalculate:");
             for(int i = 0; i < myRecalculateQueue.size(); i++)
             {
-                ImGui::Text("\t%i", myRecalculateQueue[i].myLine);
+                if(ImGui::IsKeyDown(ImGuiKey_ModShift))
+                {
+                    ImGui::Text("\t%i (%i)", myRecalculateQueue[i].myLine, myRecalculateQueue[i].myStartTime);
+                }
+                else
+                {
+                    ImGui::Text("\t%i", myRecalculateQueue[i].myLine);
+                }
             }
+        }
+        if(ImGui::IsKeyDown(ImGuiKey_ModShift))
+        {
+            ImGui::Text("Time variance: s: %i | e: %i", ourLineAnimInTime, ourLineAnimOutTime);
+        }
+        else
+        {
+            ImGui::Text("Hold Shift for times");
         }
         drawList->ChannelsSetCurrent(0);
         ImVec2 wPos = ImGui::GetWindowPos();
@@ -466,16 +493,17 @@ int PreviewWindow::AssembleLanes(float aWidth)
     return 7;
 }
 
-int PreviewWindow::FindOpenBackLanes(int aLaneCount, int aNextLineNeeds)
+int PreviewWindow::FindOpenBackLanes(int aLaneCount, int aNextLineNeeds, uint aLineStartTime)
 {
     for(int i = (aLaneCount / 2) + (aNextLineNeeds / 2); i >= aNextLineNeeds; i--)
     {
         int foundPlace = i - aNextLineNeeds;
         for(int j = 0; j < aNextLineNeeds; j++)
         {
-            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
+            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && aLineStartTime < (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime)))
             {
                 foundPlace = -1;
+                break;
             }
         }
         if(foundPlace != -1)
@@ -488,9 +516,10 @@ int PreviewWindow::FindOpenBackLanes(int aLaneCount, int aNextLineNeeds)
         int foundPlace = i;
         for(int j = 0; j < aNextLineNeeds; j++)
         {
-            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
+            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && aLineStartTime < (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime)))
             {
                 foundPlace = -1;
+                break;
             }
         }
         if(foundPlace != -1)
@@ -507,7 +536,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     float scaledWidth = 640.f - 95.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
     if(RecalculateBackLanes(aLaneCount))
     {
-        return false; // There are still more to be recalculated but they don't fit right now 
+        //return false; // There are still more to be recalculated but they don't fit right now 
     }
     int nextLineNeeds = AssembleLanes(scaledWidth);
 	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
@@ -539,34 +568,19 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     }
     if(foundPlace == -1)
     {
-        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds);
-    //    for(int i = (aLaneCount / 2) + (nextLineNeeds / 2); i >= nextLineNeeds; i--)
-    //    {
-    //        foundPlace = i - nextLineNeeds;
-    //        for(int j = 0; j < nextLineNeeds; j++)
-    //        {
-    //            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
-    //            {
-    //                foundPlace = -1;
-    //            }
-    //        }
-    //        if(foundPlace != -1) {break;}
-    //    }
-    //}
-    //if(foundPlace == -1)
-    //{
-    //    for(int i = (aLaneCount / 2) - (nextLineNeeds / 2); i <= aLaneCount - nextLineNeeds; i++)
-    //    {
-    //        foundPlace = i;
-    //        for(int j = 0; j < nextLineNeeds; j++)
-    //        {
-    //            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && myAssemblyLanes[0].myStartTime < myLanes[foundPlace + j].myEndTime))
-    //            {
-    //                foundPlace = -1;
-    //            }
-    //        }
-    //        if(foundPlace != -1) {break;}
-    //    }
+        if(myRecalculateQueue.size() > 10)
+        {
+            return false;
+        }
+        for(int i = 0; i < nextLineNeeds; i++)
+        {
+            myRecalculateQueue.emplace_back(myAssemblyLanes[i]);
+        }
+        myNextAddLineIndex++;
+        return true;
+
+        // vV This line is the working behaviour Vv
+        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds, myAssemblyLanes[0].myStartTime);
     }
     if(foundPlace != -1)
     {
@@ -652,7 +666,20 @@ void PreviewWindow::QueueBackLanesToRecalculate()
         if(myBackLanes[i].myLine != -1 && !doc.GetToken(myBackLanes[i].myLine, 0).myValue.starts_with("<line"))
         {
             DBGprintf("Queuing lane %i (line %i) for recalc\n%s\n", i, myBackLanes[i].myLine, doc.SerializeLineAsText(doc.GetLine(myBackLanes[i].myLine)).data());
-            myRecalculateQueue.emplace_back(myBackLanes[i]);
+            bool couldSort = false;
+            for(int j = 0; j < myRecalculateQueue.size(); j++)
+            {
+                if(myRecalculateQueue[j].myLine > myBackLanes[i].myLine)
+                {
+                    myRecalculateQueue.insert(myRecalculateQueue.begin() + j, myBackLanes[i]);
+                    couldSort = true;
+                    break;
+                }
+            }
+            if(!couldSort)
+            {
+                myRecalculateQueue.emplace_back(myBackLanes[i]);
+            }
             myBackLanes[i].myLine = -1;
         }
     }
@@ -677,7 +704,7 @@ bool PreviewWindow::RecalculateBackLanes(int aLaneCount)
             }
             nextLineNeeds++;
         } while (myRecalculateQueue.size() > nextLineNeeds && checkingLine == myRecalculateQueue[nextLineNeeds].myLine);
-        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds);
+        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds, myRecalculateQueue.front().myStartTime);
         if(foundPlace != -1)
         {
             for(int i = 0; i < nextLineNeeds; i++)
@@ -774,6 +801,7 @@ void PreviewWindow::Resetprogress()
         myAssemblyLanes[lane].myLine = -1;
     }
     myBackgroundQueue.clear();
+    myRecalculateQueue.clear();
     while (FillBackLanes(lanesShown))
     {
     }
