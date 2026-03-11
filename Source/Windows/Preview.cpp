@@ -399,7 +399,6 @@ void PreviewWindow::QueueImageFade()
     std::string imgPath = doc.GetToken(myNextAddLineIndex, 0).myValue.substr(("image " + timeStr + " ").size());
     uint startTime = doc.GetTimedTokenAfter(myNextAddLineIndex, 0).myStartTime;
     myBackgroundQueue.push_back({imgPath, startTime, startTime + (uint)(std::stof(timeStr) * 100)});
-    //myBackgroundQueue.push_back({"", 0, 0});
 }
 
 int PreviewWindow::AssembleLanes(float aWidth)
@@ -443,10 +442,7 @@ int PreviewWindow::AssembleLanes(float aWidth)
             if(myAssemblyLanes[lane - 1].myWidth < 0.5f)
             {
                 lane--;
-                //printf("Removed an empty lane at end of line %i.\n", myNextAddLineIndex);
             }
-            //printf("Line %i (size: %i) assembled and takes %i lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size(), lane);
-            //printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
             return lane;
         }
         myAssemblyLanes[lane].myLine = myNextAddLineIndex;
@@ -486,48 +482,96 @@ int PreviewWindow::AssembleLanes(float aWidth)
         nextStartToken = lastSpaceToken == -1 ? nextStartToken : (lastSpaceToken + 1);
         myAssemblyLanes[lane].myEndToken = nextStartToken;
         lastSpaceToken = -1;
-        //printf("Lane %i has size %f\n", lane, myAssemblyLanes[lane].myWidth);
     }
-    //printf("Line %i (lenght: %i) assembled and takes all 7 lanes\n", myNextAddLineIndex, doc.GetLine(myNextAddLineIndex).size());
-    //printf("\t%s\n", doc.SerializeLineAsText(doc.GetLine(myNextAddLineIndex)).data());
     return 7;
 }
 
+// return value of -1 means <line> is not set, -2 means lanes not available and -3 means invalid index
 int PreviewWindow::FindOpenBackLanes(int aLaneCount, int aNextLineNeeds, uint aLineStartTime)
 {
+    uint lowestCost = UINT_MAX;
+    int bestFoundPlace = -1;
     for(int i = (aLaneCount / 2) + (aNextLineNeeds / 2); i >= aNextLineNeeds; i--)
     {
+        uint currentHighestCost = 0;
+        bool hasBackLane = false;
         int foundPlace = i - aNextLineNeeds;
         for(int j = 0; j < aNextLineNeeds; j++)
         {
-            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && aLineStartTime < (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime)))
+            if(myBackLanes[foundPlace + j].myLine != -1)
             {
-                foundPlace = -1;
-                break;
+                hasBackLane = true;
+                // Check back lanes too as it might be best to wait
+                if((myBackLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) < aLineStartTime)
+                {
+                    // Line doesn't have a cost as it'll be free when this line renders
+                    continue;
+                }
+                // The line can't display here without delay so record the delay it needs
+                currentHighestCost = std::max(currentHighestCost, (myBackLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) - aLineStartTime);
+            }
+            else
+            {
+                if(myLanes[foundPlace + j].myLine == -1 || (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) < aLineStartTime)
+                {
+                    // Line doesn't have a cost as it'll be free when this line renders
+                    continue;
+                }
+                // The line can't display here without delay so record the delay it needs
+                currentHighestCost = std::max(currentHighestCost, (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) - aLineStartTime);
             }
         }
-        if(foundPlace != -1)
+        if(currentHighestCost == 0)
         {
-            return foundPlace;
+            return hasBackLane ? -2 : foundPlace;
+        }
+        if(currentHighestCost <= lowestCost)
+        {
+            lowestCost = currentHighestCost;
+            bestFoundPlace = hasBackLane ? -2 : foundPlace;
         }
     }
     for(int i = (aLaneCount / 2) - (aNextLineNeeds / 2); i <= aLaneCount - aNextLineNeeds; i++)
     {
+        uint currentHighestCost = 0;
+        bool hasBackLane = false;
         int foundPlace = i;
         for(int j = 0; j < aNextLineNeeds; j++)
         {
-            if(myBackLanes[foundPlace + j].myLine != -1 || (myLanes[foundPlace + j].myLine != -1 && aLineStartTime < (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime)))
+            if(myBackLanes[foundPlace + j].myLine != -1)
             {
-                foundPlace = -1;
-                break;
+                hasBackLane = true;
+                // Check back lanes too as it might be best to wait
+                if((myBackLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) < aLineStartTime)
+                {
+                    // Line doesn't have a cost as it'll be free when this line renders
+                    continue;
+                }
+                // The line can't display here without delay so record the delay it needs
+                currentHighestCost = std::max(currentHighestCost, (myBackLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) - aLineStartTime);
+            }
+            else
+            {
+                if(myLanes[foundPlace + j].myLine == -1 || (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) < aLineStartTime)
+                {
+                    // Line doesn't have a cost as it'll be free when this line renders
+                    continue;
+                }
+                // The line can't display here without delay so record the delay it needs
+                currentHighestCost = std::max(currentHighestCost, (myLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) - aLineStartTime);
             }
         }
-        if(foundPlace != -1)
+        if(currentHighestCost == 0)
         {
-            return foundPlace;
+            return hasBackLane ? -2 : foundPlace;
+        }
+        if(currentHighestCost <= lowestCost)
+        {
+            lowestCost = currentHighestCost;
+            bestFoundPlace = hasBackLane ? -2 : foundPlace;
         }
     }
-    return -1;
+    return bestFoundPlace;
 }
 
 bool PreviewWindow::FillBackLanes(int aLaneCount)
@@ -536,7 +580,7 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     float scaledWidth = 640.f - 95.f; // The width of a 360p display, which ECHO seems to emulate, minus some padding on the edges. 
     if(RecalculateBackLanes(aLaneCount))
     {
-        //return false; // There are still more to be recalculated but they don't fit right now 
+        return false; // There are still more to be recalculated but they don't fit right now 
     }
     int nextLineNeeds = AssembleLanes(scaledWidth);
 	if(nextLineNeeds == 0)  // 0 means the line isn't valid or there's nothing to process
@@ -557,45 +601,24 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
         Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " takes up more than half the screen. This could stop other lines from displaying correctly. Please split the line or lower the font size. ", myNextAddLineIndex);
     }
     int foundPlace = FillBackLanesSetLine(aLaneCount, nextLineNeeds);
+    if(foundPlace == -1)
+    {
+        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds, myAssemblyLanes[0].myStartTime);
+    }
+    if(foundPlace == -2) // set <line> or lowest cost not yet available
+    {
+        return false;
+    }
     if(foundPlace == -3) // invalid
     {
         myNextAddLineIndex++;
         return true;
     }
-    if(foundPlace == -2) // set <line> not yet available
-    {
-        return false;
-    }
-    if(foundPlace == -1)
-    {
-        if(myRecalculateQueue.size() > 10)
-        {
-            return false;
-        }
-        for(int i = 0; i < nextLineNeeds; i++)
-        {
-            myRecalculateQueue.emplace_back(myAssemblyLanes[i]);
-        }
-        myNextAddLineIndex++;
-        return true;
-
-        // vV This line is the working behaviour Vv
-        foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds, myAssemblyLanes[0].myStartTime);
-    }
     if(foundPlace != -1)
     {
         for(int i = 0; i < nextLineNeeds; i++)
         {
-            //printf("Moving %i tokens from line %i to back lane %i\n", myAssemblyLanes[i].myEndToken - myAssemblyLanes[i].myStartToken, myAssemblyLanes[i].myLine, i + foundPlace);
             myBackLanes[i + foundPlace] = myAssemblyLanes[i];
-            //if(myBackLanes[i + foundPlace].myEndTime < myLanes[i + foundPlace].myEndTime)// && myLanes[i + foundPlace].myLine != -1)
-            //{
-            //    Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " wasn't shown as it ended before the end of line " + std::to_string(myLanes[i + foundPlace].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myNextAddLineIndex);
-            //}
-            //else if(myBackLanes[i + foundPlace].myStartTime < myLanes[i + foundPlace].myEndTime)// && myLanes[i + foundPlace].myLine != -1)
-            //{
-            //    Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " wasn't shown in time as it began before the end of line " + std::to_string(myLanes[i + foundPlace].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myNextAddLineIndex);
-            //}
         }
         myNextAddLineIndex++;
         return true;
