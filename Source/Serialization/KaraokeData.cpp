@@ -717,6 +717,11 @@ namespace Serialization
     {
         std::vector<std::string> data = StringTools::Split(aRawProperty, ",");
         DBGprintf("KaraokeDocument::ParseEffectProperty(%s)[data0=%s][data1=%s]\n", aRawProperty.data(), data[0].data(), data[1].data());
+        if(data[0].size() == 0)
+        {
+            DBGprintf("Malformed effect, assuming it's a color.\n");
+            data[0] = "1";
+        }
         switch (std::stoi(data[0]))
         {
         case KaraokeEffect::Color:
