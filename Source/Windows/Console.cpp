@@ -240,7 +240,7 @@ void ConsoleWindow::OnImGuiDraw()
     }
     for(int logInd = 0; logInd < Console::ourLogs.size(); logInd++)
     {
-        if(ImGui::BeginChild(("##log" + std::to_string(logInd)).data(), {0, myExpandedLog == logInd ? 0 : ImGui::GetTextLineHeight() * 2 + ImGui::GetFrameHeightWithSpacing()},
+        if(ImGui::BeginChild(("##log" + std::to_string(logInd)).data(), {0, myExpandedLog == logInd ? 0 : ImGui::GetTextLineHeight() * 3 + ImGui::GetFrameHeightWithSpacing()},
             ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
         {
             Console::DrawIcon(Console::ourLogs[logInd].mySeverity, ImGui::GetTextLineHeight() * 3);
