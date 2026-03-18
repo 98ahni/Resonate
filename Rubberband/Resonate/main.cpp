@@ -77,7 +77,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
     channelStarts.clear();
     answer.clear();
     answerPointers.clear();
-    numSamples = -1;
+    numSamples = 0;
     queueStart = 0;
     hasStarted = false;
     for(int i = 0; i < channelNum; i++)
@@ -95,7 +95,7 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
         //channelArrays.back().assign((float*)arr.data(), ((float*)arr.data()) + arr.size() / 4);
         //channelArrays.push_back(emscripten::vecFromJSArray<float>(VAR_FROM_JS(get_channel_from_buffer(VAR_TO_JS(i)))));
         channelStarts.push_back(channelArrays[channelArrays.size() - 1].data());
-        numSamples = std::min(numSamples, channelArrays[channelArrays.size() - 1].size());
+        numSamples = std::max(numSamples, channelArrays[channelArrays.size() - 1].size());
     }
 #ifdef _DEBUG
     printf("Stretching audio %i...\n", stretchTo);
@@ -105,11 +105,13 @@ extern"C" EMSCRIPTEN_KEEPALIVE void jsRubberbandAudio(emscripten::EM_VAL aSample
         RubberBand::RubberBandStretcher::Option::OptionThreadingNever |
         RubberBand::RubberBandStretcher::Option::OptionProcessRealTime |
         RubberBand::RubberBandStretcher::Option::OptionWindowShort |
+        RubberBand::RubberBandStretcher::Option::OptionChannelsTogether |
         RubberBand::RubberBandStretcher::Option::OptionEngineFaster);
     stretcher->setTimeRatio(1 / (stretchTo * 0.1));
     for(int j = 0; j < channelNum; j++)
     {
         std::vector<float> newVec;
+        newVec.resize((size_t)std::ceil(stretcher->getTimeRatio() * numSamples));
         answer.push_back(newVec);
         answerPointers.push_back(answer[answer.size() - 1].data());
     }
@@ -136,14 +138,15 @@ bool RubberBandLoop()
         size_t numProcess = stretcher->getSamplesRequired() < queue ? stretcher->getSamplesRequired() : queue;
         stretcher->process(channelStarts.data(), numProcess, queue <= stretcher->getSamplesRequired());
         size_t avail = stretcher->available();
+        stretcher->retrieve(answerPointers.data(), avail);
         for(int ch = 0; ch < channelNum; ch++)
         {
             channelStarts[ch] += numProcess;
-            size_t answerCurrSize = answer[ch].size();
-            answer[ch].resize(answer[ch].size() + avail);
-            answerPointers[ch] = (&answer[ch].front()) + answerCurrSize;
+            //size_t answerCurrSize = answer[ch].size();
+            //answer[ch].resize(answer[ch].size() + avail);
+            //answerPointers[ch] = (&answer[ch].front()) + answerCurrSize;
+            answerPointers[ch] += avail;
         }
-        stretcher->retrieve(answerPointers.data(), avail);
         //EM_ASM(console.log('RubberBand | PROCESS : ' + $0 + ' : ' + $1), queueStart, numSamples);
         return true;
     }
