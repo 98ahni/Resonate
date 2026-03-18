@@ -81,6 +81,8 @@ importScripts('VexWarp/dsp.js', 'VexWarp/tools.js')
       return this.options;
     }
 
+    // Function modified by 98ahni for Resonate (2026)
+    // Added error compensation to match Rubberband timing
     stretch() {
       if (!this.buffer) {
         throw "Error: TimeStretcher.setBuffer() must be called before stretch()"
@@ -102,7 +104,9 @@ importScripts('VexWarp/dsp.js', 'VexWarp/tools.js')
       var points = this.options.stftBins;
       var vocode = this.options.vocode;
       var hop = parseInt(points * this.options.stftHop);
+      var hop_margin = (points * this.options.stftHop) - hop;
       var hop_synthesis = parseInt(hop * this.options.stretchFactor);
+      var hop_synth_margin = (hop * this.options.stretchFactor) - hop_synthesis;
       var freq = this.options.sampleRate;
       var data = this.buffer;
 
@@ -116,8 +120,9 @@ importScripts('VexWarp/dsp.js', 'VexWarp/tools.js')
       var frames_processed = 0;
       var output_frames = [];
 
+      var hop_error_corr = 0;
       // Analysis Phase: Perform STFT, and calculate phase adjustments.
-      for (var start = 0; start < (length - points); start += hop) { //
+      for (var start = 0; start < (length - points); start += hop + (hop_error_corr > 1 ? 0 : 0)) { //
         var section = new Float32Array(points);
         section.set(data.subarray(start, start + points));
         if (section.length < points) break;
@@ -134,7 +139,7 @@ importScripts('VexWarp/dsp.js', 'VexWarp/tools.js')
             // For each bin
             for (var bin = 0; bin < points; ++bin) { // only work on the lower freqs
               var phase_shift = phase(this_frame, bin) - phase(last_frame, bin);
-              var freq_deviation = (phase_shift / (hop / freq)) - fft.getBandFrequency(bin);
+              var freq_deviation = (phase_shift / ((hop + (hop_error_corr > 1 ? 1 : 0)) / freq)) - fft.getBandFrequency(bin);
               var wrapped_deviation = ((freq_deviation + Math.PI) % (2 * Math.PI)) - Math.PI;
               var true_freq = fft.getBandFrequency(bin) + wrapped_deviation;
               var new_phase = phase(last_frame, bin) + ((hop_synthesis / freq) * true_freq);
@@ -153,15 +158,21 @@ importScripts('VexWarp/dsp.js', 'VexWarp/tools.js')
           frames_processed++;
         }
 
+        if(hop_error_corr > 1){
+          hop_error_corr -= 1;
+        }
+        hop_error_corr += hop_margin;
+
         progress(1, frames_processed, parseInt(((length - points) / hop)));
       }
 
       L("Analysis complete: " + frames_processed + " frames.")
 
       // Synthesis Phase
-      var final_buffer = new Float32Array(parseInt(length * stretch_amount));
+      var final_buffer = new Float32Array(Math.ceil(length * stretch_amount));
       var overlap_pointer = 0;
       var total_output = 0;
+      var hop_synth_error_corr = 0;
       for (var i = 0; i < output_frames.length; ++i) {
         var fft = output_frames[i];
         var buffer = vocode ? hanning.process(fft.inverse()) : fft;
@@ -171,7 +182,13 @@ importScripts('VexWarp/dsp.js', 'VexWarp/tools.js')
           final_buffer[overlap_pointer + j] += buffer[j];
         }
         total_output += buffer.length;
-        overlap_pointer += hop_synthesis;
+        overlap_pointer += hop_synthesis + (hop_synth_error_corr > 1 ? 1 : 0);
+
+        if(hop_synth_error_corr > 1){
+          hop_synth_error_corr -= 1;
+        }
+        hop_synth_error_corr += hop_synth_margin;
+
         progress(2, i + 1, output_frames.length);
       }
 
