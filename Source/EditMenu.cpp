@@ -116,11 +116,14 @@ void Menu::Edit_MoveLineUp()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     TimingEditor& timing = TimingEditor::Get();
+    bool isImage = doc.GetLine(timing.GetMarkedLine()).size() == 1 && doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("image");
     doc.MoveLineUp(timing.GetMarkedLine());
+    if(isImage) doc.MoveLineUp(timing.GetMarkedLine() + 1);
     if(timing.GetMarkedLine() > 1 && doc.GetLine(timing.GetMarkedLine() - 2).size() == 1 && doc.GetToken(timing.GetMarkedLine() - 2, 0).myValue.starts_with("image"))
     {
         doc.MoveLineUp(timing.GetMarkedLine() - 1);
-        timing.MoveMarkerUp();
+        if(isImage) doc.MoveLineUp(timing.GetMarkedLine());
+        else timing.MoveMarkerUp();
     }
     timing.MoveMarkerUp();
     doc.MakeDirty();
@@ -131,11 +134,14 @@ void Menu::Edit_MoveLineDown()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     TimingEditor& timing = TimingEditor::Get();
+    bool isImage = doc.GetLine(timing.GetMarkedLine()).size() == 1 && doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("image");
+    if(isImage) doc.MoveLineUp(timing.GetMarkedLine() + 2);
     doc.MoveLineUp(timing.GetMarkedLine() + 1);
     if(doc.GetLine(timing.GetMarkedLine() + 2).size() == 1 && doc.GetLine(timing.GetMarkedLine()).size() == 1 && doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("image"))
     {
+        if(isImage) doc.MoveLineUp(timing.GetMarkedLine() + 3);
         doc.MoveLineUp(timing.GetMarkedLine() + 2);
-        timing.MoveMarkerDown();
+        //if(!isImage) timing.MoveMarkerDown();
     }
     timing.MoveMarkerDown();
     doc.MakeDirty();
