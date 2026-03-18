@@ -1,5 +1,5 @@
 //  This file is licenced under the GNU Affero General Public License and the Resonate Supplemental Terms. (See file LICENSE and LICENSE-SUPPLEMENT or <https://github.com/98ahni/Resonate>)
-//  <Copyright (C) 2024 98ahni> Original file author
+//  <Copyright (C) 2024-2026 98ahni> Original file author
 
 var http = require('http');
 var fs = require('fs');
@@ -15,11 +15,11 @@ const RELEASE_Build = false;
 const REBUILD_Imgui = false;
 const REBUILD_Rubberband = false;
 const REBUILD_Source = false;
-const SKIP_ImguiCompile = false;
+const SKIP_ImguiCompile = true;
 const SKIP_RubberbandCompile = true;
 const SKIP_SourceCompile = false;
 const SKIP_Linking = false;
-const FORCE_Linking = true;
+const FORCE_Linking = false;
 
 // APIs gotten from Github Secrets
 const API_SECRETS = [
@@ -113,8 +113,8 @@ let hasUnlinkedFiles = false;
 if(REBUILD_Rubberband || (!SKIP_RubberbandCompile && lastCompileTime < fs.statSync(projectPath + 'Rubberband/Resonate/main.cpp').mtimeMs))
 {
     console.log('Compiling Rubberband');
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/single/RubberBandSingle.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/Rubberband.o\"', {env: process.env})));//
-    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/Resonate/main.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/RubberbandMain.o\"', {env: process.env})));//
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/single/RubberBandSingle.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" ' + (RELEASE_Build ? '-D\"_RELEASE=1\"' : '-D\"_DEBUG=1\"') + ' -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/Rubberband.o\"', {env: process.env})));//
+    console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'Rubberband/Resonate/main.cpp' + '\" -D\"EMSCRIPTEN=1\" -D\"__EMSCRIPTEN__=1\" -D\"NO_THREADING=1\" ' + (RELEASE_Build ? '-D\"_RELEASE=1\"' : '-D\"_DEBUG=1\"') + ' -pedantic -x c++ -I\"' + projectPath + '\" -I\"' + projectPath + 'Rubberband/\" -c ' + (RELEASE_Build ? '-O2' : '-O0') + ' -std=c++23 -w -o \"' + projectPath + 'bin/intermediate/RubberbandMain.o\"', {env: process.env})));//
     //hasUnlinkedFiles = true;
     console.log('Linking Rubberband');
     console.log(new TextDecoder().decode(execSync(compilerPath + ' \"' + projectPath + 'bin/intermediate/RubberbandMain.o' + '\" \"' + projectPath + 'bin/intermediate/Rubberband.o' + '\" -o \"' + projectPath + 'bin/public/plugins/RubberBand.js\" --bind ' + (RELEASE_Build ? '-O2' : '-O0') + ' ' + (RELEASE_Build ? '-g0' : '-g3') + ' -lidbfs.js -sWASM=0 -sASYNCIFY -sASSERTIONS -sEXPORTED_FUNCTIONS="[\'_malloc\',\'_free\',\'_main\']" -sEXPORTED_RUNTIME_METHODS="[\'allocateUTF8\']" -sALLOW_MEMORY_GROWTH -sINITIAL_MEMORY=1024MB -sSTACK_SIZE=10MB', {env: process.env})));

@@ -993,27 +993,27 @@ function dbg(...args) {
 // === Body ===
 
 var ASM_CONSTS = {
-  4087125: () => { return Date.now(); },  
- 4087146: () => { return Date.now(); },  
- 4087167: () => { return Date.now(); },  
- 4087188: () => { location.reload() },  
- 4087206: () => { location.reload(); },  
- 4087225: ($0) => { init_gapi_with_key($0); },  
- 4087251: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
- 4087374: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
- 4087476: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
- 4087516: () => { Module.hide_loading_screen(); },  
- 4087546: () => { if(global_audio_context !== null)global_audio_context.close(); },  
- 4087609: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4087702: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
- 4087798: () => { return global_audio_element.paused ? 1 : 0; },  
- 4087842: () => { return global_audio_element.paused ? 1 : 0; },  
- 4087886: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
- 4087936: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
- 4088192: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
- 4088482: () => { audio_element_pause(); },  
- 4088505: () => { audio_element_play(); },  
- 4088527: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
+  4087397: () => { return Date.now(); },  
+ 4087418: () => { return Date.now(); },  
+ 4087439: () => { return Date.now(); },  
+ 4087460: () => { location.reload() },  
+ 4087478: () => { location.reload(); },  
+ 4087497: ($0) => { init_gapi_with_key($0); },  
+ 4087523: () => { if(document.getElementById('temp-text-input')) { document.getElementById('temp-text-input').focus({preventScroll: true});} },  
+ 4087646: () => { if(document.getElementById('temp-file-input')) { document.getElementById('temp-file-input').click();} },  
+ 4087748: ($0, $1, $2) => { Module.show_loading_screen($0, $1, $2); },  
+ 4087788: () => { Module.hide_loading_screen(); },  
+ 4087818: () => { if(global_audio_context !== null)global_audio_context.close(); },  
+ 4087881: ($0, $1) => { global_audio_element.addEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4087974: ($0, $1) => { global_audio_element.removeEventListener(Emval.toValue($0), window[Emval.toValue($1)], true); },  
+ 4088070: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4088114: () => { return global_audio_element.paused ? 1 : 0; },  
+ 4088158: ($0) => { return global_audio_completion[($0) - 1] ? 1 : 0; },  
+ 4088208: ($0) => { if(!document.querySelector("link[rel='icon']")) { let link = document.createElement('link'); link.rel = 'icon'; link.type = 'image/png'; document.head.appendChild(link); } document.querySelector("link[rel='icon']").href = "icons/" + Emval.toValue($0); },  
+ 4088464: ($0) => { let error_type = $0; let errString = 'Undefined'; if(error_type === 1) errString = 'Validation'; else if(error_type === 2) errString = 'Out of memory'; else if(error_type === 4) errString = 'Unknown'; else if(error_type === 5) errString = 'Device lost'; alert('WebGPU Error ' + errString); },  
+ 4088754: () => { audio_element_pause(); },  
+ 4088777: () => { audio_element_play(); },  
+ 4088799: () => { const dbname = '/local'; var req = indexedDB.deleteDatabase(dbname); req.onsuccess = function() { console.log('Deleted IndexedDB /local!'); location.reload();}; req.onerror = function() { console.error('Failed to delete IndexedDB /local!');}; req.onblocked = function() { console.error('Failed to delete IndexedDB /local, DB was blocked!');}; }
 };
 function ImGui_ImplGlfw_EmscriptenOpenURL(url) { url = url ? UTF8ToString(url) : null; if (url) window.open(url, '_blank'); }
 function show_input_debugger() {_ShowInputDebugger(); }
@@ -13289,9 +13289,9 @@ var _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind');
 var _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind');
 var _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind');
 var _asyncify_stop_rewind = createExportWrapper('asyncify_stop_rewind');
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4014840;
-var ___start_em_js = Module['___start_em_js'] = 4050376;
-var ___stop_em_js = Module['___stop_em_js'] = 4087125;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4015112;
+var ___start_em_js = Module['___start_em_js'] = 4050648;
+var ___stop_em_js = Module['___stop_em_js'] = 4087397;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
