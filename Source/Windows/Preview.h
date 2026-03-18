@@ -47,8 +47,8 @@ private:
     void QueueBackLanesToRecalculate();
     bool RecalculateBackLanes(int aLaneCount);
     bool TryDisplayLanes();
-    bool CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay);
-    bool RemoveOldLanes(uint someCurrentTime, uint aDelay);
+    bool CheckLaneVisible(int aLane, uint someCurrentTime);
+    bool RemoveOldLanes(uint someCurrentTime);
     void Resetprogress();
 
     std::string myTexturePath;

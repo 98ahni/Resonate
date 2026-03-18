@@ -50,7 +50,7 @@ PreviewWindow::PreviewWindow(bool anOnlyValidate)
         int lanesShown = doc.GetFontSize() <= 43 ? 7 : doc.GetFontSize() <= 50 ? 6 : 5;
         //for(int timer = 0; timer < 100000 && myNextAddLineIndex < doc.GetData().size(); timer += 10)
         //{
-            while(RemoveOldLanes(INT_MAX, 50))
+            while(RemoveOldLanes(INT_MAX))
             {
                 while(TryDisplayLanes())
                 {
@@ -190,7 +190,7 @@ void PreviewWindow::OnImGuiDraw()
     bool hasNoEffect = false;
     for(int lane = 0; lane < 7; lane++)
     {
-        if(!CheckLaneVisible(lane, playbackProgress, 200)) {continue;}
+        if(!CheckLaneVisible(lane, playbackProgress)) {continue;}
         ImGui::SetCursorPosY((lanePosY * lane) + laneHeight + contentOffset.y);
         float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * DPI_SCALED(textScale))) * .5f) + contentOffset.x;
         ImGui::SetCursorPosX(cursorStartX);
@@ -218,14 +218,14 @@ void PreviewWindow::OnImGuiDraw()
         }
     }
     ImGui::PopStyleVar();
-    while(RemoveOldLanes(playbackProgress, 50))
+    while(RemoveOldLanes(playbackProgress))
     {
         while(TryDisplayLanes())
         {
         }
-            while (FillBackLanes(lanesShown))
-            {
-            }
+        while (FillBackLanes(lanesShown))
+        {
+        }
     }
 
     // vv Reset
@@ -594,11 +594,11 @@ bool PreviewWindow::FillBackLanes(int aLaneCount)
     }
     if(nextLineNeeds > aLaneCount)
     {
-        Console::LogError("Line " + std::to_string(myNextAddLineIndex) + " is too long to fit on the screen. This will stop ECHO from displaying any lines after this. Please split the line or lower the font size. ", myNextAddLineIndex);
+        Console::LogError("Line " + std::to_string(myNextAddLineIndex) + " is too long to fit on the screen. This will stop ECHO from displaying any lines after this. Please split the line or lower the font size. \nLine needs: " + std::to_string(nextLineNeeds), myNextAddLineIndex);
     }
     else if(nextLineNeeds > aLaneCount * .5f)
     {
-        Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " takes up more than half the screen. This could stop other lines from displaying correctly. Please split the line or lower the font size. ", myNextAddLineIndex);
+        Console::LogWarning("Line " + std::to_string(myNextAddLineIndex) + " takes up more than half the screen. This could stop other lines from displaying correctly. Please split the line or lower the font size. \nLine needs: " + std::to_string(nextLineNeeds), myNextAddLineIndex);
     }
     int foundPlace = FillBackLanesSetLine(aLaneCount, nextLineNeeds);
     if(foundPlace == -1)
@@ -655,7 +655,7 @@ int PreviewWindow::FillBackLanesSetLine(int aLaneCount, int aNextLineNeeds)
         {
             if(myBackLanes[foundPlace + j].myLine != -1)
             {
-                if(myBackLanes[foundPlace + j].myEndTime < myAssemblyLanes[0].myStartTime)
+                if((myBackLanes[foundPlace + j].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) < myAssemblyLanes[0].myStartTime)
                 {
                     foundPlace = -2;
                     continue;
@@ -711,7 +711,7 @@ void PreviewWindow::QueueBackLanesToRecalculate()
 bool PreviewWindow::RecalculateBackLanes(int aLaneCount)
 {
     int foundPlace = 0;
-    while(foundPlace != -1)
+    while(foundPlace >= 0)
     {
         if(!myRecalculateQueue.size())
         {
@@ -728,7 +728,7 @@ bool PreviewWindow::RecalculateBackLanes(int aLaneCount)
             nextLineNeeds++;
         } while (myRecalculateQueue.size() > nextLineNeeds && checkingLine == myRecalculateQueue[nextLineNeeds].myLine);
         foundPlace = FindOpenBackLanes(aLaneCount, nextLineNeeds, myRecalculateQueue.front().myStartTime);
-        if(foundPlace != -1)
+        if(foundPlace >= 0)
         {
             for(int i = 0; i < nextLineNeeds; i++)
             {
@@ -769,7 +769,7 @@ bool PreviewWindow::TryDisplayLanes()
     return displayedNewLines;
 }
 
-bool PreviewWindow::CheckLaneVisible(int aLane, uint someCurrentTime, uint aDelay)
+bool PreviewWindow::CheckLaneVisible(int aLane, uint someCurrentTime)
 {
     if(myLanes[aLane].myLine == -1) {return false;}
     //Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
@@ -782,28 +782,39 @@ bool PreviewWindow::CheckLaneVisible(int aLane, uint someCurrentTime, uint aDela
     //    return doc.GetTimedTokenAfter(myLanes[aLane].myLine, 0).myStartTime <= someCurrentTime + aDelay;
     //}
     //return false;
-    return myLanes[aLane].myStartTime <= someCurrentTime + aDelay;
+    return myLanes[aLane].myStartTime <= someCurrentTime + ourLineAnimInTime;
 }
 
-bool PreviewWindow::RemoveOldLanes(uint someCurrentTime, uint aDelay)
+bool PreviewWindow::RemoveOldLanes(uint someCurrentTime)
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     bool output = false;
     for(int lane = 0; lane < 7; lane++)
     {
 		if(myLanes[lane].myLine == -1 || doc.IsNull(doc.GetLine(myLanes[lane].myLine))) {continue;}
-        if(myLanes[lane].myEndTime + aDelay < someCurrentTime)
+        if(myLanes[lane].myEndTime + ourLineAnimOutTime < someCurrentTime)
         {
             //printf("Line %i is removed from lane %i\n", myLanes[lane].myLine, lane);
 
             // For some reason the backLanes are -1‽
-            if(myBackLanes[lane].myEndTime < myLanes[lane].myEndTime && myBackLanes[lane].myLine != -1 && myLanes[lane].myLine != -1)
+            if(myBackLanes[lane].myLine != -1 && myLanes[lane].myLine != -1)
             {
-                Console::LogWarning("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown as it ended before the end of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myBackLanes[lane].myLine);
-            }
-            else if(myBackLanes[lane].myStartTime < myLanes[lane].myEndTime && myBackLanes[lane].myLine != -1 && myLanes[lane].myLine != -1)
-            {
-                Console::LogWarning("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown in time as it began before the end of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space. This could be a bug in Resonate's algorithm and might be fine in ECHO. ", myBackLanes[lane].myLine);
+                uint overlap = (myLanes[lane].myEndTime + ourLineAnimInTime + ourLineAnimOutTime) - myBackLanes[lane].myStartTime;
+                if(myBackLanes[lane].myEndTime < myLanes[lane].myEndTime)
+                {
+                    Console::LogError("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown as it ended before the end of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space.\n"
+                    "This is unlikely to work in ECHO. \nOverlap: " + std::to_string(overlap / 100) + "." + std::to_string(overlap % 100) + " seconds. ", myBackLanes[lane].myLine);
+                }
+                else if(myBackLanes[lane].myStartTime < myLanes[lane].myEndTime)
+                {
+                    Console::LogWarning("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown in time as it began before the end of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space.\n"
+                    "This probably won't look good in ECHO. \nOverlap: " + std::to_string(overlap / 100) + "." + std::to_string(overlap % 100) + " seconds. ", myBackLanes[lane].myLine);
+                }
+                else if(myBackLanes[lane].myStartTime < (myLanes[lane].myEndTime + ourLineAnimInTime + ourLineAnimOutTime))
+                {
+                    Console::Log("Line " + std::to_string(myBackLanes[lane].myLine) + " wasn't shown in time as it should display before removal of line " + std::to_string(myLanes[lane].myLine) + " which took up the same space.\n"
+                    "This might be fine in ECHO. \nOverlap: " + std::to_string(overlap / 100) + "." + std::to_string(overlap % 100) + " seconds. ", myBackLanes[lane].myLine);
+                }
             }
             myLanes[lane].myLine = -1;
             output = true;
@@ -834,7 +845,7 @@ void PreviewWindow::Resetprogress()
         {
         }
     }
-    while(RemoveOldLanes(AudioPlayback::GetPlaybackProgress(), 50))
+    while(RemoveOldLanes(AudioPlayback::GetPlaybackProgress()))
     {
         while(TryDisplayLanes())
         {
