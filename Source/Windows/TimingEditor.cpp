@@ -249,6 +249,10 @@ void TimingEditor::RecordStartTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     doc.MakeDirty();
+    while(doc.IsEffectToken(doc.GetTokenBefore(myMarkedLine, myMarkedToken)))
+    {
+        MoveMarkerLeft();       // Compensating for effect tokens to set time of all effect tokens as well
+    }
     if(myMarkedToken == 0)
     {
         auto& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
@@ -258,6 +262,13 @@ void TimingEditor::RecordStartTime()
         }
     }
     int scaledLatency = GetInputLatencyOffset();
+    while (doc.IsEffectToken(doc.GetToken(myMarkedLine, myMarkedToken)))
+    {
+        // Set times of all effect tokens, then set the time the user actually wanted
+        History::AddRecord(new Serialization::LineRecord(History::Record::Edit, myMarkedLine));
+        doc.GetToken(myMarkedLine, myMarkedToken).myStartTime = AudioPlayback::GetPlaybackProgress() - scaledLatency;
+        MoveMarkerRight();
+    }
     if(!doc.GetToken(myMarkedLine, myMarkedToken).myHasStart && doc.GetToken(myMarkedLine, myMarkedToken).myValue.starts_with("image "))
     {
         if(doc.GetValidLineAfter(myMarkedLine).size() != 1 || !doc.IsPauseToken(doc.GetValidLineAfter(myMarkedLine)[0]))    // If the marked token is an image, recording start time 
@@ -289,9 +300,20 @@ void TimingEditor::RecordEndTime()
 {
     Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
     doc.MakeDirty();
+    int realMarkLine = myMarkedLine;
+    int realMarkToken = myMarkedToken;
+    while(doc.IsEffectToken(doc.GetTokenBefore(myMarkedLine, myMarkedToken)))
+    {
+        MoveMarkerLeft();       // Compensating for effect tokens to set end time after an actual token
+    }
     Serialization::KaraokeToken& currToken = doc.GetToken(myMarkedLine, myMarkedToken);
     Serialization::KaraokeToken& prevToken = doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken);
-    if(doc.IsNull(prevToken)) return;
+    if(doc.IsNull(prevToken))
+    {
+        myMarkedLine = realMarkLine;
+        myMarkedToken = realMarkToken;
+        return;
+    }
     int scaledLatency = GetInputLatencyOffset();
     int currMarkLine = myMarkedLine;
     int currMarkToken = myMarkedToken;
@@ -334,6 +356,9 @@ void TimingEditor::RecordEndTime()
             prevLine.push_back({"", true, AudioPlayback::GetPlaybackProgress() - scaledLatency});
         }
     }
+    // Resetting after effect tokken compensation
+    myMarkedLine = realMarkLine;
+    myMarkedToken = realMarkToken;
 }
 
 void TimingEditor::MoveMarkerUp()
