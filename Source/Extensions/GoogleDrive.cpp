@@ -142,13 +142,14 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                 FS.mkdir("/GoogleDrive");
             }
             let loadPromises = [];
+            const encoder = new TextEncoder();
             for(const document of documents){
                 const fileId = document[google.picker.Document.ID];
                 if(DEBUG){console.log(fileId);}
                 const files = [];
                 const res = await gapi.client.drive.files.list({
                     q: "'" + fileId + "' in parents",
-                    fields: 'nextPageToken, files(id, name, fileExtension, trashed)',
+                    fields: 'nextPageToken, files(id, name, fileExtension, trashed, mimeType)',
                     spaces: 'drive'
                 });
                 if(DEBUG){console.log(JSON.stringify(res.result.files));}
@@ -171,11 +172,23 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
                             'fileId': file.id,
                             'alt': 'media'
                         });
-                        var bytes = [];
-                        for (var i = 0; i < fres.body.length; ++i) {
-                          bytes.push(fres.body.charCodeAt(i));
+                        if(file.mimeType.startsWith('text') || file.mimeType.startsWith('multipart') || file.mimeType.startsWith('application')){
+                            console.log(JSON.stringify(file, (k,v) => {if(k != 'body'){return v}return undefined}, 4));
+                            const u8arr = new Uint8Array(fres.body.length * 3);
+                            encoder.encodeInto(fres.body, u8arr);
+                            FS.writeFile("/GoogleDrive/" + file.name, u8arr);
                         }
-                        FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes));
+                        else{
+                            var bytes = [];
+                            for (var i = 0; i < fres.body.length; ++i) {
+                                const code = fres.body.charCodeAt(i);
+                                bytes.push(code & 0xFF);
+                                if(code > 0xFF){
+                                    bytes.push(code >> 8);
+                                }
+                            }
+                            FS.writeFile("/GoogleDrive/" + file.name, new Uint8Array(bytes));
+                        }
                         callback_func(Emval.toHandle("/GoogleDrive/" + file.name), Emval.toHandle(file.id)); // User callback
                         resolve();
                     }));
@@ -187,15 +200,17 @@ EM_JS(void, create_picker, (emscripten::EM_VAL APIKey, emscripten::EM_VAL mime_t
     picker.setVisible(true);
 });
 
-EM_ASYNC_JS(void, save_to_drive, (emscripten::EM_VAL file_id, emscripten::EM_VAL fs_path), {
+EM_ASYNC_JS(void, save_to_drive, (emscripten::EM_VAL file_id, emscripten::EM_VAL fs_path, emscripten::EM_VAL mime_type), {
     const fileData = FS.readFile(Emval.toValue(fs_path), {encoding: 'utf8'});
+    const mimetype = Emval.toValue(mime_type);
     await gapi.client.request({
         path: 'https://www.googleapis.com/upload/drive/v3/files/' + Emval.toValue(file_id),
         method: 'PATCH',
         body: fileData,
         params: {
             uploadType: 'media',
-            fields: 'id,version,name',
+            mimeType: mimetype,
+            fields: 'id,version,name,mimeType',
         },
     });
 });
@@ -227,7 +242,7 @@ void GoogleDrive::LoadProject(std::string someMimeTypes, std::string aFileCallba
     create_picker(VAR_TO_JS(APIKeys::Google()), VAR_TO_JS(someMimeTypes), VAR_TO_JS(aFileCallbackName), VAR_TO_JS(aDoneCallbackName), VAR_TO_JS(aCancelCallbackName), VAR_TO_JS(someExcludedExtensions));
 }
 
-void GoogleDrive::SaveProject(std::string aFileID, std::string aFilePath)
+void GoogleDrive::SaveProject(std::string aFileID, std::string aFilePath, std::string aMimeType)
 {
-    save_to_drive(VAR_TO_JS(aFileID), VAR_TO_JS(aFilePath));
+    save_to_drive(VAR_TO_JS(aFileID), VAR_TO_JS(aFilePath), VAR_TO_JS(aMimeType));
 }

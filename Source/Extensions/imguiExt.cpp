@@ -512,7 +512,12 @@ extern"C" EMSCRIPTEN_KEEPALIVE void GetClipboardContent()
         ImGui::GetCurrentContext()->ClipboardHandlerData.reserve(output.size());
         for(int i = 0; i < output.size(); i++)
         {
-            ImGui::GetCurrentContext()->ClipboardHandlerData.push_back(output[i]);
+            char ch = output[i];
+            ImGui::GetCurrentContext()->ClipboardHandlerData.push_back(ch);
+            if(ch > 0xFF)
+            {
+                ImGui::GetCurrentContext()->ClipboardHandlerData.push_back(ch >> 8);
+            }
         }
         SetClipboardAction(paste);
         printf("%s\n", output.data());

@@ -407,7 +407,7 @@ void loop(void* window){
                 if(ImGui::MenuItem("Save Document", 0, false, doc.GetFileSource() == Serialization::FileSource::Google && doc.GetName() != ""))
                 {
                     ImGui::Ext::StartLoadingScreen();
-                    GoogleDrive::SaveProject(doc.GetFileID(), doc.Save());
+                    GoogleDrive::SaveProject(doc.GetFileID(), doc.Save(), "text/plain");
                     Serialization::KaraokeDocument::Get().UnsetIsDirty();
                     FileHandler::SyncLocalFS();
                     ImGui::Ext::StopLoadingScreen();
