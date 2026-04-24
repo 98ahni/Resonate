@@ -61,6 +61,7 @@ static const ImWchar g_FontRangesLatinAndPinyin[] =
 {
     0x0020, 0x01FF, // Basic Latin + Latin Supplement
     //0x2000, 0x206F, // General Punctuation
+    0x2600, 0x26FF, // Miscellaneous Symbols
     //0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
     //0x31F0, 0x31FF, // Katakana Phonetic Extensions
     //0xFF00, 0xFFEF, // Half-width characters
@@ -284,15 +285,19 @@ void loop(void* window){
         const ImWchar* range = g_FontRangesLatinAndPinyin;
         //const ImWchar* range = &ImGui::GetIO().Fonts->GetGlyphRangesVietnamese()[0];
         cfg.GlyphRanges = range;
-        ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+        //ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 15.0f, &cfg, range);
         cfg.MergeMode = true;
-        cfg.SizePixels = 12.0f;
-        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 12.0f, &cfg, range);
+        cfg.SizePixels = 15.0f;
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 15.0f, &cfg, range);
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 15.0f, &cfg, range);
         cfg.MergeMode = false;
         cfg.SizePixels = 40.0f;
         MainWindow::Font = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f, &cfg, range);
         cfg.MergeMode = true;
-        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+        //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
         cfg.MergeMode = false;
         MainWindow::Font->Scale = .5f;
         ImFont* timingCustomFont = nullptr;
@@ -300,17 +305,23 @@ void loop(void* window){
         {
             PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range));
             cfg.MergeMode = true;
-            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
             cfg.MergeMode = false;
             PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range));
             cfg.MergeMode = true;
-            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
             cfg.MergeMode = false;
             if(Serialization::Preferences::HasKey("Timing/CanUseCustomFont") && Serialization::Preferences::GetBool("Timing/CanUseCustomFont"))
             {
                 timingCustomFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(g_customFontPath.data(), 40.0f, &cfg, range);
                 cfg.MergeMode = true;
-                ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+                //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+                ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+                ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
                 cfg.MergeMode = false;
                 timingCustomFont->Scale = .5f;
             }
@@ -319,16 +330,22 @@ void loop(void* window){
         {
             PreviewWindow::SetFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f, &cfg, range));
             cfg.MergeMode = true;
-            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
             cfg.MergeMode = false;
             PreviewWindow::SetRulerFont(ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/SCR1rahv RAGER HEVVY.otf", 40.0f, &cfg, range));
             cfg.MergeMode = true;
-            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+            //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+            ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
             cfg.MergeMode = false;
         }
         ImFont* timingFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/Fredoka-Regular.ttf", 40.0f, &cfg, range);
         cfg.MergeMode = true;
-        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/ResonateFallback.otf", 40.0f, &cfg, range);
+        //ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/RobotoMono-Regular.ttf", 40.0f, &cfg, range);
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSans-Regular.ttf", 40.0f, &cfg, range);
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("Fonts/NotoSansSymbols2-Regular.ttf", 40.0f, &cfg, range);
         cfg.MergeMode = false;
         timingFont->Scale = .5f;
         TimingEditor::Get().SetFont(timingFont, timingCustomFont);
@@ -631,15 +648,15 @@ void loop(void* window){
             ImGui::EndDisabled();
             if(ImGui::BeginMenu("Color"))
             {
-            for(const auto& [alias, effect] : doc.GetEffectAliases())
-            {
-                if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data(), false, !TimingEditor::Get().GetInputUnsafe()))
+                for(const auto& [alias, effect] : doc.GetEffectAliases())
                 {
-                    History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
-                    Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
+                    if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data(), false, !TimingEditor::Get().GetInputUnsafe()))
+                    {
+                        History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
+                        Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
                         doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<Color: " + alias + ">").data(), true, token.myStartTime});
-                    doc.MakeDirty();
-                }
+                        doc.MakeDirty();
+                    }
                 }
                 ImGui::EndMenu();
             }
