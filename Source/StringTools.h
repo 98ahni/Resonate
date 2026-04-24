@@ -11,6 +11,9 @@ namespace StringTools
 	std::vector<std::string> Split(std::string aStringToSplit, std::string aSplitter);
 	std::vector<std::string> Split(std::string aStringToSplit, std::regex aSplitPattern, bool aGetMatching = false);
 	std::string Join(std::vector<std::string> aStringList, std::string aJoiner = "");
+	void Trim(std::string& aStringToTrim, std::string someCharsToTrim = " \t\v\r\n");
+	void TrimStart(std::string& aStringToTrim, std::string someCharsToTrim = " \t\v\r\n");
+	void TrimEnd(std::string& aStringToTrim, std::string someCharsToTrim = " \t\v\r\n");
 	void EraseSubString(std::string& aStringToTrim, std::string aStringToErase);
 	void Replace(std::string& aBaseString, std::string aStringToReplace, std::string aReplacement);
 	std::string tolower(const std::string& aString);

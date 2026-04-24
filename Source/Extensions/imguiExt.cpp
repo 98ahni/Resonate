@@ -642,25 +642,20 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
     pos.x -= (size.x * (scale - 1) * .5f);
     pos.y -= (size.y * (scale - 1) * .7f);
     ImDrawList* drawList = GetWindowDrawList();
-    //static ImDrawList* drawList = new ImDrawList(GetDrawListSharedData());
-    //drawList->AddDrawCmd();
-    //drawList->PushTextureID(GetFont()->ContainerAtlas->TexID);
     if(anOutlineSize != 0 && aCurrentTime < end)
     {
-        //ImDrawList* drawList = GetWindowDrawList();
         for(int i = 0; i < 5; i++)
         {
-            drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/ * scale, {pos.x + (cosf(i * (6.28318 * .2f)) * anOutlineSize), pos.y + (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
-            //drawList->AddText({(cosf(i * (6.28318 * .2f)) * anOutlineSize), (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
+            drawList->AddText(GetFont(), size.y * scale, {pos.x + (cosf(i * (6.28318 * .2f)) * anOutlineSize), pos.y + (sinf(i * (6.28318 * .2f)) * anOutlineSize)}, IM_COL32(0, 0, 0, 155), aValue.data());
         }
     }
     if(aCurrentTime < start)
     {
         uint startCol = Serialization::KaraokeDocument::Get().GetStartColor();
+        uint startGrad = Serialization::KaraokeDocument::Get().GetStartGradient();
         startCol = IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000);
-        //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000));
-        //drawList->AddText({0, 0}, IM_COL32_FROM_DOC(startCol) | (aUseAlpha ? 0 : 0xFF000000), aValue.data());
-        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/, pos, startCol, aValue.data());
+        startGrad = IM_COL32_FROM_DOC(startGrad) | (aUseAlpha ? 0 : 0xFF000000);
+        GradientText(aValue, pos, size.y, startCol, startCol, startGrad, startGrad);
     }
     else if(aCurrentTime < end)
     {
@@ -676,42 +671,34 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
                 (IM_COL32_GET_B(startCol) < 200 ? 255 : 155),
                 255
             );
-            //if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
-            //{
-            //    startCol = IM_COL32(210, 190, 255, 255);
-            //}
-            //else
-            //{
-            //    startCol = IM_COL32_WHITE;
-            //}
+        }
+        uint startGrad = Serialization::KaraokeDocument::Get().GetStartGradient();
+        startGrad = IM_COL32_FROM_DOC(startGrad) | (aUseAlpha ? 0 : 0xFF000000);
+        uint endGrad = Serialization::KaraokeDocument::Get().GetEndGradient();
+        endGrad = IM_COL32_FROM_DOC(endGrad) | (aUseAlpha ? 0 : 0xFF000000);
+        if(aFlashToken || startGrad == endGrad)
+        {
+            startGrad = IM_COL32(
+                (IM_COL32_GET_R(startGrad) < 200 ? 255 : 155),
+                (IM_COL32_GET_G(startGrad) < 200 ? 255 : 155),
+                (IM_COL32_GET_B(startGrad) < 200 ? 255 : 155),
+                255
+            );
         }
         ImVec4 startColClip = {timeEndPos.x, 0, FLT_MAX, FLT_MAX};
         ImVec4 endColClip = {0, 0, timeEndPos.x, FLT_MAX};
-        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/ * scale, pos, startCol, aValue.data(), nullptr, 0, &startColClip);
-        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/ * scale, pos, endCol, aValue.data(), nullptr, 0, &endColClip);
-        //if(IM_COL32_FROM_DOC(startCol) == IM_COL32_WHITE)
-        //{
-        //    ImGui::PushStyleColor(ImGuiCol_Text, {0.87f, 0.8f, 1.f, 1.f});
-        //    //drawList->AddText({0, 0}, IM_COL32(210, 190, 255, 255), aValue.data());
-        //}
-        //else
-        //{
-        //    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
-        //    //drawList->AddText({0, 0}, IM_COL32_WHITE, aValue.data());
-        //}
+        GradientText(aValue, pos, size.y * scale, startCol, startCol, startGrad, startGrad, &startColClip);
+        GradientText(aValue, pos, size.y * scale, endCol, endCol, endGrad, endGrad, &endColClip);
     }
     else
     {
         uint endCol = Serialization::KaraokeDocument::Get().GetEndColor();
         endCol = IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000);
-        //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000));
-        //drawList->AddText({0, 0}, IM_COL32_FROM_DOC(endCol) | (aUseAlpha ? 0 : 0xFF000000), aValue.data());
-        drawList->AddText(GetFont(), size.y /*GetFont()->FontSize * GetFont()->Scale*/, pos, endCol, aValue.data());
+        uint endGrad = Serialization::KaraokeDocument::Get().GetEndGradient();
+        endGrad = IM_COL32_FROM_DOC(endGrad) | (aUseAlpha ? 0 : 0xFF000000);
+        GradientText(aValue, pos, size.y, endCol, endCol, endGrad, endGrad);
     }
-    //Text(aValue.data());
-    //drawList->PopTextureID();
     Dummy(size);
-    //ImGui::PopStyleColor();
     bool clicked = IsItemClicked(0);
     float triangleSize = DPI_SCALED(5);
     if(aShowProgress)
@@ -725,47 +712,27 @@ bool ImGui::Ext::TimedSyllable(std::string aValue, uint aStartTime, uint anEndTi
         {
             drawList->AddTriangleFilled(timeStartPos, {timeStartPos.x + triangleSize, timeStartPos.y + triangleSize}, {timeStartPos.x, timeStartPos.y + triangleSize}, IM_COL32_WHITE);
             drawList->AddLine(timeStartPos, timeEndPos, IM_COL32_WHITE, DPI_SCALED(2));
-            //drawList->AddLine({0, 0}, size, IM_COL32_WHITE, DPI_SCALED(2));
         }
     }
-    //ImDrawData drawData = {};
-    //drawData.Valid = true;
-    //drawData.AddDrawList(drawList);
-    //drawData.DisplayPos = {};
-    //drawData.DisplaySize = size;
-    //
-    //static GLint temp_texture;
-    //GLint last_texture;
-    //GLint last_active_texture;
-    //
-	//glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    //glGetIntegerv(GL_ACTIVE_TEXTURE, &last_active_texture);
-    //glActiveTexture(GL_TEXTURE0);
-    ////if(temp_texture == 0)
-    //{
-	//    glGenTextures(1, &temp_texture);
-    //}
-	//glBindTexture(GL_TEXTURE_2D, temp_texture);
-    ////if(temp_texture == 0)
-    //{
-	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#ifdef GL_UNPACK_ROW_LENGTH // Not on WebGL/ES
-	    //glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    //}
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, timeEndPos.y - pos.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-	//glClearColor(1, 1, 1, 1);
-	//glClear(GL_COLOR_BUFFER_BIT);
-    //MainWindow_RenderCustomDrawData(&drawData, size.x, timeEndPos.y - pos.y);
-    //glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, size.x, timeEndPos.y - pos.y, 0);
-	//glBindTexture(GL_TEXTURE_2D, last_texture);
-    //glActiveTexture(last_active_texture);
-    //GetWindowDrawList()->AddImage((ImTextureID)temp_texture, pos, {size.x, timeEndPos.y - pos.y});
-    //drawList->_ClearFreeMemory();
     return clicked;
+}
+
+void ImGui::Ext::GradientText(std::string aString, ImVec2 aPosition, float aSize, uint aColUL, uint aColUR, uint aColBL, uint aColBR, const ImVec4* aClipRect)
+{
+    ImDrawList* drawList = GetWindowDrawList();
+    uint vtxSizeBefore = drawList->VtxBuffer.Size;
+    drawList->AddText(GetFont(), aSize, aPosition, IM_COL32_WHITE, aString.data(), nullptr, 0, aClipRect);
+    if(drawList->VtxBuffer.Size != 0)
+    {
+        uint vtxSize = drawList->VtxBuffer.Size - 1;
+        for(uint vtx = vtxSizeBefore; vtx < vtxSize; vtx += 4)
+        {
+            drawList->VtxBuffer[vtx].col = aColUL;
+            drawList->VtxBuffer[vtx + 1].col = aColUR;
+            drawList->VtxBuffer[vtx + 2].col = aColBR;
+            drawList->VtxBuffer[vtx + 3].col = aColBL;
+        }
+    }
 }
 
 void ImGui::Ext::SetColor(unsigned int aCol)

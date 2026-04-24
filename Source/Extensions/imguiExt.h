@@ -28,6 +28,7 @@ namespace ImGui{
         void StopLoadingScreen();
 
         bool TimedSyllable(std::string aValue, uint aStartTime, uint anEndTime, uint aCurrentTime, bool aShowProgress, bool aFlashToken, bool aUseAlpha = false, float anOutlineSize = 0, float aMaxGrowFactor = 1);
+        void GradientText(std::string aString, ImVec2 aPosition, float aSize, uint aColUL, uint aColUR, uint aColBL, uint aColBR, const ImVec4* aClipRect = nullptr);
         void SetColor(unsigned int aCol);
         void ClearColor();
 

@@ -629,15 +629,35 @@ void loop(void* window){
             ImGui::BeginDisabled();
             ImGui::SeparatorText("Text Effects");
             ImGui::EndDisabled();
+            if(ImGui::BeginMenu("Color"))
+            {
             for(const auto& [alias, effect] : doc.GetEffectAliases())
             {
                 if(ImGui::MenuItem(alias.data(), effect->myECHOValue.data(), false, !TimingEditor::Get().GetInputUnsafe()))
                 {
                     History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
                     Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
-                    doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<" + alias + ">").data(), true, token.myStartTime});
+                        doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<Color: " + alias + ">").data(), true, token.myStartTime});
                     doc.MakeDirty();
                 }
+                }
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Gradient"))
+            {
+                for(const auto& [alias, effect] : doc.GetEffectAliases())
+                {
+                    std::string gradValue = effect->myECHOValue;
+                    StringTools::Replace(gradValue, "color", "gradient");
+                    if(ImGui::MenuItem(alias.data(), gradValue.data(), false, !TimingEditor::Get().GetInputUnsafe()))
+                    {
+                        History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
+                        Serialization::KaraokeToken& token = doc.GetToken(timing.GetMarkedLine(), timing.GetMarkedToken());
+                        doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + timing.GetMarkedToken(), {("<Gradient: " + alias + ">").data(), true, token.myStartTime});
+                        doc.MakeDirty();
+                    }
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }

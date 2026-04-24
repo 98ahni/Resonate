@@ -39,8 +39,26 @@ namespace StringTools
         return output;
     }
 
-    void EraseSubString(std::string& aStringToTrim, std::string aStringToErase)
-	{
+    void Trim(std::string &aStringToTrim, std::string someCharsToTrim)
+    {
+		TrimStart(aStringToTrim, someCharsToTrim);
+		TrimEnd(aStringToTrim, someCharsToTrim);
+    }
+
+    void TrimStart(std::string &aStringToTrim, std::string someCharsToTrim)
+    {
+    	size_t start = aStringToTrim.find_first_not_of(someCharsToTrim);
+		aStringToTrim.erase(0, start);
+    }
+	
+    void TrimEnd(std::string &aStringToTrim, std::string someCharsToTrim)
+    {
+		size_t end = aStringToTrim.find_last_not_of(someCharsToTrim);
+		aStringToTrim.erase(end);
+    }
+
+    void EraseSubString(std::string &aStringToTrim, std::string aStringToErase)
+    {
 		size_t index = 0;
 		while ((index = aStringToTrim.find(aStringToErase)) != std::string::npos)
 		{

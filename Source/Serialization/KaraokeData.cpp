@@ -222,21 +222,29 @@ namespace Serialization
     }
     uint KaraokeDocument::GetStartColor()
     {
-        return myHasOverrideColor ? myOverrideStartColor : myBaseStartColor;
+        return myHasOverrideStartColor ? myOverrideStartColor : myBaseStartColor;
     }
     uint KaraokeDocument::GetEndColor()
     {
-        return myHasOverrideColor ? myOverrideEndColor : myBaseEndColor;
+        return myHasOverrideEndColor ? myOverrideEndColor : myBaseEndColor;
+    }
+    uint KaraokeDocument::GetStartGradient()
+    {
+        return myHasOverrideStartGradient ? myOverrideStartGradient : (myHasBaseStartGradient ? myBaseStartGradient : GetStartColor());
+    }
+    uint KaraokeDocument::GetEndGradient()
+    {
+        return myHasOverrideEndGradient ? myOverrideEndGradient : (myHasBaseEndGradient ? myBaseEndGradient : GetEndColor());
     }
     bool KaraokeDocument::IsEffectToken(KaraokeToken &aToken)
     {
-        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= -]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"=: -]+>"), true);
         return tags.size() != 0;
     }
     bool KaraokeDocument::ParseEffectToken(KaraokeToken &aToken)
     {
         if(IsNull(aToken)){return false;}
-        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"= -]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"=: -]+>"), true);
         if(tags.size() == 0)
         {
             return false;
@@ -249,6 +257,14 @@ namespace Serialization
             std::string possibleAlias = tags[i];
             StringTools::EraseSubString(possibleAlias, "<");
             StringTools::EraseSubString(possibleAlias, ">");
+            std::vector<std::string> typeAlias = StringTools::Split(possibleAlias, ":");
+            bool isGradient = false;
+            if(typeAlias.size() > 1)
+            {
+                possibleAlias = typeAlias[1];
+                StringTools::TrimStart(possibleAlias);
+                isGradient = typeAlias[0] == "Gradient";
+            }
             std::string lowTag = StringTools::tolower(tags[i]);
             if(myEffectAliases.contains(possibleAlias))
             {
@@ -257,8 +273,16 @@ namespace Serialization
                 case KaraokeEffect::Color:
                 {
                     KaraokeColorEffect* effect = (KaraokeColorEffect*)myEffectAliases[possibleAlias];
-                    if(effect->myHasEndColor) SetColor(effect->myStartColor, effect->myEndColor);
-                    else SetColor(effect->myStartColor);
+                    if(isGradient)
+                    {
+                        if(effect->myHasEndColor) SetGradient(effect->myStartColor, effect->myEndColor);
+                        else SetGradient(effect->myStartColor);
+                    }
+                    else
+                    {
+                        if(effect->myHasEndColor) SetColor(effect->myStartColor, effect->myEndColor);
+                        else SetColor(effect->myStartColor);
+                    }
                     break;
                 }
                 }
@@ -271,6 +295,13 @@ namespace Serialization
                 if(colors.size() > 1) SetColor(FromHex(colors[1]));
                 output = true;
             }
+            else if(lowTag.starts_with("<font gradient"))
+            {
+                std::vector<std::string> gradients = StringTools::Split(std::string(lowTag.data()), std::regex("[A-Za-z0-9 ]+"), true);
+                if(gradients.size() > 2) SetGradient(FromHex(gradients[1]), FromHex(gradients[2]));
+                if(gradients.size() > 1) SetGradient(FromHex(gradients[1]));
+                output = true;
+            }
             else if(lowTag.starts_with("<line"))
             {
                 // Always handled by the calling function
@@ -278,7 +309,7 @@ namespace Serialization
             }
             else if(lowTag.starts_with("<no effect>"))
             {
-                SetColor(myOverrideStartColor, myOverrideStartColor);
+                SetColor(0x0038F97C, 0x30FFCCE9);
                 output = true;
             }
         }
@@ -286,21 +317,48 @@ namespace Serialization
     }
     void KaraokeDocument::SetColor(uint aStartColor)
     {
-        myHasOverrideColor = true;
+        myHasOverrideStartColor = true;
+        myHasOverrideEndColor = false;
         myOverrideStartColor = aStartColor;
         myOverrideEndColor = myBaseEndColor;
+        SetGradient(aStartColor);
     }
     void KaraokeDocument::SetColor(uint aStartColor, uint anEndColor)
     {
-        myHasOverrideColor = true;
+        myHasOverrideStartColor = true;
+        myHasOverrideEndColor = true;
         myOverrideStartColor = aStartColor;
         myOverrideEndColor = anEndColor;
+        SetGradient(aStartColor, anEndColor);
     }
     void KaraokeDocument::PopColor()
     {
-        myHasOverrideColor = false;
+        myHasOverrideStartColor = false;
+        myHasOverrideEndColor = false;
         myOverrideStartColor = myBaseStartColor;
         myOverrideEndColor = myBaseEndColor;
+        PopGradient();
+    }
+    void KaraokeDocument::SetGradient(uint aStartGradient)
+    {
+        myHasOverrideStartGradient = true;
+        myHasOverrideEndGradient = false;
+        myOverrideStartGradient = aStartGradient;
+        myOverrideEndGradient = myBaseEndGradient;
+    }
+    void KaraokeDocument::SetGradient(uint aStartGradient, uint anEndGradient)
+    {
+        myHasOverrideStartGradient = true;
+        myHasOverrideEndGradient = true;
+        myOverrideStartGradient = aStartGradient;
+        myOverrideEndGradient = anEndGradient;
+    }
+    void KaraokeDocument::PopGradient()
+    {
+        myHasOverrideStartGradient = false;
+        myHasOverrideEndGradient = false;
+        myOverrideStartGradient = myBaseStartGradient;
+        myOverrideEndGradient = myBaseEndGradient;
     }
     void KaraokeDocument::InsertLineBreak(size_t aLineToSplit, size_t aToken, size_t aChar)
     {
@@ -393,9 +451,18 @@ namespace Serialization
         myBaseStartColor = 0x0038F97C;
         myHasBaseEndColor = false;
         myBaseEndColor = 0x30FFCCE9;
-        myHasOverrideColor = false;
+        myHasOverrideStartColor = false;
         myOverrideStartColor = 0x0038F97C;
+        myHasOverrideEndColor = false;
         myOverrideEndColor = 0x30FFCCE9;
+        myHasBaseStartGradient = false;
+        myBaseStartGradient = 0x0038F97C;
+        myHasBaseEndGradient = false;
+        myBaseEndGradient = 0x30FFCCE9;
+        myHasOverrideStartGradient = false;
+        myOverrideStartGradient = 0x0038F97C;
+        myHasOverrideEndGradient = false;
+        myOverrideEndGradient = 0x30FFCCE9;
         myECHOtoResonateAliases.clear();
         for(auto&[name, pointer] : myEffectAliases)
         {
@@ -519,7 +586,10 @@ namespace Serialization
             std::string alias = data[0].substr(6);
             KaraokeEffect* effect = ParseEffectProperty(data[1]);
             myEffectAliases[alias] = effect;
-            myECHOtoResonateAliases[effect->myECHOValue.data()] = "<" + alias + ">";
+            myECHOtoResonateAliases[effect->myECHOValue.data()] = "<Color: " + alias + ">";
+            std::string gradValue = effect->myECHOValue.data();
+            StringTools::Replace(gradValue, "color", "gradient");
+            myECHOtoResonateAliases[gradValue.data()] = "<Gradient: " + alias + ">";
             return;
         }
         myTokens.push_back(std::vector<KaraokeToken>());
@@ -548,7 +618,7 @@ namespace Serialization
     }
     void KaraokeDocument::ReplaceEffectsInLine(std::string& aLine)
     {
-        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"=: ]+>"), true);
         for(std::string tag : tags)
         {
             if(myECHOtoResonateAliases.contains(tag))
@@ -559,15 +629,25 @@ namespace Serialization
     }
     void KaraokeDocument::ReplaceAliasesInLine(std::string &aLine)
     {
-        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"= ]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"=: ]+>"), true);
         for(std::string tag : tags)
         {
             std::string possibleAlias = tag;
             StringTools::EraseSubString(possibleAlias, "<");
             StringTools::EraseSubString(possibleAlias, ">");
+            std::vector<std::string> typeAlias = StringTools::Split(possibleAlias, ":");
+            bool isGradient = false;
+            if(typeAlias.size() > 1)
+            {
+                possibleAlias = typeAlias[1];
+                StringTools::TrimStart(possibleAlias);
+                isGradient = typeAlias[0] == "Gradient";
+            }
             if(myEffectAliases.contains(possibleAlias))
             {
-                StringTools::Replace(aLine, tag, myEffectAliases[possibleAlias]->myECHOValue);
+                std::string ECHOValue = myEffectAliases[possibleAlias]->myECHOValue;
+                if(isGradient) StringTools::Replace(ECHOValue, "color", "gradient");
+                StringTools::Replace(aLine, tag, ECHOValue);
             }
         }
     }
