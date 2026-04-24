@@ -26,6 +26,7 @@ public:
     static void SetPlaybackProgress(uint someProgress);
     static int GetPlaybackSpeed();
     static void SetPlaybackSpeed(int aSpeed);
+    static int GetHardwareLatency();
     static void Play();
     static void Pause();
     static void Stop();
@@ -51,6 +52,7 @@ private:            // Is defined as public in AudioPlayback.cpp
     bool myWantToSetSpeed = false;
     bool mySelectingSpeed = false;
     std::string myPath = "";
+    int myContextLatency;
     int mySpeed;
     uint myProgress;
     uint myDuration;

@@ -84,6 +84,13 @@ EM_JS(emscripten::EM_VAL, get_audio_playback_progress, (), {
     return Emval.toHandle(audio.currentTime);
 });
 
+EM_JS(emscripten::EM_VAL, get_audio_context_latency, (), {
+    if(global_audio_context && ("outputLatency" in global_audio_context)){
+        return Emval.toHandle(global_audio_context.outputLatency);
+    }
+    return Emval.toHandle(0);
+});
+
 EM_JS(emscripten::EM_VAL, get_audio_duration, (), {
     const audio = global_audio_element;
     return Emval.toHandle(audio.duration);
@@ -107,7 +114,6 @@ extern"C" EMSCRIPTEN_KEEPALIVE bool IsWaitingToPlay(){return AudioPlayback::ourI
 
 EM_JS(void, audio_element_play, (), {
     global_audio_element.play();
-    //global_audio_element.currentTime = 2;
 });
 EM_JS(void, audio_element_pause, (), {
     global_audio_element.pause();
@@ -147,6 +153,7 @@ void AudioPlayback::OnImGuiDraw()
         ImGui::Spacing();
         if(myHasAudio && !myWaitingToPlay)
         myProgress = (uint)(VAR_FROM_JS(get_audio_playback_progress()).as<double>() * 100 * myTimeScale);
+        myContextLatency = (int)(VAR_FROM_JS(get_audio_context_latency()).as<double>() * 100);
         if(myWaitingToPlay || !myHasAudio) ImGui::BeginDisabled();
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, ImGui::GetStyle().FramePadding.y));
         if(ImGui::Button(myHasAudio ? (myWaitingToPlay ? "Loading" : (myIsPlaying ? "Pause" : "Play")) : "Interact", {DPI_SCALED(60), 0}))
@@ -269,7 +276,7 @@ void AudioPlayback::SetEngine(AudioPlayback::ProcessEngine anEngine)
 
 uint AudioPlayback::GetPlaybackProgress()
 {
-    return ourInstance->myProgress;
+    return ourInstance->myProgress + (ourInstance->myIsPlaying ? (int)(((float)ourInstance->myContextLatency * ourInstance->myTimeScale) + .5f) : 0);
 }
 
 void AudioPlayback::SetPlaybackProgress(uint someProgress)
@@ -289,6 +296,11 @@ void AudioPlayback::SetPlaybackSpeed(int aSpeed)
     if(ourInstance->mySpeed == aSpeed) { return; }
     ourInstance->mySpeed = aSpeed;
     ourInstance->myWantToSetSpeed = true;
+}
+
+int AudioPlayback::GetHardwareLatency()
+{
+    return ourInstance->myContextLatency;
 }
 
 void AudioPlayback::Play()
@@ -527,16 +539,21 @@ std::tuple<float, float, float> AudioPlayback::GetVolumeDB()
 
 void AudioPlayback::DrawPlaybackProgress(float aDrawUntil)
 {
-    ImGui::Text(Serialization::KaraokeDocument::TimeToString(myProgress).c_str());
+    uint progress = GetPlaybackProgress();
+    #ifdef _DEBUG
+    ImGui::Text((Serialization::KaraokeDocument::TimeToString(progress) + "(" + std::to_string(myContextLatency) + ")").c_str());
+    #else
+    ImGui::Text(Serialization::KaraokeDocument::TimeToString(progress).c_str());
+    #endif
     ImGui::SameLine();
     float width = aDrawUntil - ImGui::GetCursorPosX();
     bool disable = myWaitingToPlay || !myHasAudio;
     if(disable) ImGui::BeginDisabled();
     ImGui::SetNextItemWidth(width - 20);
-    if(ImGui::SliderInt("##ProgressBar", (int*)&myProgress, (int)0, (int)myDuration, "", ImGuiSliderFlags_NoInput) && myHasAudio)
+    if(ImGui::SliderInt("##ProgressBar", (int*)&progress, (int)0, (int)myDuration, "", ImGuiSliderFlags_NoInput) && myHasAudio)
     {
         myDuration = 100 * myTimeScale * VAR_FROM_JS(get_audio_duration()).as<double>();
-        set_audio_playback_progress(VAR_TO_JS(((float)myProgress) * .01f / myTimeScale));
+        set_audio_playback_progress(VAR_TO_JS(((float)progress) * .01f / myTimeScale));
     }
     if(disable) ImGui::EndDisabled();
 }
