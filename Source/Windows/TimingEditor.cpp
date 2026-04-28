@@ -328,6 +328,7 @@ void TimingEditor::RecordEndTime()
     } while (!doc.IsNull(doc.GetTimedTokenBefore(myMarkedLine, myMarkedToken)));
     myMarkedToken = currMarkToken;
     myMarkedLine = currMarkLine;
+    bool moveRight = false;
     // Space token already exists
     if(doc.IsPauseToken(prevToken))
     {
@@ -339,13 +340,13 @@ void TimingEditor::RecordEndTime()
     {
         currToken.myStartTime = AudioPlayback::GetPlaybackProgress() - scaledLatency;
         currToken.myHasStart = true;
-        MoveMarkerRight();
+        moveRight = true;
     }
     // Token is on same line
     else if(prevToken.myHasStart && myMarkedToken != 0)
     {
         doc.GetLine(myMarkedLine).insert(doc.GetLine(myMarkedLine).begin() + myMarkedToken, {"", true, AudioPlayback::GetPlaybackProgress() - scaledLatency});
-        MoveMarkerRight();
+        moveRight = true;
     }
     // Token is on previous line
     else
@@ -359,6 +360,10 @@ void TimingEditor::RecordEndTime()
     // Resetting after effect tokken compensation
     myMarkedLine = realMarkLine;
     myMarkedToken = realMarkToken;
+    if(moveRight)
+    {
+        MoveMarkerRight();
+    }
 }
 
 void TimingEditor::MoveMarkerUp()
