@@ -188,8 +188,10 @@ void PreviewWindow::OnImGuiDraw()
     float laneHeight = (lanePosY - ImGui::GetTextLineHeightWithSpacing()) * .5f;
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, DPI_SCALED(10)});
     bool hasNoEffect = false;
+    bool isDirect = doc.GetUseDirectText();
     for(int lane = 0; lane < 7; lane++)
     {
+        int showTime = myLanes[lane].myStartTime + myLanes[lane].myShowTimeOffset;
         if(!CheckLaneVisible(lane, playbackProgress)) {continue;}
         ImGui::SetCursorPosY((lanePosY * lane) + laneHeight + contentOffset.y);
         float cursorStartX = ((contentSize.x - (myLanes[lane].myWidth * DPI_SCALED(textScale))) * .5f) + contentOffset.x;
@@ -199,14 +201,24 @@ void PreviewWindow::OnImGuiDraw()
         {
             uint start = doc.GetToken(myLanes[lane].myLine, token).myStartTime;
             uint end = doc.GetTimedTokenAfter(myLanes[lane].myLine, token).myStartTime;
-            if(!doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)))
+            if(!doc.ParseEffectToken(doc.GetToken(myLanes[lane].myLine, token)) && playbackProgress >= showTime)
             {
+                showTime += (isDirect ? 0 : ourPerCharAnimTime) * doc.GetToken(myLanes[lane].myLine, token).myValue.size();
                 ImGui::Ext::TimedSyllable(doc.GetToken(myLanes[lane].myLine, token).myValue, start, end, playbackProgress, false, ourTokenFlash, true, ourUseOutline ? DPI_SCALED(2 * textScale) : 0, hasNoEffect ? 1 : 1.15f);
                 ImGui::SameLine();
             }
             else if(doc.GetToken(myLanes[lane].myLine, token).myValue.starts_with("<no effect>"))
             {
+                isDirect = true;
                 hasNoEffect = true;
+            }
+            else if(doc.GetToken(myLanes[lane].myLine, token).myValue.starts_with("<direct>"))
+            {
+                isDirect = true;
+            }
+            else if(doc.GetToken(myLanes[lane].myLine, token).myValue.starts_with("<cascade>"))
+            {
+                isDirect = false;
             }
         }
         if(lane >= lanesShown) {break;}
@@ -215,6 +227,7 @@ void PreviewWindow::OnImGuiDraw()
         {
             doc.PopColor();
             hasNoEffect = false;
+            isDirect = doc.GetUseDirectText();
         }
     }
     ImGui::PopStyleVar();
@@ -435,6 +448,8 @@ int PreviewWindow::AssembleLanes(float aWidth)
     lineStart = lineStart == UINT_MAX ? 0 : lineStart;
     int nextStartToken = 0;
     int lastSpaceToken = -1;
+    int showTimeOffset = -ourLineAnimInTime;
+    bool isDirect = doc.GetUseDirectText();
     for(int lane = 0; lane < 7; lane++)
     {
         if(doc.GetLine(myNextAddLineIndex).size() <= nextStartToken)
@@ -449,7 +464,9 @@ int PreviewWindow::AssembleLanes(float aWidth)
         myAssemblyLanes[lane].myStartToken = nextStartToken;
         myAssemblyLanes[lane].myStartTime = lineStart;
         myAssemblyLanes[lane].myEndTime = lineEnd;
+        myAssemblyLanes[lane].myShowTimeOffset = isDirect ? -ourLineAnimInTime : showTimeOffset;
         float currentTextWidth = 0;
+        int currentCharCount = 0;
         ImGui::PushFont(ourRulerFont);
         ourRulerFont->Scale = DPI_UNSCALED(((float)doc.GetFontSize() / 50.f));
         do
@@ -460,14 +477,24 @@ int PreviewWindow::AssembleLanes(float aWidth)
                 lastSpaceToken = -1;
                 break;
             }
+            std::string tokenValue = doc.GetToken(myNextAddLineIndex, nextStartToken).myValue;
             if(doc.IsEffectToken(doc.GetToken(myNextAddLineIndex, nextStartToken)))
             {
+                if(tokenValue.starts_with("<no effect>") || tokenValue.starts_with("<direct>"))
+                {
+                    isDirect = true;
+                }
+                if(tokenValue.starts_with("<cascade>"))
+                {
+                    isDirect = false;
+                }
                 nextStartToken++;
                 continue;
             }
             // Multipying by 2.5 on the below lines is to go from the Main font (40 / 2) to the preview display font of 50.
-            currentTextWidth += ImGui::CalcTextSize(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.data()).x;
-            if(doc.GetToken(myNextAddLineIndex, nextStartToken).myValue.ends_with(" "))
+            currentTextWidth += ImGui::CalcTextSize(tokenValue.data()).x;
+            currentCharCount += tokenValue.size();
+            if(tokenValue.ends_with(" "))
             {
                 if(currentTextWidth > aWidth && lastSpaceToken != -1)
                 {
@@ -475,6 +502,8 @@ int PreviewWindow::AssembleLanes(float aWidth)
                 }
                 myAssemblyLanes[lane].myWidth = currentTextWidth;
                 lastSpaceToken = nextStartToken;
+                showTimeOffset += currentCharCount * ourPerCharAnimTime;
+                currentCharCount = 0;
             }
             nextStartToken++;
         } while(currentTextWidth < aWidth || lastSpaceToken == -1);
@@ -482,6 +511,10 @@ int PreviewWindow::AssembleLanes(float aWidth)
         nextStartToken = lastSpaceToken == -1 ? nextStartToken : (lastSpaceToken + 1);
         myAssemblyLanes[lane].myEndToken = nextStartToken;
         lastSpaceToken = -1;
+        if(doc.GetThisOrPreviousTimedToken(myNextAddLineIndex, nextStartToken).myStartTime < lineStart + showTimeOffset)
+        {
+            Console::LogError("Line " + std::to_string(myNextAddLineIndex) + " finished before it could be animated in. Consider using <direct> or turning on Direct Text in Effects > Properties.", myNextAddLineIndex);
+        }
     }
     return 7;
 }

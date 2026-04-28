@@ -19,6 +19,7 @@ class PreviewWindow : public EditorWindow
         float myWidth = 0;
         uint myStartTime = 0;
         uint myEndTime = 0;
+        int myShowTimeOffset = 0;
     };
     struct ImageFade
     {
@@ -71,4 +72,5 @@ private:
     inline static bool ourUseOutline;
     static inline int ourLineAnimInTime = 200;
     inline static int ourLineAnimOutTime = 50;
+    static inline int ourPerCharAnimTime = 2;
 };
