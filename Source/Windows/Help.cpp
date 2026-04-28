@@ -43,8 +43,8 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Syllabify the Project");
-    ImGui::TextWrapped("After opening the project you should now see the lyrics file in the Timing window. If the lyrics is not already split into syllables then click "
-    "Syllabify in the top menu then go to Document or Line and finally the language the song is written in. The Line option only splits the line where the text marker is in the Timing window. "
+    ImGui::TextWrapped("After opening the project you should now see the lyrics file in the Timing View. If the lyrics is not already split into syllables then click "
+    "Syllabify in the top menu then go to Document or Line and finally the language the song is written in. The Line option only splits the line where the text marker is in the Timing View. "
     "If the automatic splitting made a mistake you can add or remove splits by moving the text marker to the place you like with Ctrl + Arrow keys then pressing Ctrl + Space to add/remove a split. ");
     EndTreeNode
 
@@ -85,21 +85,27 @@ void HelpWindow::OnImGuiDraw()
     ImGui::TextWrapped("Adding effects is as simple as clicking the Effects menu and selecting the appropriate one. ");
     ImGui::PushFont(MainWindow::Font);
     StartTreeNode("Setting the Line");
-    ImGui::TextWrapped("By selecting Display Line a <line#> tag will be added to the selected line in the Timing editor. "
-    "The value can then be changed in the Timing editor any time. \nTo remove it, move the text marker to the line and un-select the Effects > Display Line option");
+    ImGui::TextWrapped("By selecting Display Line a <line#> tag will be added to the selected line in the Timing View. "
+    "The value can then be changed in the Timing View any time. \nTo remove it, move the text marker to the line and un-select the Effects > Display Line option. ");
+    EndTreeNode
+    StartTreeNode("Direct/Cascade");
+    ImGui::TextWrapped("Cascade is default behavior of ECHO. These options can be used to invert the choice set in the Properties window. \n"
+    "To remove it, move the text marker to the line and un-select it in the Effects menu. ");
     EndTreeNode
     StartTreeNode("No Effect");
     ImGui::TextWrapped("This option will remove all text animation in ECHO and make the text white. It is most often used when someone is talking in the song instead of singing. \n"
-    "To remove it, move the text marker to the line and un-select the Effects > No Effect option");
+    "To remove it, move the text marker to the line and un-select the Effects > No Effect option. ");
     EndTreeNode
-    StartTreeNode("Text Color");
+    StartTreeNode("Text Color/Gradient");
     ImGui::TextWrapped("After the built in line effects are the text effects added to the document. "
-    "You can create effects in the Document Properties. "
-    "A named effect will appear as its name in the Timing editor but when exporting will be translated to a command readable by ECHO.");
+    "You can create effects in the Document Properties. \n"
+    "Choosing a /Color/ will change the main color of the text for the rest of the line. \n"
+    "/Gradient/, on the other hand, will keep the main color but add a fade to it with this color at the bottom. \n"
+    "A named effect will appear as <Color: name> or <Gradient: name> where 'name' is the name of the effect but when exporting will be translated to a command readable by ECHO.");
     EndTreeNode
     StartTreeNode("Images");
-    ImGui::TextWrapped("This dropdown shows all images in the project. Selecting one will add an image tag to the Timing editor, visible as a small thumbnail. "
-    "An image has several options that can be changed by selecting it in the Timing editor and then selecting Apply when done. \n"
+    ImGui::TextWrapped("This dropdown shows all images in the project. Selecting one will add an image tag to the Timing View, visible as a small thumbnail. "
+    "An image has several options that can be changed by selecting it in the Timing View and then selecting Apply when done. \n"
     "When adding an image or applying options it is sorted according to its time of appearance. However, it does not move when its time is changed in other ways such as Raw Text. "
     "For information on why sorting is important, please read the guidelines (View > Guidelines). \n"
     "Images can not be used if a video is present in the project!");
@@ -111,7 +117,7 @@ void HelpWindow::OnImGuiDraw()
     ImGui::TextWrapped("In the Effects menu is the option to play a preview of your work. "
     "The playback is controlled by the Audio window so that it stays in sync with any changes made. "
     "This view is meant to check composition and sizing and will always play in the correct aspect ratio of 16:9. "
-    "(At this stage it's far from accurate to how ECHO will play the file.)"
+    "(The project may look slightly different when played through ECHO.)"
     "\nSupported file formats are *.jpg, *.png and *.mp4.");
     EndTreeNode
 
@@ -121,8 +127,8 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Dealing with Raw Text");
-    ImGui::TextWrapped("The Raw Text view is meant to make changes to the lyrics before timing in case you don't have access to an extrnal text editor. "
-    "It can be accessed by selecting the Raw Text tab next to the Timing tab right below the menu bar at the top of the screen. "
+    ImGui::TextWrapped("The Raw view is meant to make changes to the lyrics before timing in case you don't have access to an extrnal text editor. "
+    "It can be accessed by selecting the Raw View next to the Timing View right below the menu bar at the top of the screen. "
     "It shows and allows you to edit the file that is readable by both ECHO and Resonate. Please note that if an effect value is changed it might not be recognized as a Resonate effect. "
     "Changing the Resonate headers are not recommended as it may result in undefined behavior.");
     EndTreeNode
@@ -148,7 +154,7 @@ void HelpWindow::OnImGuiDraw()
     EndTreeNode
 
     StartTreeNode("Touch Controls");
-    ImGui::TextWrapped("The Touch Controls window can be opened from the View menu. It has buttons for navigating the Timing Editor and Audio Playback."
+    ImGui::TextWrapped("The Touch Controls window can be opened from the View menu. It has buttons for navigating the Timing View and Audio Playback."
     "The buttons ↻ and ↺ will fast forward and rewind the audio while the ◣ and ◢ buttons will set timing and add a pause respectively and "
     "the center button [:] will add or remove a syllable split. The arrows will move the text marker in the specified direction and, lastly, the "
     "Edit Mode toggle will switch between moving the text marker per character and per syllable. ");

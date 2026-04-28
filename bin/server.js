@@ -9,12 +9,12 @@ const { execSync } = require('node:child_process');
 var os = require('os');
 const WIN32 = os.platform() === "win32";
 
-const RELEASE_Build = false;
+const RELEASE_Build = true;
 
 // Skip compile steps:
-const REBUILD_Imgui = false;
-const REBUILD_Rubberband = false;
-const REBUILD_Source = false;
+const REBUILD_Imgui = true;
+const REBUILD_Rubberband = true;
+const REBUILD_Source = true;
 const SKIP_ImguiCompile = true;
 const SKIP_RubberbandCompile = true;
 const SKIP_SourceCompile = false;
@@ -23,7 +23,7 @@ const FORCE_Linking = false;
 
 // APIs gotten from Github Secrets
 const API_SECRETS = [
-    "RELEASE_VERSION=9'03",  // split into major'minor'patch with two digits per
+    "RELEASE_VERSION=10'00",  // split into major'minor'patch with two digits per
     "GOOGLE_API_SECRET=" + (RELEASE_Build ? process.env.GOOGLE_API_KEY_RELEASE : process.env.GOOGLE_API_KEY_DEBUG),
     (WIN32 ? "NO_IMPORT_API_SECRETS=1" : "DROPBOX_API_SECRET=0"),
     (RELEASE_Build ? "_RELEASE=1" : "_DEBUG=1")

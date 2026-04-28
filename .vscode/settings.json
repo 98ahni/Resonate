@@ -105,7 +105,7 @@
         "condition_variable": "cpp",
         "semaphore": "cpp"
     },
-    "editor.fontSize": 11,
+    "editor.fontSize": 13,
     "editor.tabSize": 4,
     "editor.mouseWheelZoom": true
 }
