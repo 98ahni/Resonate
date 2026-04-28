@@ -12,9 +12,9 @@ const WIN32 = os.platform() === "win32";
 const RELEASE_Build = true;
 
 // Skip compile steps:
-const REBUILD_Imgui = true;
-const REBUILD_Rubberband = true;
-const REBUILD_Source = true;
+const REBUILD_Imgui = false;
+const REBUILD_Rubberband = false;
+const REBUILD_Source = false;
 const SKIP_ImguiCompile = true;
 const SKIP_RubberbandCompile = true;
 const SKIP_SourceCompile = false;
