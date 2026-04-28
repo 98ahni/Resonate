@@ -76,6 +76,7 @@ namespace Serialization
         uint GetEndColor();
         uint GetStartGradient();
         uint GetEndGradient();
+        bool GetUseDirectText();
         bool IsEffectToken(KaraokeToken& aToken);
         bool ParseEffectToken(KaraokeToken& aToken);
         void SetColor(uint aStartColor);

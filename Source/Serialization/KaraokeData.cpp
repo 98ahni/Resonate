@@ -236,6 +236,10 @@ namespace Serialization
     {
         return myHasOverrideEndGradient ? myOverrideEndGradient : (myHasBaseEndGradient ? myBaseEndGradient : GetEndColor());
     }
+    bool KaraokeDocument::GetUseDirectText()
+    {
+        return myUseDirectText;
+    }
     bool KaraokeDocument::IsEffectToken(KaraokeToken &aToken)
     {
         std::vector<std::string> tags = StringTools::Split(aToken.myValue.data(), std::regex("<[A-Za-z0-9#\"=: -]+>"), true);
@@ -303,6 +307,11 @@ namespace Serialization
                 output = true;
             }
             else if(lowTag.starts_with("<line"))
+            {
+                // Always handled by the calling function
+                output = true;
+            }
+            else if(lowTag.starts_with("<font effect#") || possibleAlias == "direct" || possibleAlias == "cascade")
             {
                 // Always handled by the calling function
                 output = true;
@@ -557,7 +566,15 @@ namespace Serialization
             myUseDirectText = true;
             return;
         }
-        if(aLine.starts_with("font"))
+        if(aLine.starts_with("font effect "))
+        {
+            if(aLine.starts_with("font effect default"))
+            {
+                myUseDirectText = false;
+                return;
+            }
+        }
+        else if(aLine.starts_with("font"))
         {
             myFontSize = std::stoi(aLine.substr(5));
             return;
@@ -618,10 +635,18 @@ namespace Serialization
     }
     void KaraokeDocument::ReplaceEffectsInLine(std::string& aLine)
     {
-        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"=: ]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"=: -]+>"), true);
         for(std::string tag : tags)
         {
-            if(myECHOtoResonateAliases.contains(tag))
+            if(tag == "<font effect#spec10 - MKCdirekt>")
+            {
+                StringTools::Replace(aLine, tag, "<direct>");
+            }
+            else if(tag == "<font effect#default>")
+            {
+                StringTools::Replace(aLine, tag, "<cascade>");
+            }
+            else if(myECHOtoResonateAliases.contains(tag))
             {
                 StringTools::Replace(aLine, tag, myECHOtoResonateAliases[tag]);
             }
@@ -629,7 +654,7 @@ namespace Serialization
     }
     void KaraokeDocument::ReplaceAliasesInLine(std::string &aLine)
     {
-        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"=: ]+>"), true);
+        std::vector<std::string> tags = StringTools::Split(aLine.data(), std::regex("<[A-Za-z0-9#\"=: -]+>"), true);
         for(std::string tag : tags)
         {
             std::string possibleAlias = tag;
@@ -643,7 +668,15 @@ namespace Serialization
                 StringTools::TrimStart(possibleAlias);
                 isGradient = typeAlias[0] == "Gradient";
             }
-            if(myEffectAliases.contains(possibleAlias))
+            if(possibleAlias == "direct")
+            {
+                StringTools::Replace(aLine, tag, "<font effect#spec10 - MKCdirekt>");
+            }
+            else if(possibleAlias == "cascade")
+            {
+                StringTools::Replace(aLine, tag, "<font effect#default>");
+            }
+            else if(myEffectAliases.contains(possibleAlias))
             {
                 std::string ECHOValue = myEffectAliases[possibleAlias]->myECHOValue;
                 if(isGradient) StringTools::Replace(ECHOValue, "color", "gradient");
@@ -655,9 +688,10 @@ namespace Serialization
     {
         std::string headers;
         std::string output;
-        if(myUseDirectText)
+        headers += "include spec10 - MKCdirekt.txt\n";
+        if(!myUseDirectText)
         {
-            headers += "include spec10 - MKCdirekt.txt\n";
+            headers += "font effect default\n";
         }
         if(myFontSize != 50)
         {
@@ -671,7 +705,7 @@ namespace Serialization
         {
             headers += "end color 0x" + ToHex(myBaseEndColor) + "\n";
         }
-        headers += ".Resonate=1.1\n";
+        headers += ".Resonate=1.2\n";
         for(auto&[alias, effect] : myEffectAliases)
         {
             headers += ".Style" + alias + "=" + SerializeEffectProperty(effect) + "\n";

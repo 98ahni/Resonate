@@ -554,6 +554,8 @@ void loop(void* window){
             TimingEditor& timing = TimingEditor::Get();
             bool hasLineTag = false;
             bool hasNoEffectTag = false;
+            bool hasDirectEffectTag = false;
+            bool hasCascadeEffectTag = false;
             if(doc.GetLine(timing.GetMarkedLine()).size() > 0)
             {
                 hasLineTag = doc.GetToken(timing.GetMarkedLine(), 0).myValue.starts_with("<line");
@@ -562,6 +564,15 @@ void loop(void* window){
             {
                 hasNoEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<no effect>");
             }
+            if(doc.GetLine(timing.GetMarkedLine()).size() > (hasLineTag ? 1 : 0))
+            {
+                hasDirectEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<direct>");
+            }
+            if(doc.GetLine(timing.GetMarkedLine()).size() > (hasLineTag ? 1 : 0))
+            {
+                hasCascadeEffectTag = doc.GetToken(timing.GetMarkedLine(), (hasLineTag ? 1 : 0)).myValue.starts_with("<cascade>");
+            }
+            bool hasEffectTag = hasNoEffectTag || hasDirectEffectTag || hasCascadeEffectTag;
             if(ImGui::BeginMenu("Image", !PreviewWindow::GetHasVideo() && PreviewWindow::GetBackgroundElementPaths().size() > 1))
             {
                 int imgCount = PreviewWindow::GetBackgroundElementPaths().size();
@@ -624,9 +635,47 @@ void loop(void* window){
                 {
                     doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0));
                 }
+                else if(hasEffectTag)
+                {
+                    doc.GetToken(timing.GetMarkedLine(), hasLineTag ? 1 : 0).myValue = "<no effect>";
+                }
                 else
                 {
                     doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0), {"<no effect>", false, 0});
+                }
+                doc.MakeDirty();
+            }
+            if(doc.GetUseDirectText() && ImGui::MenuItem("Cascade Animation", "<cascade>", hasCascadeEffectTag, !TimingEditor::Get().GetInputUnsafe()))
+            {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
+                if(hasCascadeEffectTag)
+                {
+                    doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0));
+                }
+                else if(hasEffectTag)
+                {
+                    doc.GetToken(timing.GetMarkedLine(), hasLineTag ? 1 : 0).myValue = "<cascade>";
+                }
+                else
+                {
+                    doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0), {"<cascade>", false, 0});
+                }
+                doc.MakeDirty();
+            }
+            if(!doc.GetUseDirectText() && ImGui::MenuItem("Direct Animation", "<direct>", hasDirectEffectTag, !TimingEditor::Get().GetInputUnsafe()))
+            {
+                History::AddRecord(new Serialization::LineRecord(History::Record::Edit, timing.GetMarkedLine()), true);
+                if(hasDirectEffectTag)
+                {
+                    doc.GetLine(timing.GetMarkedLine()).erase(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0));
+                }
+                else if(hasEffectTag)
+                {
+                    doc.GetToken(timing.GetMarkedLine(), hasLineTag ? 1 : 0).myValue = "<direct>";
+                }
+                else
+                {
+                    doc.GetLine(timing.GetMarkedLine()).insert(doc.GetLine(timing.GetMarkedLine()).begin() + (hasLineTag ? 1 : 0), {"<direct>", false, 0});
                 }
                 doc.MakeDirty();
             }
