@@ -160,36 +160,48 @@ void PropertiesWindow::OnImGuiDraw()
     auto& aliases = myCurrentTab == LocalTab ? myLocalEffectAliases : doc.myEffectAliases;
     for(auto&[alias, effect] : aliases)
     {
-        DrawEffectWidget(alias, effect);
+        if(DrawEffectWidget(alias, effect)) { break; }
     }
     ImGui::BeginChild("New Effect", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border);
     ImGui::Text("Alias  <"); ImGui::SameLine();
     ImGui::InputText("##Alias", &myNewEffectName);
+    bool isEditing = ImGui::IsItemActive();
     TouchInput_ReadyKeyboard();
     ImGui::SameLine(); ImGui::Text(">");
-    ImGui::Text("Create"); ImGui::SameLine();
-    if(ImGui::Button("Color"))
+    if(ImGui::Button("Add Color") || (isEditing && ImGui::IsKeyPressed(ImGuiKey_Enter)))
     {
-        // TODO: Check if the alias exist and remove it.
-        Serialization::KaraokeColorEffect* colorEffect = new Serialization::KaraokeColorEffect();
-        colorEffect->myType = Serialization::KaraokeEffect::Color;
-        colorEffect->myStartColor = 0x0038F97C;
-        colorEffect->myHasEndColor = false;
-        colorEffect->myEndColor = 0x30FFCCE9;
+        Serialization::KaraokeColorEffect* colorEffect = nullptr;
         myEditingEffect = myNewEffectName.data();
+        if(Serialization::Preferences::HasKey("StyleProperties/" + myEditingEffect))
+        {
+            colorEffect = (Serialization::KaraokeColorEffect*)Serialization::KaraokeDocument::ParseEffectProperty(Serialization::Preferences::GetString("StyleProperties/" + myEditingEffect));
+        }
+        else
+        {
+            colorEffect = new Serialization::KaraokeColorEffect();
+            colorEffect->myType = Serialization::KaraokeEffect::Color;
+            colorEffect->myStartColor = 0x0038F97C;
+            colorEffect->myHasEndColor = false;
+            colorEffect->myEndColor = 0x30FFCCE9;
+        }
+        if(aliases.contains(myEditingEffect))
+        {
+            History::AddRecord(new EffectRecord(History::Record::Remove, myEditingEffect, myCurrentTab == LocalTab), false);
+            delete aliases[myEditingEffect];
+        }
         aliases[myEditingEffect] = colorEffect;
         History::AddRecord(new EffectRecord(History::Record::Insert, myEditingEffect, myCurrentTab == LocalTab), true);
         ApplyEdit(colorEffect);
         myNewEffectName = "";
     }
-    ImGui::BeginDisabled();
-    ImGui::SameLine();
-    if(ImGui::Button("Image"))
-    {}
-    ImGui::SameLine();
-    if(ImGui::Button("Raw"))
-    {}
-    ImGui::EndDisabled();
+    //ImGui::BeginDisabled();
+    //ImGui::SameLine();
+    //if(ImGui::Button("Image"))
+    //{}
+    //ImGui::SameLine();
+    //if(ImGui::Button("Raw"))
+    //{}
+    //ImGui::EndDisabled();
     ImGui::EndChild();
     Gui_End();
 }
@@ -608,10 +620,11 @@ void PropertiesWindow::ShiftTimingsPopupDraw()
     }
 }
 
-void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect *anEffect)
+bool PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect *anEffect)
 {
     // Name, Value, [Preview], EditBtn, [SaveBtn], DeleteBtn
     bool editingThis = myEditingEffect == anEffectAlias;
+    bool deleted = false;
     ImGui::BeginChild(("##" + anEffectAlias).data(), ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border);
     ImVec2 size = ImGui::GetWindowSize();
     ImGui::Text("<%s>", anEffectAlias.data());
@@ -628,6 +641,7 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
         if(colorEffect->myHasEndColor)
         {
             ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() - DPI_SCALED(10));
             ImGui::ColorButton("##endColPrev", ImGui::ColorConvertU32ToFloat4(IM_COL32_FROM_DOC(colorEffect->myEndColor)), 0, ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()));
         }
         if(editingThis)
@@ -665,24 +679,34 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
     case Serialization::KaraokeEffect::Raw:
         break;
     }
-    ImGui::SetCursorPos(ImVec2(size.x - DPI_SCALED(30), cursorPos.y));
+    ImGui::SetCursorPos(ImVec2(size.x - DPI_SCALED(55), cursorPos.y));
     ImGui::PushFont(MainWindow::Font);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(DPI_SCALED(-10), DPI_SCALED(-10)));
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(.5f, .35f));
-    if(ImGui::Button(((myCurrentTab == LocalTab ? "+##" : "x##") + anEffectAlias).data(), ImVec2(DPI_SCALED(20), DPI_SCALED(20))))
+    if(ImGui::Button(((myCurrentTab == LocalTab ? "+##" : "v##") + anEffectAlias).data(), ImVec2(DPI_SCALED(20), DPI_SCALED(20))))
+    {
+        myCurrentTab = myCurrentTab == LocalTab ? DocumentTab : LocalTab;
+        Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
+        auto& aliases = myCurrentTab == LocalTab ? myLocalEffectAliases : doc.myEffectAliases;
+        History::AddRecord(new EffectRecord(aliases.contains(anEffectAlias) ? History::Record::Edit : History::Record::Insert, anEffectAlias, myCurrentTab == LocalTab));
+        if(aliases.contains(anEffectAlias))
+        {
+            delete aliases[anEffectAlias];
+        }
+        aliases[anEffectAlias] = doc.ParseEffectProperty(doc.SerializeEffectProperty(anEffect));
+        ApplyEdit(aliases[anEffectAlias], anEffectAlias);
+        myCurrentTab = myCurrentTab == LocalTab ? DocumentTab : LocalTab;
+    }
+    ImGui::SetCursorPos(ImVec2(size.x - DPI_SCALED(30), cursorPos.y));
+    if(ImGui::Button(("x##" + anEffectAlias).data(), ImVec2(DPI_SCALED(20), DPI_SCALED(20))))
     {
         Serialization::KaraokeDocument& doc = Serialization::KaraokeDocument::Get();
-        if(myCurrentTab == LocalTab)
-        {
-            History::AddRecord(new EffectRecord(doc.myEffectAliases.contains(anEffectAlias) ? History::Record::Edit : History::Record::Insert, anEffectAlias, myCurrentTab == LocalTab));
-            doc.myEffectAliases[anEffectAlias] = doc.ParseEffectProperty(doc.SerializeEffectProperty(anEffect));
-        }
-        else
-        {
-            History::AddRecord(new EffectRecord(History::Record::Remove, anEffectAlias, myCurrentTab == LocalTab));
-            delete doc.myEffectAliases[anEffectAlias];
-            doc.myEffectAliases.erase(anEffectAlias);
-        }
+        auto& aliases = myCurrentTab == LocalTab ? myLocalEffectAliases : doc.myEffectAliases;
+        History::AddRecord(new EffectRecord(History::Record::Remove, anEffectAlias, myCurrentTab == LocalTab));
+        delete aliases[anEffectAlias];
+        aliases.erase(anEffectAlias);
+        ApplyEdit(nullptr, anEffectAlias);
+        deleted = true;
     }
     ImGui::PopStyleVar(2);
     ImGui::PopFont();
@@ -691,25 +715,30 @@ void PropertiesWindow::DrawEffectWidget(std::string anEffectAlias, Serialization
     {
         myEditingEffect = editingThis ? "" : anEffectAlias;
     }
+    return deleted;
 }
 
-void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect)
+void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect, std::string anEffectAlias)
 {
-    switch (anEffect->myType)
+    anEffectAlias = anEffectAlias == "" ? myEditingEffect : anEffectAlias;
+    if(anEffect)
     {
-    case Serialization::KaraokeEffect::Color:
-    {
-        Serialization::KaraokeColorEffect* colorEffect = (Serialization::KaraokeColorEffect*)anEffect;
-        colorEffect->myECHOValue = "<font color#" + Serialization::KaraokeDocument::ToHex(colorEffect->myStartColor);
-        if(colorEffect->myHasEndColor)
+        switch (anEffect->myType)
         {
-            colorEffect->myECHOValue += "#" + Serialization::KaraokeDocument::ToHex(colorEffect->myEndColor);
+            case Serialization::KaraokeEffect::Color:
+            {
+                Serialization::KaraokeColorEffect* colorEffect = (Serialization::KaraokeColorEffect*)anEffect;
+                colorEffect->myECHOValue = "<font color#" + Serialization::KaraokeDocument::ToHex(colorEffect->myStartColor);
+                if(colorEffect->myHasEndColor)
+                {
+                    colorEffect->myECHOValue += "#" + Serialization::KaraokeDocument::ToHex(colorEffect->myEndColor);
+                }
+                colorEffect->myECHOValue += ">";
+                break;
+            }
+            case Serialization::KaraokeEffect::Image:
+            case Serialization::KaraokeEffect::Raw:
         }
-        colorEffect->myECHOValue += ">";
-        break;
-    }
-    case Serialization::KaraokeEffect::Image:
-    case Serialization::KaraokeEffect::Raw:
     }
     if(myCurrentTab == DocumentTab)
     {
@@ -717,16 +746,29 @@ void PropertiesWindow::ApplyEdit(Serialization::KaraokeEffect *anEffect)
     }
     else if(myCurrentTab == LocalTab)
     {
-        std::string keys = myEditingEffect;
-        if(!Serialization::Preferences::HasKey("StyleProperties/Keys"))
+        if(anEffect)
         {
-            Serialization::Preferences::SetString("StyleProperties/Keys", keys);
+            std::string keys = anEffectAlias;
+            if(!Serialization::Preferences::HasKey("StyleProperties/Keys"))
+            {
+                Serialization::Preferences::SetString("StyleProperties/Keys", keys);
+            }
+            else if(!Serialization::Preferences::HasKey("StyleProperties/" + anEffectAlias))
+            {
+                keys = Serialization::Preferences::GetString("StyleProperties/Keys") + "," + keys;
+                Serialization::Preferences::SetString("StyleProperties/Keys", keys);
+            }
+            Serialization::Preferences::SetString("StyleProperties/" + anEffectAlias, Serialization::KaraokeDocument::SerializeEffectProperty(anEffect));
         }
-        else if(!Serialization::Preferences::HasKey("StyleProperties/" + myEditingEffect))
+        else
         {
-            keys = Serialization::Preferences::GetString("StyleProperties/Keys") + "," + keys;
-            Serialization::Preferences::SetString("StyleProperties/Keys", keys);
+            if(Serialization::Preferences::HasKey("StyleProperties/Keys"))
+            {
+                std::string keys = Serialization::Preferences::GetString("StyleProperties/Keys");
+                StringTools::EraseSubString(keys, anEffectAlias);
+                StringTools::Replace(keys, ",,", ",");
+                Serialization::Preferences::SetString("StyleProperties/Keys", keys);
+            }
         }
-        Serialization::Preferences::SetString("StyleProperties/" + myEditingEffect, Serialization::KaraokeDocument::SerializeEffectProperty(anEffect));
     }
 }

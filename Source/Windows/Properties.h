@@ -43,8 +43,8 @@ private:
     };
 
     void ShiftTimingsPopupDraw();
-    void DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect* anEffect);
-    void ApplyEdit(Serialization::KaraokeEffect* anEffect);
+    bool DrawEffectWidget(std::string anEffectAlias, Serialization::KaraokeEffect* anEffect);
+    void ApplyEdit(Serialization::KaraokeEffect* anEffect, std::string anEffectAlias = "");
     bool DrawGamepadColorComponent(const char* aLabel, bool aIsSelected, int& aColorComponent);
     bool DrawColorGamepadMenu(int aSelectedSlider, uint& aStartColor, uint& anEndColor);
 
