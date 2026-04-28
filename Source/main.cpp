@@ -882,6 +882,7 @@ void loop(void* window){
         ImGui::EndMainMenuBar();
     }
 
+#ifndef _RELEASE
     if(g_showInputDebugger)
     {
         ImGui::Begin("Input Debugger", &g_showInputDebugger);
@@ -890,6 +891,7 @@ void loop(void* window){
         else ImGui::Text("Using Mouse");
         ImGui::InputText("Text Input", g_testStr, 50);
         if(ImGui::IsItemClicked(0) && TouchInput_HasTouch()) TouchInput_ReadyKeyboard(false);
+        ImGui::Text("Special Keys: %s%s%s%s", ImGui::IsKeyDown(ImGuiKey_ModShift) ? "Shift " : "", ImGui::IsKeyDown(ImGuiKey_ModCtrl) ? "Ctrl " : "", ImGui::IsKeyDown(ImGuiKey_ModSuper) ? "Super " : "", ImGui::IsKeyDown(ImGuiKey_ModAlt) ? "Alt" : "");
         for(int i = 0; i < 25; i++)
         {
             if(Gamepad::GetButton((Gamepad::Button)i))
@@ -929,7 +931,7 @@ void loop(void* window){
         ImGui::Image(MainWindow::Font->ContainerAtlas->TexID, {ImGui::GetWindowHeight() - ImGui::GetCursorPosY(), ImGui::GetWindowHeight() - ImGui::GetCursorPosY()});
         ImGui::End();
     }
-
+#endif
 
     WindowManager::ImGuiDraw();
     DoGamepadActions();
