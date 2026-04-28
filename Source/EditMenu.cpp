@@ -12,7 +12,7 @@
 void Menu::Edit_CheckShortcuts()
 {
     // Undo/Redo
-    if(ImGui::IsKeyDown(/*MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModSuper : */ImGuiKey_ModCtrl))
+    if(ImGui::IsKeyDown(MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModSuper : ImGuiKey_ModCtrl))
     {                       // For some reason holding Super locks the key..?
         if(ImGui::IsKeyPressed(ImGuiKey_Z, false))
         {
@@ -25,8 +25,8 @@ void Menu::Edit_CheckShortcuts()
     }
 
     if(TimingEditor::Get().GetInputUnsafe()) { return; }
-    bool lineMode = !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyDown(ImGuiKey_ModAlt);
-    bool caseMode = ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyDown(ImGuiKey_ModAlt);
+    bool lineMode = !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModSuper : ImGuiKey_ModCtrl) && ImGui::IsKeyDown(ImGuiKey_ModAlt);
+    bool caseMode = ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModSuper : ImGuiKey_ModCtrl) && ImGui::IsKeyDown(ImGuiKey_ModAlt);
     if(lineMode && ImGui::IsKeyPressed(ImGuiKey_Enter, false))
     {
         Menu::Edit_InsertLinebreak();

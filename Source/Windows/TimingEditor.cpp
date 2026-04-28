@@ -109,11 +109,11 @@ void TimingEditor::OnImGuiDraw()
         {
             myDisableInput = false;
         }
-        if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModAlt) && !ImGui::GetIO().WantTextInput)
-        {
+        if(!myDisableInput && !ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModCtrl : ImGuiKey_ModSuper)  && !ImGui::IsKeyDown(ImGuiKey_ModAlt) && !ImGui::GetIO().WantTextInput)
+        {                                                                           // If Apple we don't want the Cmd(Ctrl) key but instead the Ctrl(Super) key
             bool charMode = false;
-            if(ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-            {
+            if(ImGui::IsKeyDown(MainWindow_IsPlatform(MainWindow_Apple) ? ImGuiKey_ModSuper : ImGuiKey_ModCtrl))
+            {                       // ... and if Apple we want to use the Ctrl(Super) key as Cmd works oddly
                 charMode = true;
             }
             if(ImGui::IsKeyPressed(ImGuiKey_Space, false))
@@ -152,7 +152,7 @@ void TimingEditor::OnImGuiDraw()
     }
     ImGui::EndChild();
     ImGui::PopStyleColor();
-    if(!myDisableInput && ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModAlt) && !ImGui::GetIO().WantTextInput)
+    if(!myDisableInput && ImGui::IsKeyDown(ImGuiKey_ModShift) && !ImGui::IsKeyDown(ImGuiKey_ModCtrl) && !ImGui::IsKeyDown(ImGuiKey_ModSuper) && !ImGui::IsKeyDown(ImGuiKey_ModAlt) && !ImGui::GetIO().WantTextInput)
     {
         if(ImGui::IsKeyPressed(ImGuiKey_Space, false))
         {
